@@ -1,6 +1,6 @@
 function [finalU,finalConfiguration,finalDistances,moveCount] = ...
-    MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig...
-    ,initialDistances,initialU,rCutoff)
+    MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
+    ,initialDistances,initialU)
 
 %% Monte-Carlo in NVT ensemble for Lennard-Jonse potantioal in 2D %%
 
@@ -24,17 +24,31 @@ function [finalU,finalConfiguration,finalDistances,moveCount] = ...
 % finalDistances - the pair distances of all particles in each step (N by N
 %                by Nstep matrix)
 % moveCount - counts accepted moves
-        
+
+% the potantial of Lennard-Jonse in reduced units:
+%   U = 4*[(1/r)^12 - (1/r)^6]
+
+% the potantial of Lennard-Jonse in non-reduced units:
+%   U = 4*epsilon*[(sigma/r)^12 - (sigma/r)^6]
+
+% reduced units:
+% T(reduced) = kT/epsilon | r(reduced) = r/sigma | U(reduced) = U/epsilon
+
+
 dist = initialDistances;
 particlesPosition = initialConfig;
 U = initialU;
 L = sqrt(N/rho); % board length in reduced units
 moveCount = 0;
+movedParticle = 0;
 
 for step = 1:Nsteps
     
-        % choose particle to move
-        movedParticle = randi([1 N]);
+        % choose particle to move 
+        movedParticle = movedParticle + 1;
+        if movedParticle == N + 1
+            movedParticle = 1;
+        end
                             
         % choose displacement:
         displacex = maxdr*rand - (maxdr/2);
@@ -52,21 +66,28 @@ for step = 1:Nsteps
         dU = Uchange(movedParticle,dist,newDist,N,rCutoff);
 
         % if dU < 0 eccept move
-        if dU < 0  
-            U = U + dU;
-            dist = newDist;
-            particlesPosition = newParticlesPosition;
-            moveCount = moveCount + 1; 
-        else
-            %% otherwise,
-            % keep the new state with a probability corresponding to the
-            % Boltzmann factor. if the new state is rejected, recount the
-            % old configuration.
-            if rand < exp(-(1/T)*dU)
+        %(if (1/T)*dU > 75, we are sure the move
+        % will not be excepted, so we don't calculate exp(1/T)*dU to 
+        % save calculation time)
+            
+        if (1/T)*dU < 75
+            if dU < 0  
                 U = U + dU;
                 dist = newDist;
                 particlesPosition = newParticlesPosition;
-                moveCount = moveCount + 1;
+                moveCount = moveCount + 1; 
+            else
+                %% otherwise,
+                % keep the new state with a probability corresponding to the
+                % Boltzmann factor. if the new state is rejected, recount the
+                % old configuration. 
+
+                if rand < exp(-(1/T)*dU)
+                    U = U + dU;
+                    dist = newDist;
+                    particlesPosition = newParticlesPosition;
+                    moveCount = moveCount + 1;
+                end
             end
         end
 end
