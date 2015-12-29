@@ -13,6 +13,8 @@ classdef MC2DLJoutput
 %       simulationParam.initialConfig - initial configuration of particles: 'random' or
 %       'hcp' (6 nieghbors for each patrticle)
 %       simulationParam.rCutoff - the cutoff distance for the energy
+%       simulationParam.verelt - true or false, use verelet algorithm or
+%       not.
 
 % currentU - the energy in the last step calculated
 % currentCoords - the coordinates of all particles in the last step 
@@ -97,8 +99,9 @@ classdef MC2DLJoutput
             %   simulation, using the old simulations data file name:
             %   obj = MC2DLJoutput(fileName);
             
-            switch nargin 
-                case 1
+            
+ 
+                if nargin == 1
                     % create simulation output object from old data
                     obj.fileName = varargin{1};
                     obj.data = matfile(obj.fileName);
@@ -112,8 +115,17 @@ classdef MC2DLJoutput
                     obj.currentDists = obj.data.allDists(:,:,obj.indIndata);
                     obj.currentU = obj.data.allU(1,obj.indIndata);
                     obj.currentStep = obj.data.stepInd(1,obj.indIndata);
+                end
                     
-                case 7
+                if nargin >= 7
+                    
+                    
+                    p = inputParser();
+                    addOptional(p, 'verelet', []);
+                    parse(p, varargin{8:end});
+                    Results = p.Results;
+                    rl = Results.verelet;
+                    
                     % create a simulation output object for a new
                     % simulation
                     N = varargin{1};
@@ -123,7 +135,7 @@ classdef MC2DLJoutput
                     initialConfig = varargin{5};
                     rCutoff = varargin{6};
                     r = varargin{7};
-                                        
+                    
                     obj.simulationParam.N = N;
                     obj.simulationParam.T = T;
                     obj.simulationParam.rho = rho;
@@ -132,17 +144,24 @@ classdef MC2DLJoutput
                     obj.simulationParam.initialConfig = initialConfig;
                     obj.simulationParam.rCutoff = rCutoff;
                     obj.simulationParam.r = r;
+                    obj.simulationParam.rl = rl;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
                     obj.indIndata = 0;
+                    
+                    if ~isempty(rl)
+                        vereletstr = ['verelet' my_num2str(rl)];
+                    else
+                        vereletstr = '';
+                    end
                     
                     obj.fileName = ['N' num2str(N)...
                         'T' my_num2str(T)...
                         'rho' my_num2str(rho) 'initialmaxdr'...
                         my_num2str(initialmaxdr) 'initialconfig_'...
                         initialConfig 'rCutoff'...
-                        my_num2str(rCutoff) 'date'...
+                         my_num2str(rCutoff) vereletstr 'date'...
                         nowdatetimestr()];
                         
                     % create initial configuration
@@ -177,12 +196,12 @@ classdef MC2DLJoutput
                     obj.currentU = allU;
                     obj.currentStep = stepInd;
                     obj.indIndata = 1;
+                end
 
-            end
         end
         
         function obj = MonteCarlo(obj,Nsteps,saveEvery)
-            
+                        
             stepCount = 0;
             while(stepCount < Nsteps)
                 [finalU,finalConfiguration,finalDistances,currentmoveCount] = ...
@@ -191,7 +210,8 @@ classdef MC2DLJoutput
                     obj.simulationParam.N*saveEvery...
                     ,obj.currentmaxdr,obj.currentCoords,...
                     obj.simulationParam.rCutoff...
-                    ,obj.currentDists,obj.currentU);
+                    ,obj.currentDists,obj.currentU,...
+                    'verelet',obj.simulationParam.rl);
                 
                 stepCount = stepCount + obj.simulationParam.N*saveEvery;
                 obj.currentStep = obj.currentStep...
