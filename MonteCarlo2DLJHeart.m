@@ -1,4 +1,4 @@
-function [finalU,finalConfiguration,finalDistances,moveCount] = ...
+function [finalU,finalVirial,finalPressure,finalConfiguration,finalDistances,moveCount] = ...
     MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
     ,initialDistances,initialU,varargin)
 
@@ -53,15 +53,20 @@ function [finalU,finalConfiguration,finalDistances,moveCount] = ...
 % parse input parameters
 p = inputParser();
 addOptional(p, 'verelet', []); 
+addOptional(p, 'virial', []);
 parse(p, varargin{:});
 Results = p.Results;
 rl = Results.verelet;
+virial = Results.virial;
 
 
 % initiate virables
 dist = initialDistances;
 particlesPosition = initialConfig;
 U = initialU;
+if ~isempty(virial)
+    V = virial;
+end
 L = sqrt(N/rho); % board length in reduced units
 moveCount = 0;
 movedParticle = 0;
@@ -86,7 +91,13 @@ for step = 1:Nsteps
         
         % update verelet neighbors list
         if (~isempty(nlist))&&(nlist.summaxdisplace > (rl-rCutoff))
-                nlist = verelet(dist,rl,N);
+              
+            % we need to update the distances
+            movedParticles = find(nlist.dispacements > 0);
+            dist = reCalcDist(dist,movedParticles,particlesPosition,N,L,[]);
+            
+            % and the verlet list
+            nlist = verelet(dist,rl,N);
         end
        
                             
@@ -101,11 +112,16 @@ for step = 1:Nsteps
 
         % calculate new distances
         newDist = reCalcDist(dist,movedParticle,...
-            particlesPosition,newParticlesPosition,N,L,nlist);
+            newParticlesPosition,N,L,nlist);
         
         % calculate the change in energy
         dU = Uchange(movedParticle,dist,newDist,N,rCutoff);
-
+        
+        % calculate the change in the virial 
+        if ~isempty(virial)
+            dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho);
+        end
+        
         % if dU < 0 eccept move
         %(if (1/T)*dU > 75, we are sure the move
         % will not be excepted, so we don't calculate exp(1/T)*dU to 
@@ -114,6 +130,9 @@ for step = 1:Nsteps
         if (1/T)*dU < 75
             if dU < 0  
                 U = U + dU;
+                if ~isempty(virial)
+                    V = V + dV;
+                end
                 dist = newDist;
                 particlesPosition = newParticlesPosition;
                 moveCount = moveCount + 1; 
@@ -131,6 +150,9 @@ for step = 1:Nsteps
 
                 if rand < exp(-(1/T)*dU)
                     U = U + dU;
+                    if ~isempty(virial)
+                        V = V + dV;
+                    end
                     dist = newDist;
                     particlesPosition = newParticlesPosition;
                     moveCount = moveCount + 1;
@@ -146,6 +168,13 @@ for step = 1:Nsteps
 end
 
 finalU = U;
+if ~isempty(virial)
+    finalVirial = V;
+    finalPressure = T*rho + V;
+else
+    finalVirial = [];
+    finalPressure = [];
+end
 finalConfiguration = particlesPosition;
 finalDistances = dist;
 
@@ -179,51 +208,53 @@ finalDistances = dist;
                 newparticlesPosition(2,movedParticle) = y;
         end
     
-        function newdist = reCalcDist(dist,movedParticle,...
-                particlesPosition,newParticlesPosition,N,L,nlist)
+        function newdist = reCalcDist(dist,movedParticles,...
+                newParticlesPosition,N,L,nlist)
                 
-                % recalculates pair distances after moving a particle    
-            
-                xi = newParticlesPosition(1,movedParticle);
-                yi = newParticlesPosition(2,movedParticle);
-                newdist = dist;
-                
-                % recalculate the relevent row elements in dist matrix
-                                
-                if movedParticle > 1
-                    if ~isempty(nlist)
-                        neiInd =...
-                            nlist.neighborsindy(nlist.neighborsindx == movedParticle);
-                        newdist(movedParticle,neiInd) =...
-                        distPBC(xi,yi,...
-                        particlesPosition(:,neiInd),...
-                        L);
-                    
-                    else
-                        
-                        newdist(movedParticle,1:(movedParticle-1)) =...
+                for i = 1:length(movedParticles)
+                    movedP = movedParticles(i);
+                    % recalculates pair distances after moving a particle    
+
+                    xi = newParticlesPosition(1,movedP);
+                    yi = newParticlesPosition(2,movedP);
+                    newdist = dist;
+
+                    % recalculate the relevent row elements in dist matrix
+
+                    if movedP > 1
+                        if ~isempty(nlist)
+                            neiInd =...
+                                nlist.neighborsindy(nlist.neighborsindx == movedP);
+                            newdist(movedP,neiInd) =...
                             distPBC(xi,yi,...
-                            particlesPosition(:,1:(movedParticle-1)),L);
+                            newParticlesPosition(:,neiInd),...
+                            L);
+
+                        else
+
+                            newdist(movedP,1:(movedP-1)) =...
+                                distPBC(xi,yi,...
+                                newParticlesPosition(:,1:(movedP-1)),L);
+                        end
                     end
-                end
-                
-                % recalculate the relevent column elements in dist matrix
-                
-                if movedParticle < N
-                    if ~isempty(nlist)
-                        neiInd =...
-                            nlist.neighborsindx(nlist.neighborsindy == movedParticle);
-                        newdist(neiInd,movedParticle) =...
-                        distPBC(xi,yi,...
-                            particlesPosition(:,neiInd),L);
-                    
-                    else
-                        newdist((movedParticle + 1):N,movedParticle) =...
-                        distPBC(xi,yi,...
-                            particlesPosition(:,(movedParticle+1):N),L);
+
+                    % recalculate the relevent column elements in dist matrix
+
+                    if movedP < N
+                        if ~isempty(nlist)
+                            neiInd =...
+                                nlist.neighborsindx(nlist.neighborsindy == movedP);
+                            newdist(neiInd,movedP) =...
+                            distPBC(xi,yi,...
+                                newParticlesPosition(:,neiInd),L);
+
+                        else
+                            newdist((movedP + 1):N,movedP) =...
+                            distPBC(xi,yi,...
+                                newParticlesPosition(:,(movedP+1):N),L);
+                        end
                     end
-                end
-                
+                end   
         end
     
         function dU = Uchange(movedParticle,dist,newDist,N,rCutoff)
@@ -269,5 +300,55 @@ finalDistances = dist;
                 
                 dU = newU - oldU;
         end
+    
+    function dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho)
+        % calculates the change in the virial after a particle has moved
+                
+                % calculate the old virial for the relevant particle pairs
+                
+                if movedParticle > 1
+                    oldVrow = ...
+                        calcVirial(dist(movedParticle,1:(movedParticle - 1))...
+                        ,rho,12,6,N,rCutoff);
+                else 
+                    oldVrow = 0;
+                end
+                
+                if movedParticle < N
+                    oldVcol = ...
+                        calcVirial(dist((movedParticle + 1):N,movedParticle)...
+                        ,rho,12,6,N,rCutoff);
+                else 
+                    oldVcol = 0;
+                end
+
+                oldV = oldVrow + oldVcol;
+                
+                % calculate the new virial for the relevant particle pairs
+                
+                if movedParticle > 1
+                    newVrow = calcVirial(newDist...
+                            (movedParticle,1:(movedParticle - 1))...
+                            ,rho,12,6,N,rCutoff);
+                else 
+                    newVrow = 0;
+                end
+                
+                if movedParticle < N
+                    newVcol = calcVirial(newDist...
+                        ((movedParticle + 1):N,movedParticle)...
+                        ,rho,12,6,N,rCutoff);
+                else 
+                    newVcol = 0;
+                end
+                
+                newV = newVrow + newVcol;
+                
+                % clculate the change in the virial
+                
+                dV = newV - oldV;
+    end
         
+    
+            
 end
