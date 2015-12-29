@@ -1,6 +1,6 @@
 function [finalU,finalConfiguration,finalDistances,moveCount] = ...
     MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
-    ,initialDistances,initialU)
+    ,initialDistances,initialU,varargin)
 
 %% Monte-Carlo in NVT ensemble for Lennard-Jonse potantioal in 2D %%
 
@@ -16,6 +16,9 @@ function [finalU,finalConfiguration,finalDistances,moveCount] = ...
 % initialConfig - initial configuration of particles (2 by N matrix)
 % initialU - initial energy of the configuration
 % rCutoff - the cutoff distance for the energy
+% optional: 'verelet', rl : use verelet neighbor algorithm with rCutoff
+%           (rc) inner radius and rl outer radius. see section 5.3.1 in the
+%           book computer simulation of liquids for more information.
 
 % outputs:
 % finalU - the energy in each step (1 by Nstep matrix)
@@ -34,13 +37,44 @@ function [finalU,finalConfiguration,finalDistances,moveCount] = ...
 % reduced units:
 % T(reduced) = kT/epsilon | r(reduced) = r/sigma | U(reduced) = U/epsilon
 
+% usage examples: 
 
+% with verelet algorithm
+% [finalU,finalConfiguration,finalDistances,moveCount] = ...
+%     MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
+%     ,initialDistances,initialU,'verelet',2.7)
+
+% without verelet algorithm
+% [finalU,finalConfiguration,finalDistances,moveCount] = ...
+%     MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
+%     ,initialDistances,initialU)
+
+
+% parse input parameters
+p = inputParser();
+addOptional(p, 'verelet', []); 
+parse(p, varargin{:});
+Results = p.Results;
+rl = Results.verelet;
+
+
+% initiate virables
 dist = initialDistances;
 particlesPosition = initialConfig;
 U = initialU;
 L = sqrt(N/rho); % board length in reduced units
 moveCount = 0;
 movedParticle = 0;
+
+% calculate nieghbour list
+if ~isempty(rl)
+    
+    % construct neighbors list object
+    nlist = verelet(dist,rl,N);
+else 
+    nlist = [];
+
+end
 
 for step = 1:Nsteps
     
@@ -49,10 +83,17 @@ for step = 1:Nsteps
         if movedParticle == N + 1
             movedParticle = 1;
         end
+        
+        % update verelet neighbors list
+        if (~isempty(nlist))&&(nlist.summaxdisplace > (rl-rCutoff))
+                nlist = verelet(dist,rl,N);
+        end
+       
                             
         % choose displacement:
         displacex = maxdr*rand - (maxdr/2);
         displacey = maxdr*rand - (maxdr/2);
+        displace = sqrt(displacex^2 + displacey^2);
 
         % move particle
         newParticlesPosition = movePBC(particlesPosition,movedParticle,...
@@ -60,7 +101,7 @@ for step = 1:Nsteps
 
         % calculate new distances
         newDist = reCalcDist(dist,movedParticle,...
-            particlesPosition,newParticlesPosition,N,L);
+            particlesPosition,newParticlesPosition,N,L,nlist);
         
         % calculate the change in energy
         dU = Uchange(movedParticle,dist,newDist,N,rCutoff);
@@ -76,6 +117,12 @@ for step = 1:Nsteps
                 dist = newDist;
                 particlesPosition = newParticlesPosition;
                 moveCount = moveCount + 1; 
+                
+                % update verelet displacement count
+                if ~isempty(nlist)
+                    nlist = nlist.updateDisplace(movedParticle,displace);
+                end
+                
             else
                 %% otherwise,
                 % keep the new state with a probability corresponding to the
@@ -87,6 +134,12 @@ for step = 1:Nsteps
                     dist = newDist;
                     particlesPosition = newParticlesPosition;
                     moveCount = moveCount + 1;
+                    
+                    % update verelet displacement count
+                    if ~isempty(nlist)
+                        nlist = nlist.updateDisplace(movedParticle,displace);
+                    end
+                    
                 end
             end
         end
@@ -127,28 +180,48 @@ finalDistances = dist;
         end
     
         function newdist = reCalcDist(dist,movedParticle,...
-                particlesPosition,newParticlesPosition,N,L)
-            
-                % recalculates pair distances after moving a particle
+                particlesPosition,newParticlesPosition,N,L,nlist)
+                
+                % recalculates pair distances after moving a particle    
             
                 xi = newParticlesPosition(1,movedParticle);
                 yi = newParticlesPosition(2,movedParticle);
                 newdist = dist;
                 
                 % recalculate the relevent row elements in dist matrix
-                
+                                
                 if movedParticle > 1
-                    newdist(movedParticle,1:(movedParticle-1)) =...
+                    if ~isempty(nlist)
+                        neiInd =...
+                            nlist.neighborsindy(nlist.neighborsindx == movedParticle);
+                        newdist(movedParticle,neiInd) =...
                         distPBC(xi,yi,...
+                        particlesPosition(:,neiInd),...
+                        L);
+                    
+                    else
+                        
+                        newdist(movedParticle,1:(movedParticle-1)) =...
+                            distPBC(xi,yi,...
                             particlesPosition(:,1:(movedParticle-1)),L);
+                    end
                 end
                 
                 % recalculate the relevent column elements in dist matrix
                 
                 if movedParticle < N
-                    newdist((movedParticle + 1):N,movedParticle) =...
+                    if ~isempty(nlist)
+                        neiInd =...
+                            nlist.neighborsindx(nlist.neighborsindy == movedParticle);
+                        newdist(neiInd,movedParticle) =...
+                        distPBC(xi,yi,...
+                            particlesPosition(:,neiInd),L);
+                    
+                    else
+                        newdist((movedParticle + 1):N,movedParticle) =...
                         distPBC(xi,yi,...
                             particlesPosition(:,(movedParticle+1):N),L);
+                    end
                 end
                 
         end
@@ -196,5 +269,5 @@ finalDistances = dist;
                 
                 dU = newU - oldU;
         end
-    
+        
 end
