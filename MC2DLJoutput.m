@@ -37,7 +37,8 @@ classdef MC2DLJoutput
 % fileName - the name of the matfile where all the data is stored. the file
 %           name tells you the simulation parameters like N,T, etc. the last 
 %           numbers in the file name are creation date and time
-% RDF - radial distribution function, mean
+% histo - histogram of the radial distribution function (mean)
+% bins - bins of the radial distribution function
 
 % to save time, only the current step is saved in the object. the rest of
 % the data is stored in a mat file. you can excess the data useing obj.data.
@@ -56,6 +57,10 @@ classdef MC2DLJoutput
 %       data.currentmaxdr - the current maximum displacement of the Monte
 %               Carlo step.
 %       data.simulationParam - all prameters of the simulation.
+%       histo - histogram of the radial distribution function (for every
+%                   step saved)
+%       bins - bins of the radial distribution function
+
 
 % usage example: 
 
@@ -97,7 +102,7 @@ classdef MC2DLJoutput
           moveCount,currentCoords,currentDists,currentU,currentPressure,...
           currentVir,Ulrc,Plrc,currentStep;
       fileName,data,indIndata;
-      RDF;
+      histo, bins;
       
    end
     methods
@@ -329,8 +334,8 @@ classdef MC2DLJoutput
             %
             %         output:
             %         ~~~~~~~
-            %         bins - x axis of the RDF histogram
-            %         histo - each colmun is the RDF axis of a diffrent step in the
+            %         obj.data.bins - x axis of the RDF histogram
+            %         obj.data.histo - each colmun is the RDF axis of a diffrent step in the
             %         monte carlo simulation. (so to plot the RDF for the 10'th step we
             %         need to write: plot(bins,histo(:,10));
 
@@ -352,9 +357,10 @@ classdef MC2DLJoutput
               L = obj.simulationParam.L;
               rho = obj.simulationParam.rho;
               
-              obj.data.histo = zeros(NumOfBins,obj.indIndata);      
+              obj.data.histo = zeros(obj.indIndata,NumOfBins);      
               bins = linspace(0,L*0.5,NumOfBins); 
               obj.data.bins = bins;
+              obj.histo = zeros(1,NumOfBins);
               
               for step = 1:obj.indIndata
 
@@ -389,9 +395,11 @@ classdef MC2DLJoutput
 
                     end
                         histo = 2*histo/(N-1);
-                        obj.data.histo(:,step) = histo;
+                        obj.data.histo(step,:) = histo;
+                        obj.histo = obj.histo + histo;
               end
-            
+            obj.bins = bins;
+            obj.histo = obj.histo/obj.indIndata;
         end
         
        function showStep(obj,step)
@@ -437,7 +445,6 @@ classdef MC2DLJoutput
             
        end
        
-
         
     end
     
