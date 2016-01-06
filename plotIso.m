@@ -46,6 +46,10 @@ function isotherms = plotIso(varargin)
         end
         clear i;
         
+        % sort by Temprature
+        [~, indsorted] = sort(T); 
+        fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
+        
         
         [Niso, ~] = size(fileListOrgbyT);
         
