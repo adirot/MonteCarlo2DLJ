@@ -1,0 +1,13 @@
+function plotIso(isotherms)
+    
+    Niso = length(isotherms);
+    Nrho = length(isotherms(1).rho);
+    pressure = zeros(Nrho,Niso);
+    rho = zeros(Nrho,Niso);
+    
+    for i = 1:Niso
+        rho(:,i) = isotherms(i).rho;
+        pe(:,i) = isotherms(i).rho;
+        colorPlot(x,y,varargin)
+    end
+end
