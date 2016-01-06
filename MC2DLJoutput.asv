@@ -37,7 +37,6 @@ classdef MC2DLJoutput
 % fileName - the name of the matfile where all the data is stored. the file
 %           name tells you the simulation parameters like N,T, etc. the last 
 %           numbers in the file name are creation date and time
-% RDF - radial distribution function, mean
 
 % to save time, only the current step is saved in the object. the rest of
 % the data is stored in a mat file. you can excess the data useing obj.data.
@@ -95,9 +94,8 @@ classdef MC2DLJoutput
       simulationParam = struct;
       currentmaxdr,...
           moveCount,currentCoords,currentDists,currentU,currentPressure,...
-          currentVir,Ulrc,Plrc,currentStep;
-      fileName,data,indIndata;
-      RDF;
+          currentVir,Ulrc,Plrc,currentStep,...
+          fileName,data,indIndata;
       
    end
     methods
@@ -318,81 +316,6 @@ classdef MC2DLJoutput
             
         end
         
-        function obj = calcRDF(obj,NumOfBins)
-            %% calculate 2D radial distribution function, with pediodic boundary
-            %% conditions.
-            
-            %         input:
-            %         ~~~~~~
-            
-            %         NumOfBins - number of bins in the histogram
-            %
-            %         output:
-            %         ~~~~~~~
-            %         bins - x axis of the RDF histogram
-            %         histo - each colmun is the RDF axis of a diffrent step in the
-            %         monte carlo simulation. (so to plot the RDF for the 10'th step we
-            %         need to write: plot(bins,histo(:,10));
-
-            %       method:
-            %       ~~~~~~~
-            %       the RDF is calculated by binnig all pair partical distances into 
-            %       a histogram, and normalizing each bin with it's Ideal gas number of
-            %       particals. 
-            %       when binning the pair distances, we take into acount Periodic
-            %       Boudary Conditions (PBC)
-            %       finaly, to ansure that when r->infinity : RDF ->1 , we
-            %       normalize by multiplying RDF*2/(N-1) where N is the number of
-            %       particals. 
-            %       for more information
-            %   http://www2.msm.ctw.utwente.nl/sluding/TEACHING/APiE_Script_v2011.pdf
-            %       page 48 - "Radial distribution function"
-            
-              N = obj.simulationParam.N; 
-              L = obj.simulationParam.L;
-              rho = obj.simulationParam.rho;
-              
-              obj.data.histo = zeros(NumOfBins,obj.indIndata);      
-              bins = linspace(0,L*0.5,NumOfBins); 
-              obj.data.bins = bins;
-              
-              for step = 1:obj.indIndata
-
-                    dist = obj.data.allDists(:,:,step);
-                    d = reshape(dist,1,[]);
-                    d = nonzeros(d);
-                    d = d(d < L*0.5);
-                    
-                    histo = hist(d,bins);
-                    increment = bins(2) - bins(1);
-                   
-
-                    % each bin should be normalized according to its volume
-                    for bin = 1:NumOfBins
-
-                            % rVal is the number of particles in some layer of area 
-                            % da(r)=2pi*r*dr, a distance r from the central cell
-                            rVal = bins(bin);
-                            next_rVal = increment + rVal;
-
-                            % Calculate the area of the bin (a ring of radii r,
-                            % r+dr)
-                            ereaBin = pi*next_rVal^2 - pi*rVal^2;
-
-                            % Calculate the number of particles expected in this bin in
-                            % the ideal case
-                            nIdeal = ereaBin*rho;
-
-                            % Normalize the bin
-                            histo(bin) =...
-                                histo(bin) / nIdeal;
-
-                    end
-                        histo = 2*histo/(N-1);
-                        obj.data.histo(:,step) = histo;
-              end
-            
-        end
         
        function showStep(obj,step)
            
@@ -436,8 +359,6 @@ classdef MC2DLJoutput
             obj.data.meanPlrc = my_mean(obj.data.allPlrc);
             
        end
-       
-
         
     end
     
@@ -591,9 +512,4 @@ end
                 meanProp = meanProp./one2len;
         end
         
-%        function fileName = resultAbbreviation(dataFileOrObj)
-%            
-%            if isobject(dataFileOrObj)
-%                file = dataFileOrObj.data;
-%            else
-%                if 
+
