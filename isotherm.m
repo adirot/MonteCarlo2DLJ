@@ -12,27 +12,28 @@ classdef isotherm
         function obj = isotherm(N,T,rho,initialmaxdr,initialConfig,...
                 rCutoff,r,varargin)
             
-            if iscellstr(varargin)
-                % create object from a given file list
-                obj.datafileList = varargin(:);
-                data = matfile(obj.datafileList{1,1});
-                sim = data.simulationParam;
-                obj.T = sim.T;
-                obj.simulationParam = data.simulationParam;
-                
-                for i = 1:length(obj.datafileList)
-                        if i == 1
-                            obj.MC2DLJ = ...
-                                MC2DLJoutput(obj.datafileList{i,1});
-                        else
-                            obj.MC2DLJ(i) =...
-                                MC2DLJoutput(obj.datafileList{i,1});
-                        end
-                       [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
-                       obj.pressure(i) = obj.MC2DLJ(i).data.meanPlrc(1,s);
-                       obj.rho(i) = obj.MC2DLJ(i).simulationParam.rho;
+            if iscellstr(varargin) && ~isempty(varargin)
+                if exist(varargin{1},'file')
+                    % create object from a given file list
+                    obj.datafileList = varargin(:);
+                    data = matfile(obj.datafileList{1,1});
+                    sim = data.simulationParam;
+                    obj.T = sim.T;
+                    obj.simulationParam = data.simulationParam;
+
+                    for i = 1:length(obj.datafileList)
+                            if i == 1
+                                obj.MC2DLJ = ...
+                                    MC2DLJoutput(obj.datafileList{i,1});
+                            else
+                                obj.MC2DLJ(i) =...
+                                    MC2DLJoutput(obj.datafileList{i,1});
+                            end
+                           [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
+                           obj.pressure(i) = obj.MC2DLJ(i).data.meanPlrc(1,s);
+                           obj.rho(i) = obj.MC2DLJ(i).simulationParam.rho;
+                    end
                 end
-                
                 
             else
             
