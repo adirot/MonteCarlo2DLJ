@@ -136,6 +136,7 @@ classdef MC2DLJoutput
                     obj.currentVir = obj.data.allV(1,obj.indIndata);
                     obj.currentPressure = obj.data.allP(1,obj.indIndata);
                     obj.currentStep = obj.data.stepInd(1,obj.indIndata);
+
                 end
                     
                 if nargin >= 7
@@ -246,7 +247,7 @@ classdef MC2DLJoutput
 
         end
         
-        function obj = MonteCarlo(obj,Nsteps,saveEvery)
+       function obj = MonteCarlo(obj,Nsteps,saveEvery)
             N = obj.simulationParam.N; rho = obj.simulationParam.rho;
                 rCutoff = obj.simulationParam.rCutoff;        
                     
@@ -298,7 +299,7 @@ classdef MC2DLJoutput
             
         end
         
-        function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
+       function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
                 ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc)
             
             obj.data.stepInd(1,obj.indIndata+1) = newInd;
@@ -321,9 +322,9 @@ classdef MC2DLJoutput
             obj.data.moveCount = moveCount;
             obj.data.currentmaxdr = currentmaxdr;
             
-        end
-        
-        function obj = calcRDF(obj,NumOfBins)
+       end
+       
+       function obj = calcRDF(obj,maxDist,numOfBins)
             %% calculate 2D radial distribution function, with pediodic boundary
             %% conditions.
             
@@ -353,28 +354,28 @@ classdef MC2DLJoutput
             %   http://www2.msm.ctw.utwente.nl/sluding/TEACHING/APiE_Script_v2011.pdf
             %       page 48 - "Radial distribution function"
             
-              N = obj.simulationParam.N; 
-              L = obj.simulationParam.L;
+              N = obj.simulationParam.N;
               rho = obj.simulationParam.rho;
               
-              obj.data.histo = zeros(obj.indIndata,NumOfBins);      
-              bins = linspace(0,L*0.5,NumOfBins); 
+              
+              obj.data.histo = zeros(obj.indIndata,numOfBins);      
+              bins = linspace(0,maxDist,numOfBins); 
               obj.data.bins = bins;
-              obj.histo = zeros(1,NumOfBins);
+              obj.histo = zeros(1,numOfBins);
               
               for step = 1:obj.indIndata
 
                     dist = obj.data.allDists(:,:,step);
                     d = reshape(dist,1,[]);
                     d = nonzeros(d);
-                    d = d(d < L*0.5);
+                    d = d(d < maxDist);
                     
                     histo = hist(d,bins);
                     increment = bins(2) - bins(1);
                    
 
                     % each bin should be normalized according to its volume
-                    for bin = 1:NumOfBins
+                    for bin = 1:numOfBins
 
                             % rVal is the number of particles in some layer of area 
                             % da(r)=2pi*r*dr, a distance r from the central cell
@@ -401,7 +402,7 @@ classdef MC2DLJoutput
             obj.bins = bins;
             obj.histo = obj.histo/obj.indIndata;
         end
-        
+
        function showStep(obj,step)
            
           if isnumeric(step)
@@ -547,7 +548,7 @@ end
                 % x-direction
                 xPos = linspace(sepDist/2, Lx-sepDist/2, sqrt(N));
                 % And find the corresponsing y-direction increments
-                yPos = (sqrt(3)/2)*xPos;
+                yPos = xPos;
 
                 % Create a matrix with all combinations of x and y
                 [X,Y] = meshgrid(xPos,yPos);
@@ -570,7 +571,7 @@ end
                     x = particlesPosition(1,par);
                     y = particlesPosition(2,par);
                     dist((par+1):N,par) = ...
-                        distPBC(x,y,particlesPosition(:,(par+1):N));
+                        distPBC(x,y,particlesPosition(:,(par+1):N),L);
                 end
                 
             

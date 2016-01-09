@@ -13,8 +13,8 @@ addOptional(p, 'addLegend', []);
 addOptional(p, 'plotBar', false);
 addOptional(p, 'Interpreter', 'none');
 addOptional(p, 'length2plot', []);
+addOptional(p, 'lineStyle', '+');
 addOptional(p, 'colormap','jet');
-addOptional(p, 'dots',0);
 
 parse(p, varargin{:});
 Results = p.Results;
@@ -23,8 +23,9 @@ addLegend = Results.addLegend;
 plotBar = Results.plotBar;
 Interpreter = Results.Interpreter;
 length2plot = Results.length2plot;
+style = Results.lineStyle;
 colormap = Results.colormap;
-dots = Results.dots;
+
 
     [numOfPlots,~] = size(x);
     
@@ -58,21 +59,16 @@ dots = Results.dots;
             end
        else
            if isempty(length2plot)
-               if dots
-                    plot(x(i,:),y(i,:),'color',cmap(i,:),'lineStyle','+');
-               else
-                    plot(x(i,:),y(i,:),'color',cmap(i,:),'lineStyle','+');
-               end
+               
+                    plot(x(i,:),y(i,:),'color',cmap(i,:),'lineStyle',style);
+               
 
            else
                 if length2plot > 0
-                    if dots
-                       plot(x(i,1:length2plot(i)),y(i,1:length2plot(i)),...
-                        'color',cmap(i,:),'lineStyle','+');
-                    else
+                    
                     plot(x(i,1:length2plot(i)),y(i,1:length2plot(i)),...
-                        'color',cmap(i,:));
-                    end
+                        'color',cmap(i,:),'lineStyle',style);
+                    
                     
                 end
            end
