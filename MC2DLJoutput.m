@@ -102,7 +102,7 @@ classdef MC2DLJoutput
           moveCount,currentCoords,currentDists,currentU,currentPressure,...
           currentVir,Ulrc,Plrc,currentStep;
       fileName,data,indIndata;
-      histo, bins;
+      RDFhisto, RDFbins;
       
    end
     methods
@@ -360,8 +360,8 @@ classdef MC2DLJoutput
               
               obj.data.histo = zeros(obj.indIndata,numOfBins);      
               bins = linspace(0,maxDist,numOfBins); 
-              obj.data.bins = bins;
-              obj.histo = zeros(1,numOfBins);
+              obj.data.RDFbins = bins;
+              obj.RDFhisto = zeros(1,numOfBins);
               
               for step = 1:obj.indIndata
 
@@ -396,13 +396,111 @@ classdef MC2DLJoutput
 
                     end
                         histo = 2*histo/(N-1);
-                        obj.data.histo(step,:) = histo;
-                        obj.histo = obj.histo + histo;
+                        obj.data.RDFhisto(step,:) = histo;
+                        obj.RDFhisto = obj.RDFhisto + histo;
               end
-            obj.bins = bins;
-            obj.histo = obj.histo/obj.indIndata;
-        end
+            obj.RDFbins = bins;
+            obj.RDFhisto = obj.RDFhisto/obj.indIndata;
+       end
 
+       function obj = calcRhoDistrib(obj,squares,numOfbins,varargin)
+       % try:PL is the prob to get a distribution in one squre, considering all
+       % steps. we avg on all subsys
+
+
+       % breaks the board to "squares" pieces, and finds the density in each piece.
+
+            % input:
+            % allCoords is a matrix of all coordinates in each step of a monte carlo
+            % simulation (a '2' x 'nuber of particles' x 'number of steps' matrix).
+            % N must have a natural root.
+            % L is the size of the board
+
+            % output:
+            % the results is a histogram of densities. rho is a 1 x bins matrix.
+            % rhoNorm in the x axis (the bins) of the histogram. Its the densities,
+            % normalized with the total desity on the board.
+            % PL is the probability of finding a block with some density (the y axis of
+            % the histogram.
+            % hist(j,i) is the number of particles in block i, in step j of the
+            % simulation (the histogram for the coordinates: allCoords(:,:,j)
+
+            % this function uses the function 'my_hist'. get it in this repository: 
+            % https://github.com/adirot/general-matlab-functions.git
+
+            p = inputParser();
+            addOptional(p, 'calcPL', true);
+            addOptional(p, 'startFrom', 1);
+            parse(p, varargin{:});
+            Results = p.Results;
+            calcPL = Results.calcPL;
+            startFrom = Results.startFrom;
+            
+            rhoDistribParam.squares = squares;
+            rhoDistribParam.startFrom = startFrom;
+            obj.data.rhoDistribParam = rhoDistribParam;  
+            
+            [~,N,numberOfSteps] = size(obj.data.allCoords);
+            row = sqrt(squares);
+            L = obj.simulationParam.L;
+            inc = L/row;
+            boxSize = inc^2;
+            %hist = zeros(numberOfSteps,bins);
+            hist = zeros(squares,numOfbins);
+            allRho = zeros(numberOfSteps,squares);
+
+            for step = 1:numberOfSteps
+                n = 1;
+                for x = 1:row
+                    for y = 1:row
+            %                 plot(allCoords(1,:,step),allCoords(2,:,step),'+');
+            %              hold on; xlim([-25 25]);ylim([-25 25]);
+                        % find the number of particles in the box
+                        inBoxX = and((obj.data.allCoords(1,:,step) < -L/2 ...
+                        + inc*x), ...
+                            (obj.data.allCoords(1,:,step) > -L/2 ...
+                        + inc*(x-1)));
+            %             plot([-L/2 + inc*x ,-L/2 + inc*x] ,[-25 25],'r');
+            %             plot([-L/2 + inc*(x-1), -L/2 + inc*(x-1)] ,[-25 25],'r');
+                        inBoxY = and((obj.data.allCoords(2,:,step) < -L/2 ...
+                        + inc*y) ,...
+                            (obj.data.allCoords(2,:,step) > -L/2 ...
+                            + inc*(y-1)));
+            %             plot( [-25 25], [-L/2 + inc*y ,-L/2 + inc*y],'r');
+            %             plot( [-25 25],[-L/2 + inc*(y-1), -L/2 + inc*(y-1)],'r');
+                        particlesInBox = sum(inBoxX.*inBoxY);
+
+                        allRho(step,n) = particlesInBox/boxSize;
+                        n = n + 1;
+                        %hold off;
+                    end
+                end
+            end
+
+                % create a histogram from all distributions.
+                rho = linspace(0,max(max(allRho)),numOfbins);
+
+            %     for step = 1:numberOfSteps
+            %         hist(step,:) = my_hist(allRho(step,:),rho);
+            %     end
+
+                for n = 1:squares
+                    hist(n,:)...
+                     = my_hist(allRho(startFrom:numberOfSteps,n)',rho);
+                end
+
+                obj.data.rhoNorm = rho/(N/L^2);
+
+                if calcPL
+                    %PL = mean(hist)/sq^2;
+                    obj.data.PL = mean(hist/(numberOfSteps-startFrom+1));
+                else
+                    obj.data.PL = [];
+                end
+
+       end
+
+       
        function showStep(obj,step)
            
           if isnumeric(step)
