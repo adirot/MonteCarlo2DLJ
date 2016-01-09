@@ -60,7 +60,7 @@ function fit = fitIso(isotherms,fitprop,varargin)
                  
                  for i = 1:length(isotherms)
                     
-                    plot(fit(i).rho,fit(i).P,'k');
+                    plot(fit(i).rho,fit(i).P,'ok');
                     
                  end 
                  
