@@ -1,7 +1,7 @@
 classdef RDFoutput
 
     properties
-        data, dataFileList, maxDist,numOfBins, MC2DLJs;
+        data, dataFileList, maxDist,numOfBins, MC2DLJs, N;
         length2plot, legrho, legT;
     end
     
@@ -23,6 +23,8 @@ classdef RDFoutput
                     error(['provide number of particles,'...
                             'for example: plotIso(''N'',625)']);
               end
+              
+              obj.N = N;
               
               if isempty(RDFdata) && isempty(dataFileList)
                   
@@ -121,10 +123,10 @@ classdef RDFoutput
                    if saveFig
                        saveas(gcf,['RDF_T'...
                            my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                            '.fig']);
+                            'N' num2str(obj.N)  '.fig']);
                        saveas(gcf,['RDF_T'...
                            my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                            '.jpg']);
+                            'N' num2str(obj.N)  '.jpg']);
                    end
 
                    if ~keepFigOpen
@@ -167,10 +169,10 @@ classdef RDFoutput
                     if saveFig
                         saveas(gcf,['RDF_rho'...
                             my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                            '.fig']);
+                             'N' num2str(obj.N) '.fig']);
                         saveas(gcf,['RDF_rho'...
                             my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                            '.jpg']);
+                             'N' num2str(obj.N) '.jpg']);
                     end
                     
                     if ~keepFigOpen
