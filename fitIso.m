@@ -4,9 +4,11 @@ function fit = fitIso(isotherms,fitprop,varargin)
 
      p = inputParser();
      addOptional(p, 'figureHandle', []);
+     addOptional(p, 'my_eps', 0.1); % resulution for the virial
      parse(p, varargin{:});
      Results = p.Results;
      figureHandle = Results.figureHandle;
+     my_eps = Results.my_eps;
     
      for i = 1:length(isotherms)
          switch fitprop
@@ -14,10 +16,14 @@ function fit = fitIso(isotherms,fitprop,varargin)
                     [fit{i,1}, fit{i,2}] = ...
                         polyfit(isotherms(i).rho,isotherms(i).pressure,1);
              case 'plotVirialExp'
-                 [P,rho,~,~,~,~] = ...
-                    real_pressure2D(isotherms(i).T,isotherms(i).rho,0.1,'');
+                        
+                 [P,rho,~,good_ind,~,~] = ...
+                    real_pressure2D(isotherms(i).T,...
+                            isotherms(i).rho,my_eps,'');
                 fit(i).P = P;
                 fit(i).rho = rho;
+                fit(i).good_ind = good_ind;
+                
          end
      end
      
@@ -63,6 +69,13 @@ function fit = fitIso(isotherms,fitprop,varargin)
                     plot(fit(i).rho,fit(i).P,'ok');
                     
                  end 
+                 
+                 for i = 1:length(isotherms)
+                    
+                    plot(fit(i).rho(good_ind),fit(i).P(good_ind),'ob');
+                    
+                 end
+                 
                  
          end
      end
