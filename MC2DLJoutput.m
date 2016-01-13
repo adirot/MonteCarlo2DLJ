@@ -360,7 +360,7 @@ classdef MC2DLJoutput
               rho = obj.simulationParam.rho;
               
               
-              obj.data.histo = zeros(obj.indIndata,numOfBins);      
+              obj.data.RDFhisto = zeros(obj.indIndata,numOfBins);      
               bins = linspace(0,maxDist,numOfBins); 
               obj.data.RDFbins = bins;
               obj.RDFhisto = zeros(1,numOfBins);

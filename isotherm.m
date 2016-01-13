@@ -9,8 +9,7 @@ classdef isotherm
     methods
         
         % constructor
-        function obj = isotherm(N,T,rho,initialmaxdr,initialConfig,...
-                rCutoff,r,varargin)
+        function obj = isotherm(varargin)
             
             if iscellstr(varargin) && ~isempty(varargin)
                 if exist(varargin{1},'file')
@@ -36,11 +35,26 @@ classdef isotherm
                 end
                 
             else
-            
+          
                     p = inputParser();
                     addOptional(p, 'verelet', []);
+                    addOptional(p, 'N', []);
+                    addOptional(p, 'T', []);
+                    addOptional(p, 'rho', []);
+                    addOptional(p, 'initialmaxdr', []);
+                    addOptional(p, 'initialConfig', []);
+                    addOptional(p, 'rCutoff', []);
+                    addOptional(p, 'r', []);
                     parse(p, varargin{:});
                     Results = p.Results;
+                    rl = Results.verelet;
+                    N = Results.N;
+                    T = Results.T;
+                    rho = Results.rho;
+                    initialmaxdr = Results.initialmaxdr;
+                    initialconfig = Results.initialconfig;
+                    rCutoff = Results.rCutoff;
+                    r = Results.r;
                     rl = Results.verelet;
                     
                     obj.simulationParam.N = N;

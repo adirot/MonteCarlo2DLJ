@@ -2,16 +2,25 @@ function [RDF,fileListOrgbyT,MC2DLJs,length2plot,legT,legrho] = plotRDF(varargin
     
 
     % check input, build MC2DLJoutput object from data files if necessary
-    if nargin == 0
-        MC2DLJOrFileList = dir('*mat');
-        MC2DLJOrFileList = {MC2DLJOrFileList.name};
-    else
-        MC2DLJOrFileList = varargin{:};
-    end
+
+        p = inputParser();
+        addOptional(p, 'N', []); 
+        addOptional(p, 'Visible', 'on');
+        addOptional(p, 'saveFig', 'off');
+        parse(p, varargin{:});
+        Results = p.Results;
+        N = Results.N;
+        Visible = Results.Visible;
+        saveFig = Results.saveFig;
+        
+        if isempty(N)
+            error(['provide number of particles,'...
+                'for example: plotRDF(''N'',625)']);
+        else
+            MC2DLJOrFileList = dir(['N' num2str(N) '*mat']);
+            MC2DLJOrFileList = {MC2DLJOrFileList.name};
+        end
     
-    if isobject(MC2DLJOrFileList)
-        MC2DLJs = MC2DLJOrFileList;
-    else
         fileListOrgbyT = {};
         fileList = MC2DLJOrFileList;
         i = 1;
@@ -70,10 +79,9 @@ function [RDF,fileListOrgbyT,MC2DLJs,length2plot,legT,legrho] = plotRDF(varargin
                 end
             end
         end
-    end
+    
                     
                 
-    [Niso, Nrho] = size(MC2DLJs);
     MC2DLJs(1,1) = MC2DLJs(1,1).calcRDF(10,300);
     numOfBins = length(MC2DLJs(1,1).bins);
     histo = zeros(Niso,Nrho,numOfBins);
