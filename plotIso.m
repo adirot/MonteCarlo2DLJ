@@ -1,13 +1,26 @@
 function isotherms = plotIso(varargin)
     
-
     % check input, build isotherm object from data files if necessary
-    if nargin == 0
-        isothermsOrFileList = dir('*mat');
-        isothermsOrFileList = {isothermsOrFileList.name};
-    else
-        isothermsOrFileList = varargin{:};
-    end
+
+        p = inputParser();
+        addOptional(p, 'N', []); 
+        addOptional(p, 'Visible', 'on');
+        addOptional(p, 'saveFig', 'off');
+        parse(p, varargin{:});
+        Results = p.Results;
+        N = Results.N;
+        Visible = Results.Visible;
+        saveFig = Results.saveFig;
+        
+        if isempty(N)
+            error(['provide number of particles,'...
+                'for example: plotIso(''N'',625)']);
+        else
+            isothermsOrFileList = dir(['N' num2str(N) '*mat']);
+            isothermsOrFileList = {isothermsOrFileList.name};
+        end
+            
+    
     
     if isobject(isothermsOrFileList)
         isotherms = isothermsOrFileList;
@@ -76,6 +89,27 @@ function isotherms = plotIso(varargin)
         
     end
     
-    colorPlot(rho,pressure,'addLegend',leg);
-    colorPlot(1./rho,pressure,'addLegend',leg);
+    h1 = figure('Visible',Visible);
+    colorPlot(rho,pressure,'addLegend',leg,'figHandle',h1);
+    title(['isotherms for N = ' num2str(N)]);
+    xlabel('density, reduced units');
+    ylabel('pressure, reduced units');
+    
+    if saveFig
+        saveas(h1,['isotherms_N' num2str(N) 'P_rho.fig']);
+        saveas(h1,['isotherms_N' num2str(N) 'P_rho.jpg']);
+    end
+
+    
+    h2 = figure('Visible',Visible);
+    colorPlot(1./rho,pressure,'addLegend',leg,'figHandle',h2);
+    title(['isotherms for N = ' num2str(N)]);
+    xlabel('volume, reduced units');
+    ylabel('pressure, reduced units');
+    
+    if saveFig
+        saveas(h2,['isotherms_N' num2str(N) 'P_V.fig']);
+        saveas(h2,['isotherms_N' num2str(N) 'P_V.jpg']);
+    end
+    
 end
