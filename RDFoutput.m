@@ -12,15 +12,22 @@ classdef RDFoutput
               p = inputParser();
               addOptional(p, 'dataFileList', []);
               addOptional(p, 'RDFdata', []);
+              addOptional(p, 'N',[]);
               parse(p, varargin{:});
               Results = p.Results;
               dataFileList = Results.dataFileList;
               RDFdata = Results.RDFdata;
+              N = Results.N;
+              
+              if isempty(N)
+                    error(['provide number of particles,'...
+                            'for example: plotIso(''N'',625)']);
+              end
               
               if isempty(RDFdata) && isempty(dataFileList)
                   
                   % get all data from files in folder
-                  fileList = dir('N*mat');
+                  fileList = dir(['N' num2str(N) '*mat']);
                   fileList = {fileList.name};
                   
                   dataFileList = getDataFileList(fileList);
@@ -31,9 +38,11 @@ classdef RDFoutput
                   obj.MC2DLJs = MC2DLJs;
                   
                   % create RDF data matfile
-                  save('RDF.mat','MC2DLJs','dataFileList','-v7.3');
-                  obj.data = matfile('RDF.mat');
-                  obj.data = matfile('RDF.mat','Writable',true);
+                  save(['RDF_N' num2str(N) '.mat']...
+                      ,'MC2DLJs','dataFileList','-v7.3');
+                  obj.data = matfile(['RDF_N' num2str(N) '.mat']);
+                  obj.data = matfile(['RDF_N' num2str(N) '.mat'],...
+                      'Writable',true);
                   clear MC2DLJs dataFileList;
                   
               else
@@ -49,7 +58,6 @@ classdef RDFoutput
                 parse(p, varargin{:});
                 Results = p.Results;
                 talk = Results.talk;
-
                 
                 [Niso, Nrho] = size(obj.MC2DLJs);
                 obj.MC2DLJs(1,1) =...
@@ -66,7 +74,8 @@ classdef RDFoutput
                         end
                         obj.MC2DLJs(i,j) =...
                             obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins);
-                        obj.length2plot(i,j) = length(obj.MC2DLJs(i,j).RDFbins); 
+                        obj.length2plot(i,j) =...
+                            length(obj.MC2DLJs(i,j).RDFbins); 
                         obj.data.bins(i,j,1:obj.length2plot(i,j)) =...
                             obj.MC2DLJs(i,j).RDFbins;
                         obj.data.histo(i,j,1:obj.length2plot(i,j)) =...
@@ -86,10 +95,12 @@ classdef RDFoutput
            p = inputParser();
            addOptional(p, 'saveFig', true);
            addOptional(p, 'keepFigOpen', true);
+           addOptional(p, 'Visible', 'on');
            parse(p, varargin{:});
            Results = p.Results;
            saveFig = Results.saveFig;
            keepFigOpen = Results.keepFigOpen;
+           Visible = Results.Visible;
 
            [Niso, ~] = size(obj.MC2DLJs);
            
@@ -99,8 +110,10 @@ classdef RDFoutput
             for i = 1:Niso
                    x(:,:) = obj.data.bins(i,:,:);
                    y(:,:) = obj.data.histo(i,:,:);
+                   
+                   h = figure('Visible', Visible);
                    colorPlot(x,y,'addLegend',obj.legrho,...
-                       'lineStyle','-');
+                       'lineStyle','-','figHandle',h);
                    title(['T = ' num2str(obj.MC2DLJs(i,1).simulationParam.T)]);
                    xlabel('distance, reduced units');
                    ylabel('g(r)');
@@ -129,18 +142,23 @@ classdef RDFoutput
                p = inputParser();
                addOptional(p, 'saveFig', true);
                addOptional(p, 'keepFigOpen', true);
+               addOptional(p, 'Visible' , 'on');
                parse(p, varargin{:});
                Results = p.Results;
                saveFig = Results.saveFig;
                keepFigOpen = Results.keepFigOpen;
-
+               Visible = Results.Visible; 
+               
                [~, Nrho] = size(obj.MC2DLJs);
                
                 for j = 1:Nrho
+                     
+                     h = figure('Visible',Visible);
                      colorPlot(obj.data.bins(:,j,:)...
                          ,obj.data.histo(:,j,:),'addLegend',obj.legT,...
                          'lineStyle','-',...
-                         'length2plot',obj.length2plot(:,j));
+                         'length2plot',obj.length2plot(:,j)...
+                         'figHandle',h);
                     title(['\rho = '...
                         num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
                     xlabel('distance, reduced units');
