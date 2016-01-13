@@ -6,11 +6,15 @@ function isotherms = plotIso(varargin)
         addOptional(p, 'N', []); 
         addOptional(p, 'Visible', 'on');
         addOptional(p, 'saveFig', 'off');
+        addOptional(p, 'fitprop', []);
+        addOptional(p, 'residuals', []);
         parse(p, varargin{:});
         Results = p.Results;
         N = Results.N;
         Visible = Results.Visible;
         saveFig = Results.saveFig;
+        fitprop = Results.fitprop;
+        residuals = Results.residuals;
         
         if isempty(N)
             error(['provide number of particles,'...
@@ -20,7 +24,6 @@ function isotherms = plotIso(varargin)
             isothermsOrFileList = {isothermsOrFileList.name};
         end
             
-    
     
     if isobject(isothermsOrFileList)
         isotherms = isothermsOrFileList;
@@ -95,6 +98,27 @@ function isotherms = plotIso(varargin)
     xlabel('density, reduced units');
     ylabel('pressure, reduced units');
     
+    if ~isempty(fitprop)
+        for i = length(fitprop)
+            fit = fitIso(isotherms,fitprop{i},'figureHandle',h1);
+        end
+    end
+    
+    if ~isempty(residuals)
+        for i = length(residuals)
+            if isempty(fit)
+                error('you can''t plot residuals with no fit!');
+            else
+                for iso = 1:length(isotherms)
+                    res = my_residuals(pressure(iso,:),fit(iso).P);
+                    for j = 1:length(res)
+                        text(rho(iso,j),pressure(iso,j),num2str(res(j)));
+                    end
+                end
+            end
+        end
+    end
+    
     if saveFig
         saveas(h1,['isotherms_N' num2str(N) 'P_rho.fig']);
         saveas(h1,['isotherms_N' num2str(N) 'P_rho.jpg']);
@@ -107,6 +131,7 @@ function isotherms = plotIso(varargin)
     xlabel('volume, reduced units');
     ylabel('pressure, reduced units');
     
+   
     if saveFig
         saveas(h2,['isotherms_N' num2str(N) 'P_V.fig']);
         saveas(h2,['isotherms_N' num2str(N) 'P_V.jpg']);
