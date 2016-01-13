@@ -1,4 +1,4 @@
-function isotherms = plotIso(varargin)
+function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
     
     % check input, build isotherm object from data files if necessary
 
@@ -37,7 +37,7 @@ function isotherms = plotIso(varargin)
             T(i) = sim.T;
             fileListOrgbyT{i,1} = fileList{1,1};
             
-            ind = 2;
+            canGetUfromgRind = 2;
             indnewlist = 1;
             newfileList = fileList;
             for j = 2:length(fileList)
@@ -46,12 +46,12 @@ function isotherms = plotIso(varargin)
                 thisT = sim.T;
                 
                 if thisT == T(i)
-                    fileListOrgbyT{i,ind} = fileList{1,j};
+                    fileListOrgbyT{i,canGetUfromgRind} = fileList{1,j};
                     newfileList = ...
                         {newfileList{1,1:(indnewlist-1)}...
                         newfileList{1,(indnewlist+1):end}};
                     indnewlist = indnewlist - 1;
-                    ind = ind + 1;
+                    canGetUfromgRind = canGetUfromgRind + 1;
 
                 end
                 indnewlist = indnewlist + 1;
@@ -105,15 +105,24 @@ function isotherms = plotIso(varargin)
     end
     
     if ~isempty(residuals)
-        
+        for i = 1:length(fit)
+            if residuals{1,i}
                 for iso = 1:length(isotherms)
-                    f = fit{1,1}(1,iso);
+                    f = fit{1,i}(1,iso);
                     res = my_residuals(pressure(iso,:),f.P);
                     for j = 1:length(res)
-                        text(rho(iso,j),pressure(iso,j),num2str(res(j)));
+                        text(rho(iso,j),f.P(j),num2str(res(j)));
                     end
                 end
-            
+            end
+        end
+    end
+    
+    canGetUfromgRind = canGetUfromgR(isotherms,fit,0.1);
+    
+    for i = 1:length(isotherms)
+        plot(isotherms(i).rho(1,canGetUfromgRind{1,i}),...
+            isotherms(i).pressure(1,canGetUfromgRind{1,i}),'m*');
     end
     
     if saveFig

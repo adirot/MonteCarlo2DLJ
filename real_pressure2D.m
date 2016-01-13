@@ -67,14 +67,14 @@ end
 
                 if abs(first_term) < abs(second_term)   
                     P = 0;
-                    errorind = 1;
+                    errorind = 2;
                 else 
                     P = first_term - second_term;
 
                     if abs(second_term)/abs(first_term) < my_eps
                         errorind = 0;
                     else 
-                        errorind = 2;
+                        errorind = 1;
                     end
                 end
                 

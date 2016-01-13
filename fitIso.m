@@ -46,6 +46,7 @@ function fit = fitIso(isotherms,fitprop,varargin)
                     text(x(70),y(70),['T = ' num2str(p(1))...
                         ' (' num2str(fit{i,2}.R(1,1)) ','...
                         num2str(fit{i,2}.R(1,2)) ')']);
+                    fit(i).P = y; 
                  end
                  
              case 'plotLin'
@@ -56,7 +57,8 @@ function fit = fitIso(isotherms,fitprop,varargin)
                     
                  for i = 1:length(isotherms)
                     
-                    plot(x,isotherms(i).T*x,'r');
+                    plot(isotherms(i).rho,isotherms(i).T*isotherms(i).rho,'r');
+                    fit(i).P = isotherms(i).T*isotherms(i).rho;
                     
                  end 
                  
@@ -78,7 +80,7 @@ function fit = fitIso(isotherms,fitprop,varargin)
                     
                     plot(fit(i).rho(cantusevirial_ind),...
                         fit(i).P(cantusevirial_ind),...
-                        'color',[0.8 0.5 0.1],'marker','o','line','none'); %yelow
+                        'color','y','marker','o','line','none'); 
                     
                  end
                  
