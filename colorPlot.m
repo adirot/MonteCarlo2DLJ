@@ -15,6 +15,8 @@ addOptional(p, 'Interpreter', 'none');
 addOptional(p, 'length2plot', []);
 addOptional(p, 'lineStyle', '+');
 addOptional(p, 'colormap','jet');
+addOptional(p, 'figHandle', []);
+
 
 parse(p, varargin{:});
 Results = p.Results;
@@ -25,6 +27,7 @@ Interpreter = Results.Interpreter;
 length2plot = Results.length2plot;
 style = Results.lineStyle;
 colormap = Results.colormap;
+figHandle = Results.figHandle;
 
 
     [numOfPlots,~] = size(x);
@@ -42,8 +45,13 @@ colormap = Results.colormap;
   end
           
    
-   figure; hold on;
-   
+if isempty(figHandle)
+       figHandle = figure;
+   else
+       figure(figHandle);
+   end
+        
+   hold on;   
    for i = 1:numOfPlots
        if plotBar
             increment = x(i,2)-x(i,1);

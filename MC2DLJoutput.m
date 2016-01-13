@@ -133,8 +133,10 @@ classdef MC2DLJoutput
                     obj.currentCoords = obj.data.allCoords(:,:,obj.indIndata);
                     obj.currentDists = obj.data.allDists(:,:,obj.indIndata);
                     obj.currentU = obj.data.allU(1,obj.indIndata);
-                    obj.currentVir = obj.data.allV(1,obj.indIndata);
-                    obj.currentPressure = obj.data.allP(1,obj.indIndata);
+                    if ~isempty(obj.data.allV)
+                        obj.currentVir = obj.data.allV(1,obj.indIndata);
+                        obj.currentPressure = obj.data.allP(1,obj.indIndata);
+                    end
                     obj.currentStep = obj.data.stepInd(1,obj.indIndata);
 
                 end
@@ -439,6 +441,7 @@ classdef MC2DLJoutput
             rhoDistribParam.squares = squares;
             rhoDistribParam.startFrom = startFrom;
             obj.data.rhoDistribParam = rhoDistribParam;  
+            obj.simulationParam.rhoDistribParam = rhoDistribParam;
             
             [~,N,numberOfSteps] = size(obj.data.allCoords);
             row = sqrt(squares);

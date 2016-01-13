@@ -1,7 +1,8 @@
 classdef RhoDistriboutput
 
     properties
-        data, dataFileList, squares,numOfBins, MC2DLJs;
+        data, dataFileList, rhoDistribParam,numOfBins, MC2DLJs, length2plot,...
+            legrho, legT;
     end
     
     methods
@@ -37,7 +38,20 @@ classdef RhoDistriboutput
                   clear MC2DLJs dataFileList;
                   
               else
-                 % add constructor - if data file exists 
+                 if ~isempty(rhoDistribdata)
+                        obj.data = matfile(rhoDistribdata);
+                        obj.data = matfile(rhoDistribdata,...
+                            'Writable',true);
+                        obj.MC2DLJs = obj.data.MC2DLJs;
+                        obj.numOfBins = size(obj.data.bins);
+                        MC2DLJs1 = obj.MC2DLJs(1,1);
+                        obj.rhoDistribParam = MC2DLJs1.data.rhoDistribParam;
+                        clear MC2DLJs1;
+                        obj.dataFileList = obj.data.dataFileList;
+                        obj.length2plot = obj.data.length2plot;
+                        obj.legT = obj.data.legT;
+                        obj.legrho = obj.data.legrho;
+                 end
                  
               end
         end
@@ -68,17 +82,22 @@ classdef RhoDistriboutput
                             obj.MC2DLJs(i,j).calcRhoDistrib(squares,...
                                 numOfBins);
                         obj.length2plot(i,j) =...
-                            length(obj.MC2DLJs(i,j).rhoNorm); 
+                            length(obj.MC2DLJs(i,j).data.rhoNorm); 
                         obj.data.bins(i,j,1:obj.length2plot(i,j)) =...
-                            obj.MC2DLJs(i,j).rhoNorm;
+                            reshape(obj.MC2DLJs(i,j).data.rhoNorm,...
+                            [1,1,obj.length2plot(i,j)]);
                         obj.data.histo(i,j,1:obj.length2plot(i,j)) =...
-                            obj.MC2DLJs(i,j).PL;
+                            reshape(obj.MC2DLJs(i,j).data.PL,...
+                            [1,1,obj.length2plot(i,j)]);
                         obj.legrho{1,j} = ['\rho = '...
                             num2str(obj.MC2DLJs(i,j).simulationParam.rho)];
                     end
                     obj.legT{1,i} = ['T = '...
                         num2str(obj.MC2DLJs(i,1).simulationParam.T)];
                 end
+                obj.data.length2plot = obj.length2plot;
+                obj.data.legT = obj.legT;
+                obj.data.legrho = obj.legrho;
 
         end
         
@@ -88,10 +107,12 @@ classdef RhoDistriboutput
            p = inputParser();
            addOptional(p, 'saveFig', true);
            addOptional(p, 'keepFigOpen', true);
+           addOptional(p, 'Visible', 'on');
            parse(p, varargin{:});
            Results = p.Results;
            saveFig = Results.saveFig;
            keepFigOpen = Results.keepFigOpen;
+           Visible = Results.Visible;
 
            [Niso, ~] = size(obj.MC2DLJs);
            
@@ -101,8 +122,9 @@ classdef RhoDistriboutput
             for i = 1:Niso
                    x(:,:) = obj.data.bins(i,:,:);
                    y(:,:) = obj.data.histo(i,:,:);
+                   h = figure('Visible',Visible); 
                    colorPlot(x,y,'addLegend',obj.legrho,...
-                       'lineStyle','-');
+                       'lineStyle','-','figHandle',h);
                    title(['T = ' num2str(obj.MC2DLJs(i,1).simulationParam.T)]);
                    xlabel('distance, reduced units');
                    ylabel('PL');
@@ -125,24 +147,28 @@ classdef RhoDistriboutput
 
         end
         
-        function obj = plotRDFrho(obj,varargin)
+        function obj = plotrhoDistribrho(obj,varargin)
         % plot for one density in the same figure, different Temperatures
 
                p = inputParser();
                addOptional(p, 'saveFig', true);
                addOptional(p, 'keepFigOpen', true);
+               addOptional(p, 'Visible','on')
                parse(p, varargin{:});
                Results = p.Results;
                saveFig = Results.saveFig;
                keepFigOpen = Results.keepFigOpen;
-
+               Visible = Results.Visible; 
+               
                [~, Nrho] = size(obj.MC2DLJs);
                
                 for j = 1:Nrho
+                     h = figure('Visible',Visible);
                      colorPlot(obj.data.bins(:,j,:)...
                          ,obj.data.histo(:,j,:),'addLegend',obj.legT,...
                          'lineStyle','-',...
-                         'length2plot',obj.length2plot(:,j));
+                         'length2plot',obj.length2plot(:,j),...
+                         'figHandle',h);
                     title(['\rho = '...
                         num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
                     xlabel('distance, reduced units');

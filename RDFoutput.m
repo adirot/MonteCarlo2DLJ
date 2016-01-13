@@ -66,11 +66,11 @@ classdef RDFoutput
                         end
                         obj.MC2DLJs(i,j) =...
                             obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins);
-                        obj.length2plot(i,j) = length(obj.MC2DLJs(i,j).bins); 
+                        obj.length2plot(i,j) = length(obj.MC2DLJs(i,j).RDFbins); 
                         obj.data.bins(i,j,1:obj.length2plot(i,j)) =...
-                            obj.MC2DLJs(i,j).bins;
+                            obj.MC2DLJs(i,j).RDFbins;
                         obj.data.histo(i,j,1:obj.length2plot(i,j)) =...
-                            obj.MC2DLJs(i,j).histo;
+                            obj.MC2DLJs(i,j).RDFhisto;
                         obj.legrho{1,j} = ['\rho = '...
                             num2str(obj.MC2DLJs(i,j).simulationParam.rho)];
                     end
