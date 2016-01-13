@@ -17,12 +17,14 @@ function fit = fitIso(isotherms,fitprop,varargin)
                         polyfit(isotherms(i).rho,isotherms(i).pressure,1);
              case 'plotVirialExp'
                         
-                 [P,rho,~,good_ind,~,~] = ...
+                 [P,rho,~,good_ind,cantusevirial_ind,bad_ind] = ...
                     real_pressure2D(isotherms(i).T,...
                             isotherms(i).rho,my_eps,'');
                 fit(i).P = P;
                 fit(i).rho = rho;
                 fit(i).good_ind = good_ind;
+                fit(i).cantusevirial_ind = cantusevirial_ind;
+                fit(i).bad_ind = bad_ind;
                 
          end
      end
@@ -64,18 +66,29 @@ function fit = fitIso(isotherms,fitprop,varargin)
                  annotation('textbox',dim,'String',str,...
                      'FitBoxToText','on');
                  
-                 for i = 1:length(isotherms)
-                    
-                    plot(fit(i).rho,fit(i).P,'ok');
-                    
-                 end 
                  
                  for i = 1:length(isotherms)
                     
-                    plot(fit(i).rho(good_ind),fit(i).P(good_ind),'ob');
+                    plot(fit(i).rho(good_ind),fit(i).P(good_ind),...
+                        'color',[0 0.5 0],'marker','o','line','none'); %green
                     
                  end
                  
+                 for i = 1:length(isotherms)
+                    
+                    plot(fit(i).rho(cantusevirial_ind),...
+                        fit(i).P(cantusevirial_ind),...
+                        'color',[0.8 0.5 0.1],'marker','o','line','none'); %yelow
+                    
+                 end
+                 
+                 
+                 for i = 1:length(isotherms)
+                    
+                    plot(fit(i).rho(bad_ind),fit(i).P(bad_ind),...
+                        'color','r','marker','o','line','none'); 
+                    
+                 end
                  
          end
      end

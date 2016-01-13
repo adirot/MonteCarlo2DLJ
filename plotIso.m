@@ -99,24 +99,21 @@ function isotherms = plotIso(varargin)
     ylabel('pressure, reduced units');
     
     if ~isempty(fitprop)
-        for i = length(fitprop)
-            fit = fitIso(isotherms,fitprop{i},'figureHandle',h1);
+        for i = 1:length(fitprop)
+            fit{1,i} = fitIso(isotherms,fitprop{i},'figureHandle',h1);
         end
     end
     
     if ~isempty(residuals)
-        for i = length(residuals)
-            if isempty(fit)
-                error('you can''t plot residuals with no fit!');
-            else
+        
                 for iso = 1:length(isotherms)
-                    res = my_residuals(pressure(iso,:),fit(iso).P);
+                    f = fit{1,1}(1,iso);
+                    res = my_residuals(pressure(iso,:),f.P);
                     for j = 1:length(res)
                         text(rho(iso,j),pressure(iso,j),num2str(res(j)));
                     end
                 end
-            end
-        end
+            
     end
     
     if saveFig
