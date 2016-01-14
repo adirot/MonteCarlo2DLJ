@@ -8,6 +8,11 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
         addOptional(p, 'saveFig', 'off');
         addOptional(p, 'fitprop', []);
         addOptional(p, 'residuals', []);
+        addOptional(p, 'fileNameEnd', '');
+        addOptional(p, 'isotherms', []);
+        addOptional(p, 'fit', []);
+        addOptional(p, 'canGetUfromgRind', []);
+        addOptional(p, 'fileListOrgbyT', []);
         parse(p, varargin{:});
         Results = p.Results;
         N = Results.N;
@@ -15,57 +20,61 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
         saveFig = Results.saveFig;
         fitprop = Results.fitprop;
         residuals = Results.residuals;
+        fileNameEnd = Results.fileNameEnd;
+        isotherms = Results.isotherms;
+        fit = results.fit;
+        canGetUfromgRind = Results.canGetUfromgRind;
+        fileListOrgbyT = Results.fileListOrgbyT;
         
-        if isempty(N)
+        if isempty(N) && isempty(isotherms) && isempty(fileListOrgbyT)
             error(['provide number of particles,'...
-                'for example: plotIso(''N'',625)']);
+                'for example: plotIso(''N'',625), or isotherm object, or fileListOrgbyT']);
         else
             isothermsOrFileList = dir(['N' num2str(N) '*mat']);
             isothermsOrFileList = {isothermsOrFileList.name};
         end
             
     
-    if isobject(isothermsOrFileList)
-        isotherms = isothermsOrFileList;
-    else
-        fileListOrgbyT = {};
-        fileList = isothermsOrFileList;
-        i = 1;
-        while ~isempty(fileList);
-            data = matfile(fileList{1,1});
-            sim = data.simulationParam;
-            T(i) = sim.T;
-            fileListOrgbyT{i,1} = fileList{1,1};
-            
-            canGetUfromgRind = 2;
-            indnewlist = 1;
-            newfileList = fileList;
-            for j = 2:length(fileList)
-                data = matfile(fileList{1,j});
+    if isempty(isotherms)
+        if isempty(fileListOrgbyT)
+            fileListOrgbyT = {};
+            fileList = isothermsOrFileList;
+            i = 1;
+            while ~isempty(fileList);
+                data = matfile(fileList{1,1});
                 sim = data.simulationParam;
-                thisT = sim.T;
-                
-                if thisT == T(i)
-                    fileListOrgbyT{i,canGetUfromgRind} = fileList{1,j};
-                    newfileList = ...
-                        {newfileList{1,1:(indnewlist-1)}...
-                        newfileList{1,(indnewlist+1):end}};
-                    indnewlist = indnewlist - 1;
-                    canGetUfromgRind = canGetUfromgRind + 1;
+                T(i) = sim.T;
+                fileListOrgbyT{i,1} = fileList{1,1};
 
+                ind = 2;
+                indnewlist = 1;
+                newfileList = fileList;
+                for j = 2:length(fileList)
+                    data = matfile(fileList{1,j});
+                    sim = data.simulationParam;
+                    thisT = sim.T;
+
+                    if thisT == T(i)
+                        fileListOrgbyT{i,ind} = fileList{1,j};
+                        newfileList = ...
+                            {newfileList{1,1:(indnewlist-1)}...
+                            newfileList{1,(indnewlist+1):end}};
+                        indnewlist = indnewlist - 1;
+                        ind = ind + 1;
+
+                    end
+                    indnewlist = indnewlist + 1;
                 end
-                indnewlist = indnewlist + 1;
+                fileList = newfileList;
+                fileList = fileList(1,2:end);
+                i = i + 1;
             end
-            fileList = newfileList;
-            fileList = fileList(1,2:end);
-            i = i + 1;
-        end
-        clear i;
-        
-        % sort by Temprature
-        [~, indsorted] = sort(T); 
-        fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
-        
+            clear i;
+
+            % sort by Temprature
+            [~, indsorted] = sort(T); 
+            fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
+        end        
         
         [Niso, ~] = size(fileListOrgbyT);
         
@@ -79,8 +88,9 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
     end
                     
                 
-
-    Niso = length(isotherms);
+    if isempty(Niso)
+        Niso = length(isotherms);
+    end
     Nrho = length(isotherms(1).rho);
     pressure = zeros(Niso,Nrho);
     rho = zeros(Niso,Nrho);
@@ -98,7 +108,7 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
     xlabel('density, reduced units');
     ylabel('pressure, reduced units');
     
-    if ~isempty(fitprop)
+    if ~isempty(fitprop) && isempty(fit)
         for i = 1:length(fitprop)
             fit{1,i} = fitIso(isotherms,fitprop{i},'figureHandle',h1);
         end
@@ -118,7 +128,9 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
         end
     end
     
-    canGetUfromgRind = canGetUfromgR(isotherms,fit,0.1);
+    if isempty(canGetUfromgRind)
+        canGetUfromgRind = canGetUfromgR(isotherms,fit,0.1);
+    end
     
     for i = 1:length(isotherms)
         plot(isotherms(i).rho(1,canGetUfromgRind{1,i}),...
@@ -126,8 +138,8 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
     end
     
     if saveFig
-        saveas(h1,['isotherms_N' num2str(N) 'P_rho.fig']);
-        saveas(h1,['isotherms_N' num2str(N) 'P_rho.jpg']);
+        saveas(h1,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.fig']);
+        saveas(h1,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.jpg']);
     end
 
     
@@ -139,8 +151,8 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
     
    
     if saveFig
-        saveas(h2,['isotherms_N' num2str(N) 'P_V.fig']);
-        saveas(h2,['isotherms_N' num2str(N) 'P_V.jpg']);
+        saveas(h2,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.fig']);
+        saveas(h2,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.jpg']);
     end
     
 end

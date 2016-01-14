@@ -5,10 +5,12 @@ function fit = fitIso(isotherms,fitprop,varargin)
      p = inputParser();
      addOptional(p, 'figureHandle', []);
      addOptional(p, 'my_eps', 0.1); % resulution for the virial
+     addOptional(p, 'colorVir', false);
      parse(p, varargin{:});
      Results = p.Results;
      figureHandle = Results.figureHandle;
      my_eps = Results.my_eps;
+     colorVir = Results.colorVir;
     
      for i = 1:length(isotherms)
          switch fitprop
@@ -68,28 +70,37 @@ function fit = fitIso(isotherms,fitprop,varargin)
                  annotation('textbox',dim,'String',str,...
                      'FitBoxToText','on');
                  
-                 
-                 for i = 1:length(isotherms)
-                    
-                    plot(fit(i).rho(good_ind),fit(i).P(good_ind),...
-                        'color',[0 0.5 0],'marker','o','line','none'); %green
-                    
-                 end
-                 
-                 for i = 1:length(isotherms)
-                    
-                    plot(fit(i).rho(cantusevirial_ind),...
-                        fit(i).P(cantusevirial_ind),...
-                        'color','y','marker','o','line','none'); 
-                    
-                 end
-                 
-                 
-                 for i = 1:length(isotherms)
-                    
-                    plot(fit(i).rho(bad_ind),fit(i).P(bad_ind),...
-                        'color','r','marker','o','line','none'); 
-                    
+                 if colorVir
+                     for i = 1:length(isotherms)
+
+                        plot(fit(i).rho(good_ind),fit(i).P(good_ind),...
+                            'color',[0 0.5 0],'marker','o','line','none'); %green
+
+                     end
+
+                     for i = 1:length(isotherms)
+
+                        plot(fit(i).rho(cantusevirial_ind),...
+                            fit(i).P(cantusevirial_ind),...
+                            'color','y','marker','o','line','none'); 
+
+                     end
+
+
+                     for i = 1:length(isotherms)
+
+                        plot(fit(i).rho(bad_ind),fit(i).P(bad_ind),...
+                            'color','r','marker','o','line','none'); 
+
+                     end
+                 else
+                     for i = 1:length(isotherms)
+
+                        plot(fit(i).rho,fit(i).P,...
+                            'color','k','marker','o','line','none'); 
+
+                     end
+                     
                  end
                  
          end
