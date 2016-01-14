@@ -22,7 +22,7 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
         residuals = Results.residuals;
         fileNameEnd = Results.fileNameEnd;
         isotherms = Results.isotherms;
-        fit = results.fit;
+        fit = Results.fit;
         canGetUfromgRind = Results.canGetUfromgRind;
         fileListOrgbyT = Results.fileListOrgbyT;
         
@@ -85,6 +85,8 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
                 isotherms(i) = isotherm(fileListOrgbyT{i,:});
             end
         end
+    else
+        Niso = [];
     end
                     
                 
@@ -133,11 +135,11 @@ function [isotherms,fit,canGetUfromgRind] = plotIso(varargin)
     end
     
     for i = 1:length(isotherms)
-        plot(isotherms(i).rho(1,canGetUfromgRind{1,i}),...
-            isotherms(i).pressure(1,canGetUfromgRind{1,i}),'m*');
+        plot(isotherms(i).rho(find(canGetUfromgRind(i,:))),...
+            isotherms(i).pressure(find(canGetUfromgRind(i,:))),'m*');
     end
     
-    if saveFig
+    if strcmp(saveFig,'on')
         saveas(h1,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.fig']);
         saveas(h1,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.jpg']);
     end
