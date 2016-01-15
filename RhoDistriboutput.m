@@ -13,18 +13,23 @@ classdef RhoDistriboutput
               p = inputParser();
               addOptional(p, 'dataFileList', []);
               addOptional(p, 'rhoDistribdata', []);
+              addOptional(p, 'dataFileNameEnd', '');
               parse(p, varargin{:});
               Results = p.Results;
               dataFileList = Results.dataFileList;
               rhoDistribdata = Results.rhoDistribdata;
+              dataFileNameEnd = Results.dataFileNameEnd;
               
-              if isempty(rhoDistribdata) && isempty(dataFileList)
+              if isempty(rhoDistribdata)
+                    
+                  if isempty(dataFileList)
+                      % get all data from files in folder
+                      fileList = dir('N*mat');
+                      fileList = {fileList.name};
                   
-                  % get all data from files in folder
-                  fileList = dir('N*mat');
-                  fileList = {fileList.name};
+                      dataFileList = getDataFileList(fileList);
+                  end
                   
-                  dataFileList = getDataFileList(fileList);
                   obj.dataFileList = dataFileList;
                   
                   % build MC2DLJoutput objects
@@ -32,7 +37,8 @@ classdef RhoDistriboutput
                   obj.MC2DLJs = MC2DLJs;
                   
                   % create rhoDistrib data matfile
-                  save('rhoDistrib.mat','MC2DLJs','dataFileList','-v7.3');
+                  save(['rhoDistrib' dataFileNameEnd '.mat']...
+                      ,'MC2DLJs','dataFileList','-v7.3');
                   obj.data = matfile('rhoDistrib.mat');
                   obj.data = matfile('rhoDistrib.mat','Writable',true);
                   clear MC2DLJs dataFileList;
