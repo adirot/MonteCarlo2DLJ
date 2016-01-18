@@ -258,12 +258,16 @@ end
         clear i;
         
         % sort by Temperature
-        [~, indsorted] = sort(T); 
-        fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
+        if length(T) > 1
+            [~, indsorted] = sort(T); 
+            fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
+        end
         
         % sort by density
-        [~, indsorted] = sort(unique(rho));
-        fileListOrgbyT(:,indsorted) = fileListOrgbyT(:,:);
+        if length(unique(rho)) > 1
+            [~, indsorted] = sort(unique(rho));
+            fileListOrgbyT(:,indsorted) = fileListOrgbyT(:,:);
+        end
         
     end
             
