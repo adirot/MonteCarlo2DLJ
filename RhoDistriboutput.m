@@ -24,11 +24,11 @@ classdef RhoDistriboutput
                     
                   if isempty(dataFileList)
                       % get all data from files in folder
-                      fileList = dir('N*mat');
-                      fileList = {fileList.name};
-                  
-                      dataFileList = getDataFileList(fileList);
+                      dataFileList = dir('N*mat');
+                      dataFileList = {dataFileList.name};
                   end
+                  
+                  dataFileList = getDataFileList(dataFileList);
                   
                   obj.dataFileList = dataFileList;
                   
@@ -39,8 +39,9 @@ classdef RhoDistriboutput
                   % create rhoDistrib data matfile
                   save(['rhoDistrib' dataFileNameEnd '.mat']...
                       ,'MC2DLJs','dataFileList','-v7.3');
-                  obj.data = matfile('rhoDistrib.mat');
-                  obj.data = matfile('rhoDistrib.mat','Writable',true);
+                  obj.data = matfile(['rhoDistrib' dataFileNameEnd '.mat']);
+                  obj.data = matfile(['rhoDistrib' dataFileNameEnd...
+                      '.mat'],'Writable',true);
                   clear MC2DLJs dataFileList;
                   
               else
@@ -72,36 +73,39 @@ classdef RhoDistriboutput
 
                 
                 [Niso, Nrho] = size(obj.MC2DLJs);
-                obj.MC2DLJs(1,1) =...
+                [obj.MC2DLJs(1,1), rhoNorm, PL] =...
                     obj.MC2DLJs(1,1).calcRhoDistrib(squares,numOfBins);
                 obj.data.histo = zeros(Niso,Nrho,numOfBins);
                 obj.data.bins = zeros(Niso,Nrho,numOfBins);
-                obj.length2plot = zeros(Niso,Nrho);
-
+                obj.data.histo(1,1,1:numOfBins) =...
+                    reshape(PL,[1,1,numOfBins]);
+                obj.data.bins(1,1,1:numOfBins) =...
+                    reshape(rhoNorm,[1,1,numOfBins]);
+                obj.data.squares = squares;
+                obj.data.numOfBins = numOfBins;
+                
                 for i = 1:Niso
                     for j = 1:Nrho
                         if talk
                             j
                             i
                         end
-                        obj.MC2DLJs(i,j) =...
-                            obj.MC2DLJs(i,j).calcRhoDistrib(squares,...
-                                numOfBins);
-                        obj.length2plot(i,j) =...
-                            length(obj.MC2DLJs(i,j).data.rhoNorm); 
-                        obj.data.bins(i,j,1:obj.length2plot(i,j)) =...
-                            reshape(obj.MC2DLJs(i,j).data.rhoNorm,...
-                            [1,1,obj.length2plot(i,j)]);
-                        obj.data.histo(i,j,1:obj.length2plot(i,j)) =...
-                            reshape(obj.MC2DLJs(i,j).data.PL,...
-                            [1,1,obj.length2plot(i,j)]);
+                        if ~and(i == 1,j==1)
+                            [obj.MC2DLJs(i,j), rhoNorm, PL] =...
+                                obj.MC2DLJs(i,j).calcRhoDistrib(squares,...
+                                    numOfBins); 
+                            obj.data.bins(i,j,1:numOfBins) =...
+                                reshape(rhoNorm, [1,1,numOfBins]);
+                            obj.data.histo(i,j,1:numOfBins) =...
+                                reshape(PL, [1,1,numOfBins]);
+                        end
                         obj.legrho{1,j} = ['\rho = '...
                             num2str(obj.MC2DLJs(i,j).simulationParam.rho)];
                     end
                     obj.legT{1,i} = ['T = '...
                         num2str(obj.MC2DLJs(i,1).simulationParam.T)];
                 end
-                obj.data.length2plot = obj.length2plot;
+                
                 obj.data.legT = obj.legT;
                 obj.data.legrho = obj.legrho;
 
@@ -114,12 +118,16 @@ classdef RhoDistriboutput
            addOptional(p, 'saveFig', true);
            addOptional(p, 'keepFigOpen', true);
            addOptional(p, 'Visible', 'on');
+           addOptional(p, 'addStr2title', '');
+           addOptional(p, 'addFileNameEnd', '');
            parse(p, varargin{:});
            Results = p.Results;
            saveFig = Results.saveFig;
            keepFigOpen = Results.keepFigOpen;
            Visible = Results.Visible;
-
+           addStr2title = Results.addStr2title;
+           addFileNameEnd = Results.addFileNameEnd; 
+           
            [Niso, ~] = size(obj.MC2DLJs);
            
            [~, b, c] = size(obj.data.bins(1,:,:));
@@ -131,17 +139,19 @@ classdef RhoDistriboutput
                    h = figure('Visible',Visible); 
                    colorPlot(x,y,'addLegend',obj.legrho,...
                        'lineStyle','-','figHandle',h);
-                   title(['T = ' num2str(obj.MC2DLJs(i,1).simulationParam.T)]);
+                   title(['T = '...
+                       num2str(obj.MC2DLJs(i,1).simulationParam.T)...
+                        addStr2title]);
                    xlabel('distance, reduced units');
                    ylabel('PL');
 
                    if saveFig
                        saveas(gcf,['rhoDistrib_T'...
                            my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                            '.fig']);
+                             addFileNameEnd '.fig']);
                        saveas(gcf,['rhoDistrib_T'...
                            my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                            '.jpg']);
+                             addFileNameEnd '.jpg']);
                    end
 
                    if ~keepFigOpen
@@ -159,12 +169,16 @@ classdef RhoDistriboutput
                p = inputParser();
                addOptional(p, 'saveFig', true);
                addOptional(p, 'keepFigOpen', true);
-               addOptional(p, 'Visible','on')
+               addOptional(p, 'Visible','on');
+               addOptional(p, 'addStr2title', '');
+               addOptional(p, 'addFileNameEnd', '');
                parse(p, varargin{:});
                Results = p.Results;
                saveFig = Results.saveFig;
                keepFigOpen = Results.keepFigOpen;
                Visible = Results.Visible; 
+               addStr2title = Results.addStr2title;
+               addFileNameEnd = Results.addFileNameEnd;
                
                [~, Nrho] = size(obj.MC2DLJs);
                
@@ -173,20 +187,20 @@ classdef RhoDistriboutput
                      colorPlot(obj.data.bins(:,j,:)...
                          ,obj.data.histo(:,j,:),'addLegend',obj.legT,...
                          'lineStyle','-',...
-                         'length2plot',obj.length2plot(:,j),...
                          'figHandle',h);
                     title(['\rho = '...
-                        num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
+                        num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
+                         addStr2title]);
                     xlabel('distance, reduced units');
                     ylabel('g(r)');
                     
                     if saveFig
                         saveas(gcf,['RDF_rho'...
                             my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                            '.fig']);
+                             addFileNameEnd '.fig']);
                         saveas(gcf,['RDF_rho'...
                             my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                            '.jpg']);
+                             addFileNameEnd '.jpg']);
                     end
                     
                     if ~keepFigOpen

@@ -108,7 +108,7 @@ classdef MC2DLJoutput
     methods
         
         % constructor 
-        function obj = MC2DLJoutput(varargin)
+       function obj = MC2DLJoutput(varargin)
             
             % constructors for MC2DLJoutput. usage options:
             % 1. create new simulation output object: 
@@ -147,10 +147,12 @@ classdef MC2DLJoutput
                     p = inputParser();
                     addOptional(p, 'verelet', []);
                     addOptional(p, 'pressure', false);
+                    addOptional(p, 'fileNameInit', '');
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
                     pressure = Results.pressure;
+                    fileNameInit = Rsults.fileNameInit;
                     
                     % create a simulation output object for a new
                     % simulation
@@ -189,7 +191,7 @@ classdef MC2DLJoutput
                         pressurestr = '';
                     end
                     
-                    obj.fileName = ['N' num2str(N)...
+                    obj.fileName = [fileNameInit 'N' num2str(N)...
                         'T' my_num2str(T)...
                         'rho' my_num2str(rho) 'initialmaxdr'...
                         my_num2str(initialmaxdr) 'initialconfig_'...
@@ -405,7 +407,8 @@ classdef MC2DLJoutput
             obj.RDFhisto = obj.RDFhisto/obj.indIndata;
        end
 
-       function obj = calcRhoDistrib(obj,squares,numOfbins,varargin)
+       function [obj, rhoNorm, PL] =...
+               calcRhoDistrib(obj,squares,numOfbins,varargin)
        % try:PL is the prob to get a distribution in one squre, considering all
        % steps. we avg on all subsys
 
@@ -433,15 +436,19 @@ classdef MC2DLJoutput
             p = inputParser();
             addOptional(p, 'calcPL', true);
             addOptional(p, 'startFrom', 1);
+            addOptional(p, 'save2data', false);
             parse(p, varargin{:});
             Results = p.Results;
             calcPL = Results.calcPL;
             startFrom = Results.startFrom;
+            save2data = Results.save2data;
             
-            rhoDistribParam.squares = squares;
-            rhoDistribParam.startFrom = startFrom;
-            obj.data.rhoDistribParam = rhoDistribParam;  
-            obj.simulationParam.rhoDistribParam = rhoDistribParam;
+            if save2data
+                rhoDistribParam.squares = squares;
+                rhoDistribParam.startFrom = startFrom;
+                obj.data.rhoDistribParam = rhoDistribParam;  
+                obj.simulationParam.rhoDistribParam = rhoDistribParam;
+            end
             
             [~,N,numberOfSteps] = size(obj.data.allCoords);
             row = sqrt(squares);
@@ -492,13 +499,22 @@ classdef MC2DLJoutput
                      = my_hist(allRho(startFrom:numberOfSteps,n)',rho);
                 end
 
-                obj.data.rhoNorm = rho/(N/L^2);
+                rhoNorm = rho/(N/L^2);
+                if save2data
+                    obj.data.rhoNorm = rhoNorm;
+                end
 
                 if calcPL
                     %PL = mean(hist)/sq^2;
-                    obj.data.PL = mean(hist/(numberOfSteps-startFrom+1));
+                    PL = mean(hist/(numberOfSteps-startFrom+1));
+                    if save2data
+                        obj.data.PL = PL;
+                    end
                 else
-                    obj.data.PL = [];
+                    PL = [];
+                    if save2data
+                        obj.data.PL = [];
+                    end
                 end
 
        end
@@ -698,7 +714,7 @@ end
                 end
                 one2len = 1:lenProp;
                 meanProp = meanProp./one2len;
-        end
+        end        
         
 %        function fileName = resultAbbreviation(dataFileOrObj)
 %            

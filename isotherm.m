@@ -45,6 +45,7 @@ classdef isotherm
                     addOptional(p, 'initialConfig', []);
                     addOptional(p, 'rCutoff', []);
                     addOptional(p, 'r', []);
+                    addOptional(p, 'fileNameInit', '');
                     parse(p, varargin{:});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -52,10 +53,11 @@ classdef isotherm
                     T = Results.T;
                     rho = Results.rho;
                     initialmaxdr = Results.initialmaxdr;
-                    initialconfig = Results.initialconfig;
+                    initialConfig = Results.initialConfig;
                     rCutoff = Results.rCutoff;
                     r = Results.r;
                     rl = Results.verelet;
+                    fileNameInit = Results.fileNameInit;
                     
                     obj.simulationParam.N = N;
                     obj.T = T;
@@ -71,11 +73,13 @@ classdef isotherm
                         if i == 1
                             obj.MC2DLJ = MC2DLJoutput(N,T,rho(i),initialmaxdr,...
                                 initialConfig,rCutoff,r,...
-                                'verelet',rl,'pressure',true);
+                                'verelet',rl,'pressure',true,...
+                                'fileNameInit',fileNameInit);
                         else
                             obj.MC2DLJ(i) = MC2DLJoutput(N,T,rho(i),initialmaxdr,...
                                 initialConfig,rCutoff,r,...
-                                'verelet',rl,'pressure',true);
+                                'verelet',rl,'pressure',true,...
+                                'fileNameInit',fileNameInit);
                         end
                         obj.datafileList{1,i} = obj.MC2DLJ(i).fileName;
                     end

@@ -21,7 +21,7 @@ classdef RDFoutput
               
               if isempty(N)
                     error(['provide number of particles,'...
-                            'for example: plotIso(''N'',625)']);
+                            'for example: RDFoutput(''N'',625)']);
               end
               
               obj.N = N;
@@ -78,17 +78,26 @@ classdef RDFoutput
                             obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins);
                         obj.length2plot(i,j) =...
                             length(obj.MC2DLJs(i,j).data.RDFbins); 
+ 
+                        a = obj.MC2DLJs(i,j).data.RDFbins(1,1:obj.length2plot(i,j));
+                            obj.data.bins(i,j,1:obj.length2plot(i,j)) = a(1,1,:);
                         
-                        for ii = 1:obj.length2plot(i,j)
-                            obj.data.bins(i,j,ii) =...
-                                obj.MC2DLJs(i,j).data.RDFbins(1,ii);
-                        end
+                        a = obj.MC2DLJs(i,j).data.RDFhisto(1,1:obj.length2plot(i,j));
+                            obj.data.histo(i,j,1:obj.length2plot(i,j)) = a(1,1,:);
                         
-                        for ii = 1:obj.length2plot(i,j)
-                            obj.data.histo(i,j,ii) =...
-                                obj.MC2DLJs(i,j).data.RDFhisto(1,ii);
-                        end
-                        
+                         
+%                         for ii = 1:obj.length2plot(i,j)
+%                             ii
+%                             obj.data.bins(i,j,ii) =...
+%                                 obj.MC2DLJs(i,j).data.RDFbins(1,ii);
+%                         end
+%                         
+%                         for ii = 1:obj.length2plot(i,j)
+%                             ii
+%                             obj.data.histo(i,j,ii) =...
+%                                 obj.MC2DLJs(i,j).data.RDFhisto(1,ii);
+%                         end
+%                         
                         obj.legrho{1,j} = ['\rho = '...
                             num2str(obj.MC2DLJs(i,j).simulationParam.rho)];
                     end
