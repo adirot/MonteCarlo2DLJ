@@ -598,6 +598,14 @@ classdef MC2DLJoutput
             
             figHandle = gcf;
        end
+       
+       function obj = calcMeanWithoutFirstSteps(firstSteps2ignore)
+           obj.data.firstSteps2ignore = firstSteps2ignore;
+           obj.data.meanPlrcEq =...
+               mean(obj.data.allPlrc(firstSteps2ignore:obj.indIndata));
+           obj.data.meanUlrcEq =...
+               mean(obj.data.allUlrc(firstSteps2ignore:obj.indIndata));
+       end
         
     end
     
