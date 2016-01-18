@@ -104,5 +104,31 @@ classdef isotherm
              
         end
         
+        function [obj, figHandle] = plotPropVsStep(obj,prop)
+            indIndata = obj.MC2DLJ(1).indIndata;
+            rhoN = length(obj.rho);
+            x = zeros(rhoN,indIndata);
+            y = x;
+            switch prop
+                case 'P'
+                    for i = 1:rhoN
+                        y(i,:) = obj.MC2DLJ(i).data.allPlrc;
+                        x(i,:) = 1:indIndata;
+                        leg{1,i} = ['rho = ' num2str(obj.rho(i))];
+                    end
+                    
+                case 'U'
+                    for i = 1:rhoN
+                        y(i,:) = obj.MC2DLJ(i).data.allUlrc;
+                        x(i,:) = 1:indIndata;
+                        leg{1,i} = ['rho = ' num2str(obj.rho(i))];
+                    end
+            end
+            
+            figHandle = colorPlot(x,y,'lineStyle','-','addLegend',leg);
+            title([prop ' Vs. steps for T = ' num2str(obj.T)]);
+            xlabel('step');
+            ylabel(prop);
+        end
     end
 end
