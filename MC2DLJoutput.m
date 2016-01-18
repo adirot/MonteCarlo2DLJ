@@ -563,6 +563,41 @@ classdef MC2DLJoutput
             
        end
        
+       function [obj, figHandle] = plotPropVsStep(obj,prop,varargin)
+           
+            p = inputParser();
+            addOptional(p, 'figHandle', []);
+            addOptional(p, 'lineStyle', []);
+            parse(p, varargin{:});
+            Results = p.Results;
+            figHandle = Results.figHandle;
+            lineStyle = Results.lineStyle;
+            
+            if isempty(figHandle)
+                figHandle = figure;
+                hold on;
+            else
+                figure(figHandle);
+                hold on;
+            end
+            
+            switch prop
+                case 'P'
+                    if isempty(lineStyle)
+                        plot(obj.data.allPlrc);
+                    else
+                        plot(obj.data.allPlrc,'lineStyle',lineStyle);
+                    end
+                case 'U'
+                    if isempty(lineStyle)
+                        plot(obj.data.allUlrc);
+                    else
+                        plot(obj.data.allUlrc,'lineStyle',lineStyle);
+                    end
+            end
+            
+            figHandle = gcf;
+       end
         
     end
     
@@ -716,9 +751,3 @@ end
                 meanProp = meanProp./one2len;
         end        
         
-%        function fileName = resultAbbreviation(dataFileOrObj)
-%            
-%            if isobject(dataFileOrObj)
-%                file = dataFileOrObj.data;
-%            else
-%                if 
