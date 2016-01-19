@@ -4,17 +4,50 @@ classdef isotherm
         pressure, rho, T;
         MC2DLJ, datafileList;
         simulationParam;
+        cutEquilirization, firstSteps2ignore;
     end
     
     methods
         
         % constructor
         function obj = isotherm(varargin)
+                    
+                    p = inputParser();
+                    addOptional(p, 'verelet', []);
+                    addOptional(p, 'N', []);
+                    addOptional(p, 'T', []);
+                    addOptional(p, 'rho', []);
+                    addOptional(p, 'initialmaxdr', []);
+                    addOptional(p, 'initialConfig', []);
+                    addOptional(p, 'rCutoff', []);
+                    addOptional(p, 'r', []);
+                    addOptional(p, 'fileNameInit', '');
+                    addOptional(p, 'cutEquilirization', true);
+                    addOptional(p, 'firstSteps2ignore', 50);
+                    addOptional(p, 'datafileList', []);
+                    parse(p, varargin{:});
+                    Results = p.Results;
+                    rl = Results.verelet;
+                    N = Results.N;
+                    T = Results.T;
+                    rho = Results.rho;
+                    initialmaxdr = Results.initialmaxdr;
+                    initialConfig = Results.initialConfig;
+                    rCutoff = Results.rCutoff;
+                    r = Results.r;
+                    rl = Results.verelet;
+                    fileNameInit = Results.fileNameInit;
+                    cutEquilirization = Results.cutEquilirization;
+                    datafileList = Results.datafileList;
+                    firstSteps2ignore = Results.firstSteps2ignore;
+                    
+                    obj.cutEquilirization = cutEquilirization;
+
             
-            if iscellstr(varargin) && ~isempty(varargin)
-                if exist(varargin{1},'file')
+            if ~isempty(datafileList)
+                
                     % create object from a given file list
-                    obj.datafileList = varargin(:);
+                    obj.datafileList = datafileList;
                     data = matfile(obj.datafileList{1,1});
                     sim = data.simulationParam;
                     obj.T = sim.T;
@@ -28,36 +61,31 @@ classdef isotherm
                                 obj.MC2DLJ(i) =...
                                     MC2DLJoutput(obj.datafileList{i,1});
                             end
-                           [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
-                           obj.pressure(i) = obj.MC2DLJ(i).data.meanPlrc(1,s);
-                           obj.rho(i) = obj.MC2DLJ(i).simulationParam.rho;
+                            
+                            if cutEquilirization
+                                
+                               % check if meanPlrcEq needs to be calculated
+                               % calculate it if it was nit calculated yet
+                               if isempty(whos(obj.MC2DLJ(i).data,...
+                                       'meanPlrcEq'))
+                                   obj.MC2DLJ(i) =...
+                                       obj.MC2DLJ(i).calcMeanWithoutFirstSteps(...
+                                       firstSteps2ignore);
+                               end
+                                   
+                               obj.pressure(i) =...
+                                   obj.MC2DLJ(i).data.meanPlrcEq;
+                            else
+                               [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
+                               obj.pressure(i) =...
+                                   obj.MC2DLJ(i).data.meanPlrc(1,s);
+                            end
+                            obj.rho(i) = obj.MC2DLJ(i).simulationParam.rho;
                     end
-                end
+                
                 
             else
           
-                    p = inputParser();
-                    addOptional(p, 'verelet', []);
-                    addOptional(p, 'N', []);
-                    addOptional(p, 'T', []);
-                    addOptional(p, 'rho', []);
-                    addOptional(p, 'initialmaxdr', []);
-                    addOptional(p, 'initialConfig', []);
-                    addOptional(p, 'rCutoff', []);
-                    addOptional(p, 'r', []);
-                    addOptional(p, 'fileNameInit', '');
-                    parse(p, varargin{:});
-                    Results = p.Results;
-                    rl = Results.verelet;
-                    N = Results.N;
-                    T = Results.T;
-                    rho = Results.rho;
-                    initialmaxdr = Results.initialmaxdr;
-                    initialConfig = Results.initialConfig;
-                    rCutoff = Results.rCutoff;
-                    r = Results.r;
-                    rl = Results.verelet;
-                    fileNameInit = Results.fileNameInit;
                     
                     obj.simulationParam.N = N;
                     obj.T = T;
