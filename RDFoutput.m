@@ -3,6 +3,7 @@ classdef RDFoutput
     properties
         data, dataFileList, maxDist,numOfBins, MC2DLJs, N;
         length2plot, legrho, legT;
+        
     end
     
     methods
@@ -67,6 +68,7 @@ classdef RDFoutput
                 obj.data.histo = zeros(Niso,Nrho,numOfBins);
                 obj.data.bins = zeros(Niso,Nrho,numOfBins);
                 obj.length2plot = zeros(Niso,Nrho);
+                obj.numOfBins = numOfBins;
                         
 
                 for i = 1:Niso
@@ -130,9 +132,15 @@ classdef RDFoutput
 
            [Niso, Nrho] = size(obj.MC2DLJs);
            
-           [~, b, c] = size(obj.data.bins(1,:,:));
-            x = zeros(b,c);
-            y = zeros(b,c);
+           [~, b, numOfBins] = size(obj.data.bins(1,:,:));
+            x = zeros(b,numOfBins);
+            y = zeros(b,numOfBins);
+            
+            if plotLog
+                   obj.data.logRDF = zeros(Niso,Nrho,numOfBins);
+                   obj.data.length2plotlog = zeros(Niso,Nrho);
+            end
+            
             for i = 1:Niso
                     if plotLog
                         
@@ -148,6 +156,14 @@ classdef RDFoutput
                                 obj.data.bins(i,j,nonZeroInd);
                             length2plotlog(j) =...
                                 length(obj.data.bins(i,j,nonZeroInd));
+                            
+                                                        
+                            % save log data
+                            obj.data.logRDF(i,j,1:numOfBins)...
+                             = reshape(y(j,:),[1,1,numOfBins]);
+                            obj.data.length2plotlog(i,j) =...
+                                length2plotlog(j); 
+
                          end
                     else
                         x(:,:) = obj.data.bins(i,:,:);
@@ -213,6 +229,10 @@ classdef RDFoutput
                plotLog = Results.plotLog;
                
                [Niso, Nrho] = size(obj.MC2DLJs);
+               if plotLog
+                   obj.data.logRDF = zeros(Niso,Nrho,obj.numOfBins);
+                   obj.data.length2plotlog = zeros(Niso,Nrho);
+               end
                
                 for j = 1:Nrho
                      
@@ -232,6 +252,11 @@ classdef RDFoutput
                                 obj.data.bins(i,j,nonZeroInd);
                             length2plotlog(i) =...
                                 length(obj.data.bins(i,j,nonZeroInd));
+                            
+                            % save log data
+                            obj.data.logRDF(i,j,1:obj.numOfBins)...
+                             = reshape(y(i,:),[1,1,obj.numOfBins]);
+                            obj.data.length2plotlog(i,j) = length2plotlog(i); 
                          end
                          
                          colorPlot(x,y,'addLegend',obj.legT,...
@@ -239,6 +264,8 @@ classdef RDFoutput
                          'length2plot',length2plotlog...
                          ,'figHandle',h);
                          ylabel('-log(g(r))');
+                         
+                         
                      else
                          colorPlot(obj.data.bins(:,j,:)...
                              ,obj.data.histo(:,j,:),'addLegend',obj.legT,...
@@ -247,7 +274,7 @@ classdef RDFoutput
                              ,'figHandle',h);
                          ylabel('g(r)');
                      end
-
+                    
                     title(['\rho = '...
                         num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
                     xlabel('distance, reduced units');
@@ -275,6 +302,30 @@ classdef RDFoutput
 
 
 
+        end
+        
+        function obj = fitlogRDF(obj,varargin)
+            
+            [Niso, Nrho] = size(obj.MC2DLJs);
+            ftnm = fittype('4*(x^-n - x^m)');
+            ftm = fittype('4*(x^-12 - x^m)');
+            
+            for iso = 1:Niso
+                for rho = 1:Nrho
+                    fitsnm{iso,rho} =...
+                        fit(obj.data.bins(iso,rho,...
+                            1:obj.data.length2plotlog(iso,rho)),...
+                        obj.data.logRDF(iso,rho,...
+                            1:obj.data.length2plotlog(iso,rho)),ftnm);
+                    fitsm{iso,rho} =...
+                        fit(obj.data.bins(iso,rho,...
+                            1:obj.data.length2plotlog(iso,rho)),...
+                        obj.data.logRDF(iso,rho,...
+                            1:obj.data.length2plotlog(iso,rho)),ftm);
+                end
+                obj.data.fitsnm = fitsnm;
+                obj.data.fitsm = fitsm;
+            end
         end
         
             
