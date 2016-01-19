@@ -39,7 +39,7 @@ classdef isotherm
                     fileNameInit = Results.fileNameInit;
                     cutEquilirization = Results.cutEquilirization;
                     datafileList = Results.datafileList;
-                    firstSteps2ignore = Results.firstSteps2ignore;
+                    firstSteps2ignore  = Results.firstSteps2ignore;
                     
                     obj.cutEquilirization = cutEquilirization;
 
@@ -126,8 +126,29 @@ classdef isotherm
                  clear M;
                  
                  for i = 1:length(obj.rho)
-                           [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
-                           obj.pressure(i) = obj.MC2DLJ(i).data.meanPlrc(1,s);
+                        
+                        if obj.cutEquilirization
+                                % check if meanPlrcEq needs to be calculated
+                                % calculate it if it was nit calculated yet
+                            if isempty...
+                                    (whos(obj.MC2DLJ(i).data,'meanPlrcEq'))
+                                obj.MC2DLJ(i) =...
+                                obj.MC2DLJ(i).calcMeanWithoutFirstSteps(...
+                                               obj.firstSteps2ignore);
+                            end
+
+                            obj.pressure(i) =...
+                                       obj.MC2DLJ(i).data.meanPlrcEq;
+                        else
+                            [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
+                                obj.pressure(i) =...
+                                       obj.MC2DLJ(i).data.meanPlrc(1,s);
+                        end
+                            obj.rho(i) = obj.MC2DLJ(i).simulationParam.rho;
+                            [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
+                            obj.pressure(i) =...
+                                obj.MC2DLJ(i).data.meanPlrc(1,s);
+                        
                  end
              
         end
