@@ -152,7 +152,7 @@ classdef MC2DLJoutput
                     Results = p.Results;
                     rl = Results.verelet;
                     pressure = Results.pressure;
-                    fileNameInit = Rsults.fileNameInit;
+                    fileNameInit = Results.fileNameInit;
                     
                     % create a simulation output object for a new
                     % simulation
@@ -599,12 +599,12 @@ classdef MC2DLJoutput
             figHandle = gcf;
        end
        
-       function obj = calcMeanWithoutFirstSteps(firstSteps2ignore)
+       function obj = calcMeanWithoutFirstSteps(obj, firstSteps2ignore)
            obj.data.firstSteps2ignore = firstSteps2ignore;
            obj.data.meanPlrcEq =...
-               mean(obj.data.allPlrc(firstSteps2ignore:obj.indIndata));
+               mean(obj.data.allPlrc(1,firstSteps2ignore:obj.indIndata));
            obj.data.meanUlrcEq =...
-               mean(obj.data.allUlrc(firstSteps2ignore:obj.indIndata));
+               mean(obj.data.allUlrc(1,firstSteps2ignore:obj.indIndata));
        end
         
     end

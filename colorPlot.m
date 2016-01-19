@@ -13,10 +13,10 @@ addOptional(p, 'addLegend', []);
 addOptional(p, 'plotBar', false);
 addOptional(p, 'Interpreter', 'none');
 addOptional(p, 'length2plot', []);
-addOptional(p, 'lineStyle', '+');
+addOptional(p, 'plotFrom', []);
 addOptional(p, 'colormap','jet');
 addOptional(p, 'figHandle', []);
-
+addOptional(p, 'lineStyle', '+');
 
 parse(p, varargin{:});
 Results = p.Results;
@@ -25,12 +25,22 @@ addLegend = Results.addLegend;
 plotBar = Results.plotBar;
 Interpreter = Results.Interpreter;
 length2plot = Results.length2plot;
-style = Results.lineStyle;
+plotFrom = Results.plotFrom;
 colormap = Results.colormap;
 figHandle = Results.figHandle;
+lineStyle = Results.lineStyle;
+
+[numOfPlots,Nx] = size(x);
+
+if isempty(plotFrom)
+    plotFrom = ones(1,numOfPlots);
+end
+
+if isempty(length2plot)
+    length2plot = Nx*ones(1,numOfPlots);
+end
 
 
-    [numOfPlots,~] = size(x);
     
   switch colormap
       case 'hsv'
@@ -44,42 +54,27 @@ figHandle = Results.figHandle;
           cmap = jet(numOfPlots);
   end
           
-   
-if isempty(figHandle)
+   if isempty(figHandle)
        figHandle = figure;
    else
        figure(figHandle);
    end
         
-   hold on;   
+   hold on;
+   
    for i = 1:numOfPlots
        if plotBar
             increment = x(i,2)-x(i,1);
-            if isempty(length2plot)
-                bar(x(i,:)+increment/2,y(i,:),1,'EdgeColor',cmap(i,:)...
-                    ,'FaceColor','none')
-            else
-                if length2plot(i) > 0
-                    bar(x(i,1:length2plot(i))+increment/2,...
-                        y(i,1:length2plot(i)),1,'EdgeColor',cmap(i,:)...
+            
+            bar(x(i,plotFrom(i):length2plot(i))+increment/2,...
+                        y(i,plotFrom(i):length2plot(i)),...
+                        1,'EdgeColor',cmap(i,:)...
                         ,'FaceColor','none')
-                end
-            end
+            
        else
-           if isempty(length2plot)
-               
-                    plot(x(i,:),y(i,:),'color',cmap(i,:),'lineStyle',style);
-               
-
-           else
-                if length2plot > 0
-                    
-                    plot(x(i,1:length2plot(i)),y(i,1:length2plot(i)),...
-                        'color',cmap(i,:),'lineStyle',style);
-                    
-                    
-                end
-           end
+           plot(x(i,plotFrom(i):length2plot(i)),...
+               y(i,plotFrom(i):length2plot(i)),...
+                        'color',cmap(i,:),'lineStyle',lineStyle);
                
        end
    end
