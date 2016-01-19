@@ -26,13 +26,15 @@ classdef RDFoutput
               
               obj.N = N;
               
-              if isempty(RDFdata) && isempty(dataFileList)
+              if isempty(RDFdata) 
+                  if isempty(dataFileList)
                   
-                  % get all data from files in folder
-                  fileList = dir(['N' num2str(N) '*mat']);
-                  fileList = {fileList.name};
+                      % get all data from files in folder
+                      dataFileList = dir(['N' num2str(N) '*mat']);
+                      dataFileList = {dataFileList.name};
+                  end
                   
-                  dataFileList = getDataFileList(fileList);
+                  dataFileList = getDataFileList(dataFileList);
                   obj.dataFileList = dataFileList;
                   
                   % build MC2DLJoutput objects
@@ -62,11 +64,10 @@ classdef RDFoutput
                 talk = Results.talk;
                 
                 [Niso, Nrho] = size(obj.MC2DLJs);
-                obj.MC2DLJs(1,1) =...
-                    obj.MC2DLJs(1,1).calcRDF(maxDist,numOfBins);
                 obj.data.histo = zeros(Niso,Nrho,numOfBins);
                 obj.data.bins = zeros(Niso,Nrho,numOfBins);
                 obj.length2plot = zeros(Niso,Nrho);
+                        
 
                 for i = 1:Niso
                     for j = 1:Nrho
@@ -79,11 +80,15 @@ classdef RDFoutput
                         obj.length2plot(i,j) =...
                             length(obj.MC2DLJs(i,j).data.RDFbins); 
  
-                        a = obj.MC2DLJs(i,j).data.RDFbins(1,1:obj.length2plot(i,j));
-                            obj.data.bins(i,j,1:obj.length2plot(i,j)) = a(1,1,:);
+                        a = obj.MC2DLJs(i,j).data.RDFbins(1,...
+                            1:obj.length2plot(i,j));
+                        obj.data.bins(i,j,1:obj.length2plot(i,j)) =...
+                            reshape(a,[1,1,obj.length2plot(i,j)]);
                         
-                        a = obj.MC2DLJs(i,j).data.RDFhisto(1,1:obj.length2plot(i,j));
-                            obj.data.histo(i,j,1:obj.length2plot(i,j)) = a(1,1,:);
+                        a = obj.MC2DLJs(i,j).data.RDFhisto(1,...
+                            1:obj.length2plot(i,j));
+                        obj.data.histo(i,j,1:obj.length2plot(i,j)) =...
+                            reshape(a,[1,1,obj.length2plot(i,j)]);
                         
                          
 %                         for ii = 1:obj.length2plot(i,j)
@@ -198,6 +203,48 @@ classdef RDFoutput
 
 
 
+        end
+        
+        function [obj, figHandle] = plotlogRDFrho(obj,varargin)
+               p = inputParser();
+               addOptional(p, 'saveFig', false);
+               addOptional(p, 'keepFigOpen', true);
+               parse(p, varargin{:});
+               Results = p.Results;
+               saveFig = Results.saveFig;
+               keepFigOpen = Results.keepFigOpen;
+               
+               [~, Nrho] = size(obj.MC2DLJs);
+               
+                for j = 1:Nrho
+                     
+                     figHandle = figure;
+                     colorPlot(obj.data.bins(:,j,:)...
+                         ,-log(obj.data.histo(:,j,:)),'addLegend',obj.legT,...
+                         'lineStyle','-',...
+                         'length2plot',obj.length2plot(:,j)...
+                         ,'figHandle',figHandle);
+                    title(['\rho = '...
+                        num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
+                    xlabel('distance, reduced units');
+                    ylabel('-log(g(r))');
+                    
+                    if saveFig
+                        saveas(gcf,['logRDF_rho'...
+                            my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
+                             'N' num2str(obj.N) '.fig']);
+                        saveas(gcf,['logRDF_rho'...
+                            my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
+                             'N' num2str(obj.N) '.jpg']);
+                    end
+                    
+                    if ~keepFigOpen
+                        close all;
+                    end
+                    
+                end
+
+               
         end
             
     end
