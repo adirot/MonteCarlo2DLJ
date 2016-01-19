@@ -50,6 +50,26 @@ classdef RDFoutput
                       'Writable',true);
                   clear MC2DLJs dataFileList;
                   
+                  % get old RDF data if it exists
+                  if ~isempty(whos(obj.MC2DLJs(1,1).data,'RDFhisto'))
+                        [Niso, Nrho] = size(obj.MC2DLJs);
+                        [~,numOfBins] = size(obj.MC2DLJs(1,1).data.RDFbins);
+                        obj.numOfBins = numOfBins;
+                        obj.data.histo = zeros(Niso,Nrho,numOfBins);
+                        obj.data.bins = zeros(Niso,Nrho,numOfBins);
+                        for iso = 1:Niso
+                            for rho = 1:Nrho
+                                obj.data.histo(iso,rho,:) = reshape(...
+                                    mean(obj.MC2DLJs(iso,rho).data.RDFhisto),...
+                                    [1,1,numOfBins]);
+                                obj.data.bins(iso,rho,:) = reshape(...
+                                    obj.MC2DLJs(iso,rho).data.RDFbins,...
+                                    [1,1,numOfBins]);
+                            end
+                        end
+                  end
+
+                  
               else
                  % add constructor - if data file exists 
                  
