@@ -119,32 +119,48 @@ classdef RDFoutput
            addOptional(p, 'saveFig', true);
            addOptional(p, 'keepFigOpen', true);
            addOptional(p, 'Visible', 'on');
-           addOptional(p, 'log', false);
+           addOptional(p, 'plotLog', false);
            parse(p, varargin{:});
            Results = p.Results;
            saveFig = Results.saveFig;
            keepFigOpen = Results.keepFigOpen;
            Visible = Results.Visible;
-           log = Results.log;
+           plotLog = Results.plotLog;
            
 
-           [Niso, ~] = size(obj.MC2DLJs);
+           [Niso, Nrho] = size(obj.MC2DLJs);
            
            [~, b, c] = size(obj.data.bins(1,:,:));
             x = zeros(b,c);
             y = zeros(b,c);
             for i = 1:Niso
-                   x(:,:) = obj.data.bins(i,:,:);
-                   y(:,:) = obj.data.histo(i,:,:);
+                    if plotLog
+                        
+                        % don't log zeros
+                         length2plotlog = zeros(Nrho);
+                         for j = 1:Nrho
+                            nonZeroInd = find(obj.data.histo(i,j,:));
+                            length2plotlog(j) =...
+                                length(obj.data.bins(i,j,nonZeroInd));
+                            y(j,1:length2plotlog(j)) =...
+                                -log(obj.data.histo(i,j,nonZeroInd));
+                            x(j,1:length2plotlog(j)) =...
+                                obj.data.bins(i,j,nonZeroInd);
+                            length2plotlog(j) =...
+                                length(obj.data.bins(i,j,nonZeroInd));
+                         end
+                    else
+                        x(:,:) = obj.data.bins(i,:,:);
+                        y(:,:) = obj.data.histo(i,:,:);
+                    end
                    
-                   if log
-                       y = -log(y);
-                   end
+                   
                    
                    h = figure('Visible', Visible);
                    colorPlot(x,y,'addLegend',obj.legrho,...
-                       'lineStyle','-','figHandle',h);
-                   if log
+                       'lineStyle','-','figHandle',h,...
+                       'length2plot',length2plotlog);
+                   if plotLog
                        ylabel('-log(g(r))');
                    else
                        ylabel('g(r)');
@@ -155,7 +171,7 @@ classdef RDFoutput
                    
 
                    if saveFig
-                       if log
+                       if plotLog
                            saveas(gcf,['logRDF_T'...
                            my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
                             'N' num2str(obj.N)  '.fig']);
@@ -188,24 +204,39 @@ classdef RDFoutput
                addOptional(p, 'saveFig', true);
                addOptional(p, 'keepFigOpen', true);
                addOptional(p, 'Visible' , 'on');
-               addOptional(p, 'log' , false);
+               addOptional(p, 'plotLog' , false);
                parse(p, varargin{:});
                Results = p.Results;
                saveFig = Results.saveFig;
                keepFigOpen = Results.keepFigOpen;
                Visible = Results.Visible; 
-               log = Results.log;
+               plotLog = Results.plotLog;
                
-               [~, Nrho] = size(obj.MC2DLJs);
+               [Niso, Nrho] = size(obj.MC2DLJs);
                
                 for j = 1:Nrho
                      
                      h = figure('Visible',Visible);
-                     if log
-                         colorPlot(obj.data.bins(:,j,:)...
-                         ,-log(obj.data.histo(:,j,:)),'addLegend',obj.legT,...
+                     if plotLog
+                         % don't log zeros
+                         x = zeros(Niso,obj.numOfBins);
+                         y = zeros(Niso,obj.numOfBins);
+                         length2plotlog = zeros(Niso);
+                         for i = 1:Niso 
+                            nonZeroInd = find(obj.data.histo(i,j,:));
+                            length2plotlog(i) =...
+                                length(obj.data.bins(i,j,nonZeroInd));
+                            y(i,1:length2plotlog(i)) =...
+                                -log(obj.data.histo(i,j,nonZeroInd));
+                            x(i,1:length2plotlog(i)) =...
+                                obj.data.bins(i,j,nonZeroInd);
+                            length2plotlog(i) =...
+                                length(obj.data.bins(i,j,nonZeroInd));
+                         end
+                         
+                         colorPlot(x,y,'addLegend',obj.legT,...
                          'lineStyle','-',...
-                         'length2plot',obj.length2plot(:,j)...
+                         'length2plot',length2plotlog...
                          ,'figHandle',h);
                          ylabel('-log(g(r))');
                      else
