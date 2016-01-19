@@ -80,15 +80,18 @@ classdef RDFoutput
                 
                 p = inputParser();
                 addOptional(p, 'talk', false);
+                addOptional(p, 'skipExisting', false);
                 parse(p, varargin{:});
                 Results = p.Results;
                 talk = Results.talk;
+                skipExisting = Results.skipExisting;
                 
                 [Niso, Nrho] = size(obj.MC2DLJs);
                 obj.data.histo = zeros(Niso,Nrho,numOfBins);
                 obj.data.bins = zeros(Niso,Nrho,numOfBins);
                 obj.length2plot = zeros(Niso,Nrho);
                 obj.numOfBins = numOfBins;
+                
                         
 
                 for i = 1:Niso
@@ -97,8 +100,18 @@ classdef RDFoutput
                             j
                             i
                         end
-                        obj.MC2DLJs(i,j) =...
-                            obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins);
+                        
+                        if skipExisting
+                            if isempty(whos(obj.MC2DLJs(i,j).RDFhisto))
+                                obj.MC2DLJs(i,j) =...
+                                obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins);
+                                
+                            end
+                        else
+                           obj.MC2DLJs(i,j) =...
+                                obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins); 
+                        end
+                        
                         obj.length2plot(i,j) =...
                             length(obj.MC2DLJs(i,j).data.RDFbins); 
  
@@ -112,19 +125,6 @@ classdef RDFoutput
                         obj.data.histo(i,j,1:obj.length2plot(i,j)) =...
                             reshape(a,[1,1,obj.length2plot(i,j)]);
                         
-                         
-%                         for ii = 1:obj.length2plot(i,j)
-%                             ii
-%                             obj.data.bins(i,j,ii) =...
-%                                 obj.MC2DLJs(i,j).data.RDFbins(1,ii);
-%                         end
-%                         
-%                         for ii = 1:obj.length2plot(i,j)
-%                             ii
-%                             obj.data.histo(i,j,ii) =...
-%                                 obj.MC2DLJs(i,j).data.RDFhisto(1,ii);
-%                         end
-%                         
                         obj.legrho{1,j} = ['\rho = '...
                             num2str(obj.MC2DLJs(i,j).simulationParam.rho)];
                     end
