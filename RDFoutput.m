@@ -119,11 +119,14 @@ classdef RDFoutput
            addOptional(p, 'saveFig', true);
            addOptional(p, 'keepFigOpen', true);
            addOptional(p, 'Visible', 'on');
+           addOptional(p, 'log', false);
            parse(p, varargin{:});
            Results = p.Results;
            saveFig = Results.saveFig;
            keepFigOpen = Results.keepFigOpen;
            Visible = Results.Visible;
+           log = Results.log;
+           
 
            [Niso, ~] = size(obj.MC2DLJs);
            
@@ -134,20 +137,39 @@ classdef RDFoutput
                    x(:,:) = obj.data.bins(i,:,:);
                    y(:,:) = obj.data.histo(i,:,:);
                    
+                   if log
+                       y = -log(y);
+                   end
+                   
                    h = figure('Visible', Visible);
                    colorPlot(x,y,'addLegend',obj.legrho,...
                        'lineStyle','-','figHandle',h);
+                   if log
+                       ylabel('-log(g(r))');
+                   else
+                       ylabel('g(r)');
+                   end
+                   
                    title(['T = ' num2str(obj.MC2DLJs(i,1).simulationParam.T)]);
                    xlabel('distance, reduced units');
-                   ylabel('g(r)');
+                   
 
                    if saveFig
-                       saveas(gcf,['RDF_T'...
+                       if log
+                           saveas(gcf,['logRDF_T'...
                            my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
                             'N' num2str(obj.N)  '.fig']);
-                       saveas(gcf,['RDF_T'...
-                           my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                            'N' num2str(obj.N)  '.jpg']);
+                           saveas(gcf,['logRDF_T'...
+                               my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
+                                'N' num2str(obj.N)  '.jpg']);
+                       else
+                           saveas(gcf,['RDF_T'...
+                               my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
+                                'N' num2str(obj.N)  '.fig']);
+                           saveas(gcf,['RDF_T'...
+                               my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
+                                'N' num2str(obj.N)  '.jpg']);
+                       end
                    end
 
                    if ~keepFigOpen
@@ -166,32 +188,51 @@ classdef RDFoutput
                addOptional(p, 'saveFig', true);
                addOptional(p, 'keepFigOpen', true);
                addOptional(p, 'Visible' , 'on');
+               addOptional(p, 'log' , false);
                parse(p, varargin{:});
                Results = p.Results;
                saveFig = Results.saveFig;
                keepFigOpen = Results.keepFigOpen;
                Visible = Results.Visible; 
+               log = Results.log;
                
                [~, Nrho] = size(obj.MC2DLJs);
                
                 for j = 1:Nrho
                      
                      h = figure('Visible',Visible);
-                     colorPlot(obj.data.bins(:,j,:)...
-                         ,obj.data.histo(:,j,:),'addLegend',obj.legT,...
+                     if log
+                         colorPlot(obj.data.bins(:,j,:)...
+                         ,-log(obj.data.histo(:,j,:)),'addLegend',obj.legT,...
                          'lineStyle','-',...
                          'length2plot',obj.length2plot(:,j)...
                          ,'figHandle',h);
+                         ylabel('-log(g(r))');
+                     else
+                         colorPlot(obj.data.bins(:,j,:)...
+                             ,obj.data.histo(:,j,:),'addLegend',obj.legT,...
+                             'lineStyle','-',...
+                             'length2plot',obj.length2plot(:,j)...
+                             ,'figHandle',h);
+                         ylabel('g(r)');
+                     end
+
                     title(['\rho = '...
                         num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
                     xlabel('distance, reduced units');
                     ylabel('g(r)');
                     
                     if saveFig
-                        saveas(gcf,['RDF_rho'...
+                        if log
+                            logstr = 'log';
+                        else
+                            logstr = '';
+                        end
+                        
+                        saveas(gcf,[logstr 'RDF_rho'...
                             my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
                              'N' num2str(obj.N) '.fig']);
-                        saveas(gcf,['RDF_rho'...
+                        saveas(gcf,[logstr 'RDF_rho'...
                             my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
                              'N' num2str(obj.N) '.jpg']);
                     end
@@ -205,48 +246,8 @@ classdef RDFoutput
 
         end
         
-        function [obj, figHandle] = plotlogRDFrho(obj,varargin)
-               p = inputParser();
-               addOptional(p, 'saveFig', false);
-               addOptional(p, 'keepFigOpen', true);
-               parse(p, varargin{:});
-               Results = p.Results;
-               saveFig = Results.saveFig;
-               keepFigOpen = Results.keepFigOpen;
-               
-               [~, Nrho] = size(obj.MC2DLJs);
-               
-                for j = 1:Nrho
-                     
-                     figHandle = figure;
-                     colorPlot(obj.data.bins(:,j,:)...
-                         ,-log(obj.data.histo(:,j,:)),'addLegend',obj.legT,...
-                         'lineStyle','-',...
-                         'length2plot',obj.length2plot(:,j)...
-                         ,'figHandle',figHandle);
-                    title(['\rho = '...
-                        num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
-                    xlabel('distance, reduced units');
-                    ylabel('-log(g(r))');
-                    
-                    if saveFig
-                        saveas(gcf,['logRDF_rho'...
-                            my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                             'N' num2str(obj.N) '.fig']);
-                        saveas(gcf,['logRDF_rho'...
-                            my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                             'N' num2str(obj.N) '.jpg']);
-                    end
-                    
-                    if ~keepFigOpen
-                        close all;
-                    end
-                    
-                end
-
-               
-        end
             
+        
     end
     
 

@@ -1,4 +1,4 @@
-function colorPlot(x,y,varargin)
+function figHandle = colorPlot(x,y,varargin)
 % every row in x is an x axis to plot
 % every rew in y is a y axis to plot
 % this will plot all [x, y]'s in different colors
