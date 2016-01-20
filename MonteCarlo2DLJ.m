@@ -3,18 +3,18 @@ function MonteCarlo2DLJ(N,Nsteps)
 %% Monte-Carlo in NVT ensemble for Lennard-Jonse potantioal in 2D %%
 
 
-%         T = [0.1 0.2 0.3 0.4 0.45 0.5 0.6 0.7 0.9 1 10 100];
-%         rhorand = [0.0001 0.0003 0.0005 0.0007 0.001 0.003 0.005 0.007 0.01 0.03 0.05 0.07 0.1 0.2 0.3 0.4];
-%         rhohex  = 0.42:0.02:0.7;
-%         maxdr = 1;
-%         rCutoff = 2.5;
-%         saveEvery = 10;
-        T = [1 2 3];
-        rhorand = [0.1 0.2 0.3 0.4];
-        rhohex  = [0.5 0.6 0.7];
+        T = [0.1 0.2 0.3 0.4 0.45 0.5 0.6 0.7 0.9 1 10 100];
+        rhorand = [0.0001 0.0003 0.0005 0.0007 0.001 0.003 0.005 0.007 0.01 0.03 0.05 0.07 0.1 0.2 0.3 0.4];
+        rhohex  = 0.42:0.02:0.7;
         maxdr = 1;
         rCutoff = 2.5;
-        saveEvery = 1;
+        saveEvery = 10;
+%         T = [1 2 3];
+%         rhorand = [0.1 0.2 0.3 0.4];
+%         rhohex  = [0.5 0.6 0.7];
+%         maxdr = 1;
+%         rCutoff = 2.5;
+%         saveEvery = 1;
 
 
 r = 2^(1/6)/2; % particle radius in reduced units 
