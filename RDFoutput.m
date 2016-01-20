@@ -182,16 +182,15 @@ classdef RDFoutput
                          length2plotlog = zeros(Nrho);
                          for j = 1:Nrho
                             nonZeroInd = find(obj.data.histo(i,j,:));
-                            length2plotlog(j) =...
-                                length(obj.data.bins(i,j,nonZeroInd));
-                            y(j,1:length2plotlog(j)) =...
-                                -log(obj.data.histo(i,j,nonZeroInd));
-                            x(j,1:length2plotlog(j)) =...
-                                obj.data.bins(i,j,nonZeroInd);
-                            length2plotlog(j) =...
-                                length(obj.data.bins(i,j,nonZeroInd));
-                            
-                                                        
+                            bins = obj.data.bins(i,j,1:numOfBins);
+                            bins = bins(1,1,nonZeroInd);
+                            histo = obj.data.histo(i,j,1:numOfBins);
+                            histo = histo(1,1,nonZeroInd);
+                            length2plotlog(j) = length(bins);
+                            y(j,1:length2plotlog(j)) = -log(histo);
+                            x(j,1:length2plotlog(j)) = bins;
+                            length2plotlog(j) = length(bins);
+                                    
                             % save log data
                             obj.data.logRDF(i,j,1:numOfBins)...
                              = reshape(y(j,:),[1,1,numOfBins]);
@@ -206,13 +205,18 @@ classdef RDFoutput
                    
                    
                    
-                   h = figure('Visible', Visible);
-                   colorPlot(x,y,'addLegend',obj.legrho,...
-                       'lineStyle','-','figHandle',h,...
-                       'length2plot',length2plotlog);
                    if plotLog
+                        h = figure('Visible', Visible);
+                            colorPlot(x,y,'addLegend',obj.legrho,...
+                            'lineStyle','-','figHandle',h,...
+                            'length2plot',length2plotlog);
+
                        ylabel('-log(g(r))');
                    else
+                        h = figure('Visible', Visible);
+                            colorPlot(x,y,'addLegend',obj.legrho,...
+                            'lineStyle','-','figHandle',h);
+
                        ylabel('g(r)');
                    end
                    
@@ -277,20 +281,23 @@ classdef RDFoutput
                          y = zeros(Niso,obj.numOfBins);
                          length2plotlog = zeros(Niso);
                          for i = 1:Niso 
-                            nonZeroInd = find(obj.data.histo(i,j,:));
-                            length2plotlog(i) =...
-                                length(obj.data.bins(i,j,nonZeroInd));
-                            y(i,1:length2plotlog(i)) =...
-                                -log(obj.data.histo(i,j,nonZeroInd));
-                            x(i,1:length2plotlog(i)) =...
-                                obj.data.bins(i,j,nonZeroInd);
-                            length2plotlog(i) =...
-                                length(obj.data.bins(i,j,nonZeroInd));
+                            
+                            histo = obj.data.histo(i,j,1:obj.numOfBins);
+                            bins = obj.data.bins(i,j,1:obj.numOfBins);
+                            nonZeroInd = find(histo);
+                            histo = histo(1,1,nonZeroInd);
+                            bins = bins(1,1,nonZeroInd);
+                            length2plotlog(i) = length(bins);
+                            y(i,1:length2plotlog(i)) = -log(histo);
+                            x(i,1:length2plotlog(i)) = bins;
+                            length2plotlog(i) = length(bins);
                             
                             % save log data
                             obj.data.logRDF(i,j,1:obj.numOfBins)...
                              = reshape(y(i,:),[1,1,obj.numOfBins]);
-                            obj.data.length2plotlog(i,j) = length2plotlog(i); 
+                            obj.data.length2plotlog(i,j) =...
+                                length2plotlog(i);
+                            
                          end
                          
                          colorPlot(x,y,'addLegend',obj.legT,...
@@ -315,7 +322,7 @@ classdef RDFoutput
                     ylabel('g(r)');
                     
                     if saveFig
-                        if log
+                        if plotLog
                             logstr = 'log';
                         else
                             logstr = '';
@@ -361,6 +368,8 @@ classdef RDFoutput
                 obj.data.fitsm = fitsm;
             end
         end
+        
+%        function obj = plotGoodFits(obj,
         
             
         
