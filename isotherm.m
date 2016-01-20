@@ -153,7 +153,17 @@ classdef isotherm
              
         end
         
-        function [obj, figHandle] = plotPropVsStep(obj,prop)
+        function [obj, figHandle] = plotPropVsStep(obj,prop,varargin)
+                    p = inputParser();
+                    addOptional(p, 'figHandle', []);
+                    parse(p, varargin{:});
+                    Results = p.Results;
+                    figHandle = Results.figHandle;
+                    
+            if isempty(figHandle)
+                figHandle = figure();
+            end
+                    
             indIndata = obj.MC2DLJ(1).indIndata;
             rhoN = length(obj.rho);
             x = zeros(rhoN,indIndata);
@@ -174,7 +184,8 @@ classdef isotherm
                     end
             end
             
-            figHandle = colorPlot(x,y,'lineStyle','-','addLegend',leg);
+            figHandle = colorPlot(x,y,'lineStyle','-','addLegend',leg,...
+                'figHandle',figHandle);
             title([prop ' Vs. steps for T = ' num2str(obj.T)]);
             xlabel('step');
             ylabel(prop);

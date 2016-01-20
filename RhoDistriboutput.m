@@ -12,11 +12,13 @@ classdef RhoDistriboutput
             
               p = inputParser();
               addOptional(p, 'dataFileList', []);
+              addOptional(p, 'N', '');              
               addOptional(p, 'rhoDistribdata', []);
               addOptional(p, 'dataFileNameEnd', '');
               parse(p, varargin{:});
               Results = p.Results;
               dataFileList = Results.dataFileList;
+              N = Results.N;
               rhoDistribdata = Results.rhoDistribdata;
               dataFileNameEnd = Results.dataFileNameEnd;
               
@@ -24,7 +26,7 @@ classdef RhoDistriboutput
                     
                   if isempty(dataFileList)
                       % get all data from files in folder
-                      dataFileList = dir('N*mat');
+                      dataFileList = dir(['N' num2str(N) '*.mat']);
                       dataFileList = {dataFileList.name};
                   end
                   
@@ -37,10 +39,10 @@ classdef RhoDistriboutput
                   obj.MC2DLJs = MC2DLJs;
                   
                   % create rhoDistrib data matfile
-                  save(['rhoDistrib' dataFileNameEnd '.mat']...
+                  save(['rhoDistribN' num2str(N) dataFileNameEnd '.mat']...
                       ,'MC2DLJs','dataFileList','-v7.3');
-                  obj.data = matfile(['rhoDistrib' dataFileNameEnd '.mat']);
-                  obj.data = matfile(['rhoDistrib' dataFileNameEnd...
+                  obj.data = matfile(['rhoDistribN' num2str(N) dataFileNameEnd '.mat']);
+                  obj.data = matfile(['rhoDistribN' num2str(N) dataFileNameEnd...
                       '.mat'],'Writable',true);
                   clear MC2DLJs dataFileList;
                   
@@ -216,60 +218,6 @@ classdef RhoDistriboutput
     
 
 end
-
-    function fileListOrgbyT = getDataFileList(inputFileList)
-        fileListOrgbyT = {};
-        fileList = inputFileList;
-        i = 1;
-        rhoInd = 1;
-        while ~isempty(fileList);
-            data = matfile(fileList{1,1});
-            sim = data.simulationParam;
-            T(i) = sim.T;
-            rho(rhoInd) = sim.rho;
-            rhoInd = rhoInd + 1;
-            fileListOrgbyT{i,1} = fileList{1,1};
-            
-            ind = 2;
-            indnewlist = 1;
-            newfileList = fileList;
-            for j = 2:length(fileList)
-                data = matfile(fileList{1,j});
-                sim = data.simulationParam;
-                thisT = sim.T;
-                rho(rhoInd) = sim.rho;
-                rhoInd = rhoInd + 1;
-                
-                if thisT == T(i)
-                    fileListOrgbyT{i,ind} = fileList{1,j};
-                    newfileList = ...
-                        {newfileList{1,1:(indnewlist-1)}...
-                        newfileList{1,(indnewlist+1):end}};
-                    indnewlist = indnewlist - 1;
-                    ind = ind + 1;
-
-                end
-                indnewlist = indnewlist + 1;
-            end
-            fileList = newfileList;
-            fileList = fileList(1,2:end);
-            i = i + 1;
-        end
-        clear i;
-        
-        % sort by Temperature
-        if length(T) > 1
-            [~, indsorted] = sort(T); 
-            fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
-        end
-        
-        % sort by density
-        if length(unique(rho)) > 1
-            [~, indsorted] = sort(unique(rho));
-            fileListOrgbyT(:,indsorted) = fileListOrgbyT(:,:);
-        end
-        
-    end
             
     function MC2DLJs = getMC2DLJs(fileListOrgbyT)
         [Niso, Nrho] = size(fileListOrgbyT);

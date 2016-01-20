@@ -12,12 +12,16 @@ classdef RDFoutput
         function obj = RDFoutput(varargin)
               p = inputParser();
               addOptional(p, 'dataFileList', []);
+              addOptional(p, 'MC2DLJs', []);
               addOptional(p, 'RDFdata', []);
+              addOptional(p, 'numOfBins', 300);
               addOptional(p, 'N',[]);
               parse(p, varargin{:});
               Results = p.Results;
               dataFileList = Results.dataFileList;
+              MC2DLJs = Results.MC2DLJs;
               RDFdata = Results.RDFdata;
+              numOfBins = Results.numOfBins;
               N = Results.N;
               
               if isempty(N)
@@ -39,11 +43,15 @@ classdef RDFoutput
                   obj.dataFileList = dataFileList;
                   
                   % build MC2DLJoutput objects
-                  MC2DLJs = getMC2DLJs(obj.dataFileList);
-                  obj.MC2DLJs = MC2DLJs;
+                  if isempty(MC2DLJs)
+                        MC2DLJs = getMC2DLJs(obj.dataFileList);
+                        obj.MC2DLJs = MC2DLJs;
+                  else
+                        obj.MC2DLJs = MC2DLJs;
+                  end
                   
                   % create RDF data matfile
-                  save(['RDF_N' nuclr allm2str(N) '.mat']...
+                  save(['RDF_N' num2str(N) '.mat']...
                       ,'MC2DLJs','dataFileList','-v7.3');
                   obj.data = matfile(['RDF_N' num2str(N) '.mat']);
                   obj.data = matfile(['RDF_N' num2str(N) '.mat'],...
@@ -53,13 +61,18 @@ classdef RDFoutput
               else
                     obj.data = matfile(RDFdata,'Writable',true);
                     obj.MC2DLJs = obj.data.MC2DLJs;
+                    obj.dataFileList = obj.data.dataFileList;
+                    
+                    if ~isempty(whos(obj.data,'length2plot'))
+                        obj.data.length2plot = length2plot;
+                    end
+                    
                  
               end
               
               % get old RDF data if it exists
                   
               [Niso, Nrho] = size(obj.MC2DLJs);
-              [~,numOfBins] = size(obj.MC2DLJs(1,1).data.RDFbins);
               obj.numOfBins = numOfBins;
               
               if isempty(whos(obj.data,'histo'))
@@ -345,39 +358,53 @@ classdef RDFoutput
 
         end
         
-        function obj = fitlogRDF(obj,varargin)
-            
-            [Niso, Nrho] = size(obj.MC2DLJs);
-            ftnm = fittype('4*(x^-n - x^m)');
-            ftm = fittype('4*(x^-12 - x^m)');
-            
-            for iso = 1:Niso
-                for rho = 1:Nrho
-                    fitsnm{iso,rho} =...
-                        fit(obj.data.bins(iso,rho,...
-                            1:obj.data.length2plotlog(iso,rho)),...
-                        obj.data.logRDF(iso,rho,...
-                            1:obj.data.length2plotlog(iso,rho)),ftnm);
-                    fitsm{iso,rho} =...
-                        fit(obj.data.bins(iso,rho,...
-                            1:obj.data.length2plotlog(iso,rho)),...
-                        obj.data.logRDF(iso,rho,...
-                            1:obj.data.length2plotlog(iso,rho)),ftm);
-                end
-                obj.data.fitsnm = fitsnm;
-                obj.data.fitsm = fitsm;
-            end
-        end
-        
-%        function obj = plotGoodFits(obj,
-        
-            
-        
-    end
-    
-
-end
-
+%         function obj = fitlogRDF(obj,varargin)
+%             
+%             [Niso, Nrho] = size(obj.MC2DLJs);
+%             ftnm = fittype('4*(x^-n - x^m)');
+%             ftm = fittype('4*(x^-12 - x^m)');
+%             start = 1;
+%             
+%             for iso = 1:Niso
+%                 for rho = 1:Nrho
+%                     len2plot = obj.data.length2plotlog(iso,rho);
+%                     
+%                     x = reshape...
+%                         (obj.data.bins(iso,rho,1:len2plot),[len2plot,1]);
+%                     y = reshape...
+%                         (obj.data.histo(iso,rho,1:len2plot),[len2plot,1]);
+%                     
+%                     
+%                     success = false;
+%                     
+%                     while and(start < len2plot,~success)
+%                         try
+%                             fitsm{iso,rho} = fit(x,y,ftm);
+%                             if confint(
+%                             success = true;
+%                         catch
+%                             start = start + 10;
+%                         end
+%                     end
+%                     
+%                     if ~success
+%                         fitsm{iso,rho} = [];
+%                     end
+%                     
+%                 end
+%                 obj.data.fitsnm = fitsnm;
+%                 obj.data.fitsm = fitsm;
+%             end
+%         end
+%         
+% %        function obj = plotGoodFits(obj,
+%         
+%             
+%         
+     end
+     
+ 
+ end
             
     function MC2DLJs = getMC2DLJs(fileListOrgbyT)
         [Niso, Nrho] = size(fileListOrgbyT);
@@ -392,3 +419,31 @@ end
             end
         end
     end
+    
+%     function start = find_best_start_for_fit(x,y,ft,minconf)
+%             
+%             % check input: 
+%             if length(minconf) ~= length(coeffnames(ft))
+%                 error(['minconf must be a vector with the values'...
+%                     ' of minconf for each coefficient in ft']);
+%             end
+%             
+%             success = false;
+%             
+%             while and(start < len2plot, ~success)
+%                     try
+%                         fitsnm{iso,rho} = fit(x,y,ft);
+%                         if 
+%                         success = true;
+%                     catch
+%                         start = start + 10;
+%                     end
+%             end
+%                     
+%             if ~success
+%                     fitsnm{iso,rho} = [];
+%             end
+%  
+%     end
+% 
+    
