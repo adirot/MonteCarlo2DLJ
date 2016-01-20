@@ -43,39 +43,51 @@ classdef RDFoutput
                   obj.MC2DLJs = MC2DLJs;
                   
                   % create RDF data matfile
-                  save(['RDF_N' num2str(N) '.mat']...
+                  save(['RDF_N' nuclr allm2str(N) '.mat']...
                       ,'MC2DLJs','dataFileList','-v7.3');
                   obj.data = matfile(['RDF_N' num2str(N) '.mat']);
                   obj.data = matfile(['RDF_N' num2str(N) '.mat'],...
                       'Writable',true);
                   clear MC2DLJs dataFileList;
                   
-                  % get old RDF data if it exists
-                  
-                        [Niso, Nrho] = size(obj.MC2DLJs);
-                        [~,numOfBins] = size(obj.MC2DLJs(1,1).data.RDFbins);
-                        obj.numOfBins = numOfBins;
-                        obj.data.histo = zeros(Niso,Nrho,numOfBins);
-                        obj.data.bins = zeros(Niso,Nrho,numOfBins);
-                        for iso = 1:Niso
-                            for rho = 1:Nrho
-                                if ~isempty(whos(obj.MC2DLJs(iso,rho).data,'RDFhisto'))
-                                    obj.data.histo(iso,rho,:) = reshape(...
-                                        mean(obj.MC2DLJs(iso,rho).data.RDFhisto),...
-                                        [1,1,numOfBins]);
-                                    obj.data.bins(iso,rho,:) = reshape(...
-                                        obj.MC2DLJs(iso,rho).data.RDFbins,...
-                                        [1,1,numOfBins]);
-                                end
-                            end
-                        end
-                  
-
-                  
               else
-                 % add constructor - if data file exists 
+                    obj.data = matfile(RDFdata,'Writable',true);
+                    obj.MC2DLJs = obj.data.MC2DLJs;
                  
               end
+              
+              % get old RDF data if it exists
+                  
+              [Niso, Nrho] = size(obj.MC2DLJs);
+              [~,numOfBins] = size(obj.MC2DLJs(1,1).data.RDFbins);
+              obj.numOfBins = numOfBins;
+              
+              if isempty(whos(obj.data,'histo'))
+                    histo = zeros(Niso,Nrho,numOfBins);
+                    bins = zeros(Niso,Nrho,numOfBins);
+              else
+                    histo = obj.data.histo;
+                    bins = obj.data.bins;
+              end
+              
+              for iso = 1:Niso
+                    for rho = 1:Nrho
+                        if sum(histo(iso,rho,:)) == 0
+                            if ~isempty(whos(obj.MC2DLJs(iso,rho).data,'RDFhisto'))
+                                histo(iso,rho,:) = reshape(mean...
+                                        (obj.MC2DLJs(iso,rho).data.RDFhisto),...
+                                            [1,1,numOfBins]);
+                                bins(iso,rho,:) = reshape(...
+                                            obj.MC2DLJs(iso,rho).data.RDFbins,...
+                                            [1,1,numOfBins]);
+                            end
+                        end
+                    end
+              end
+              
+              obj.data.histo = histo;
+              obj.data.bins = bins;
+              
         end
         
         function obj = calcAllRDF(obj,maxDist,numOfBins,varargin)
