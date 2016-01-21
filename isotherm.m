@@ -156,9 +156,11 @@ classdef isotherm
         function [obj, figHandle] = plotPropVsStep(obj,prop,varargin)
                     p = inputParser();
                     addOptional(p, 'figHandle', []);
+                    addOptional(p, 'normalizeByMean', false);
                     parse(p, varargin{:});
                     Results = p.Results;
                     figHandle = Results.figHandle;
+                    normalizeByMean = Reuslts.normalizeByMean;
                     
             if isempty(figHandle)
                 figHandle = figure();
@@ -172,6 +174,11 @@ classdef isotherm
                 case 'P'
                     for i = 1:rhoN
                         y(i,:) = obj.MC2DLJ(i).data.allPlrc;
+                        
+                        if normalizeByMean
+                            y(i,:) = y(i,:)/mean(y(i,:));
+                        end
+                        
                         x(i,:) = 1:indIndata;
                         leg{1,i} = ['rho = ' num2str(obj.rho(i))];
                     end
@@ -179,6 +186,11 @@ classdef isotherm
                 case 'U'
                     for i = 1:rhoN
                         y(i,:) = obj.MC2DLJ(i).data.allUlrc;
+                        
+                        if normalizeByMean
+                            y(i,:) = y(i,:)/mean(y(i,:));
+                        end
+                        
                         x(i,:) = 1:indIndata;
                         leg{1,i} = ['rho = ' num2str(obj.rho(i))];
                     end
