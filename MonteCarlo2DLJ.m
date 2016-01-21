@@ -33,7 +33,7 @@ for i = 1:length(T)
         'cutEquilirization',false);
 end
 
-save(['isoN' num2str(N)],'-v7.3');
+save(['isoObjN' num2str(N)],'-v7.3');
 
 for i = 1:length(T)
     Irand(i) = Irand(i).calcIso(Nsteps,10);
