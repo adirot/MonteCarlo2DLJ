@@ -161,7 +161,7 @@ classdef isotherm
             parse(p, varargin{:});
             Results = p.Results;
             figHandle = Results.figHandle;
-            normalizeByMean = Rseuslts.normalizeByMean;
+            normalizeByMean = Resuslts.normalizeByMean;
                     
             if isempty(figHandle)
                 figHandle = figure();
