@@ -154,13 +154,14 @@ classdef isotherm
         end
         
         function [obj, figHandle] = plotPropVsStep(obj,prop,varargin)
-                    p = inputParser();
-                    addOptional(p, 'figHandle', []);
-                    addOptional(p, 'normalizeByMean', false);
-                    parse(p, varargin{:});
-                    Results = p.Results;
-                    figHandle = Results.figHandle;
-                    normalizeByMean = Reuslts.normalizeByMean;
+            
+            p = inputParser();
+            addOptional(p, 'figHandle', []);
+            addOptional(p, 'normalizeByMean', false);
+            parse(p, varargin{:});
+            Results = p.Results;
+            figHandle = Results.figHandle;
+            normalizeByMean = Rseuslts.normalizeByMean;
                     
             if isempty(figHandle)
                 figHandle = figure();
