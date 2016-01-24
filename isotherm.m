@@ -22,7 +22,7 @@ classdef isotherm
                     addOptional(p, 'rCutoff', []);
                     addOptional(p, 'r', []);
                     addOptional(p, 'fileNameInit', '');
-                    addOptional(p, 'cutEquilirization', true);
+                    addOptional(p, 'cutEquilirization', false);
                     addOptional(p, 'firstSteps2ignore', 50);
                     addOptional(p, 'datafileList', []);
                     parse(p, varargin{:});

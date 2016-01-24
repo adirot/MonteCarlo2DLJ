@@ -607,6 +607,7 @@ classdef MC2DLJoutput
                mean(obj.data.allUlrc(1,firstSteps2ignore:obj.indIndata));
        end
         
+       
     end
     
         

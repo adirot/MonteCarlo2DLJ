@@ -3,7 +3,7 @@ function MonteCarlo2DLJ(N,Nsteps,varargin)
 %% Monte-Carlo in NVT ensemble for Lennard-Jonse potantioal in 2D %%
 
 p = inputParser();
-addOptional(p, 'T', [0.1 0.2 0.3 0.4 0.45 0.5 0.6 0.7 0.9 1 10 100]);
+addOptional(p, 'T', [0.1 0.2 0.3 0.45 0.5 0.6 0.7 0.9 1 10 100]);
 parse(p, varargin{:});
 Results = p.Results;
 T = Results.T;

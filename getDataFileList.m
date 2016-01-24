@@ -1,14 +1,15 @@
     function fileListOrgbyT = getDataFileList(inputFileList)
         fileListOrgbyT = {};
         fileList = inputFileList;
+        rho = struct;
         i = 1;
-        rhoInd = 1;
+        
         while ~isempty(fileList);
+            rho(i).rho = [];
             data = matfile(fileList{1,1});
             sim = data.simulationParam;
             T(i) = sim.T;
-            rho(rhoInd) = sim.rho;
-            rhoInd = rhoInd + 1;
+            rho(i).rho = [rho(i).rho sim.rho];
             fileListOrgbyT{i,1} = fileList{1,1};
             
             ind = 2;
@@ -18,14 +19,13 @@
                 data = matfile(fileList{1,j});
                 sim = data.simulationParam;
                 thisT = sim.T;
-                rho(rhoInd) = sim.rho;
-                rhoInd = rhoInd + 1;
                 
                 if thisT == T(i)
                     fileListOrgbyT{i,ind} = fileList{1,j};
                     newfileList = ...
                         {newfileList{1,1:(indnewlist-1)}...
                         newfileList{1,(indnewlist+1):end}};
+                    rho(i).rho = [rho(i).rho sim.rho];
                     indnewlist = indnewlist - 1;
                     ind = ind + 1;
 
@@ -43,7 +43,10 @@
         fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
         
         % sort by density
-        [~, indsorted] = sort(unique(rho));
-        fileListOrgbyT(:,indsorted) = fileListOrgbyT(:,:);
+        for i = 1:length(T)
+            [~, indsorted] = sort(unique(rho(i).rho));
+            fileListOrgbyT(i,indsorted) =...
+                fileListOrgbyT(i,1:length(unique(rho(i).rho)));
+        end
         
     end
