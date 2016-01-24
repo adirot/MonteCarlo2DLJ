@@ -33,6 +33,7 @@ for i = 1:length(T)
         'cutEquilirization',false);
 end
 
+disp(['created Isotherms N = ' num2str(N)]);
 save(['isoObjN' num2str(N)],'-v7.3');
 
 for i = 1:length(T)
@@ -40,6 +41,7 @@ for i = 1:length(T)
     Ihex(i) = Ihex(i).calcIso(Nsteps,10);
 end
 
+disp(['calculated Isotherms N = ' num2str(N)]);
 save(['isoObjN' num2str(N)],'-v7.3');
 
 for i = 1:length(T)
@@ -58,6 +60,8 @@ for i = 1:length(T)
 
 end
 
+disp(['ploted PvsStep N = ' num2str(N)]);
+
 [~,fitrand,canGetUfromgRindrand,hPvsRho,hPvsV] = plotIso('isotherms',Irand,...
     'N',N,'fitprop',{'plotLin', 'plotVirialExp'},...
     'residuals',{false, false});
@@ -67,6 +71,7 @@ end
     ,'hPvsRho',hPvsRho,'hPvsV',hPvsV,...
     'residuals',{false, false});
 
+disp(['ploted isotherms N = ' num2str(N)]);
 save(['isoObjN' num2str(N)],'-v7.3');
 
 clear Irand Ihex fithex fitrand canGetUfromgRindrand canGetUfromgRindhex;
@@ -74,8 +79,12 @@ clear Irand Ihex fithex fitrand canGetUfromgRindrand canGetUfromgRindhex;
 RDF = RDFoutput('N',N);
 save(['RDFObjN' num2str(N)],'-v7.3');
 
+disp(['created RDFobj N = ' num2str(N)]);
+
 RDF = RDF.calcAllRDF(10,300);
 save(['RDFObjN' num2str(N)],'-v7.3');
+
+disp(['calculated RDFs N = ' num2str(N)]);
 
 RDF = RDF.plotRDFT('keepFigOpen',false);
 save(['RDFObjN' num2str(N)],'-v7.3');
@@ -89,6 +98,8 @@ save(['RDFObjN' num2str(N)],'-v7.3');
 RDF = RDF.plotRDFrho('keepFigOpen',false,'plotLog',true);
 save(['RDFObjN' num2str(N)],'-v7.3');
 
+disp(['ploted RDF N = ' num2str(N)]);
+
 clear RDF;
 
 sq = (4:10).^2;
@@ -97,6 +108,7 @@ for i = 1:length(sq)
     RhoDistrib(i) = RhoDistriboutput('N',N);
 end
 
+disp(['created rhoDistrib Obj N = ' num2str(N)]);
 save(['rhoDistObjN' num2str(N)],'-v7.3');
 
 for i = 1:length(sq)
@@ -109,6 +121,7 @@ for i = 1:length(sq)
         'addFileNameEnd',['Sq' num2str(sq(i))],'keepFigOpen',false);
 end
 
+disp(['ploted rhoDistrib Obj N = ' num2str(N)]);
 
 end
 
