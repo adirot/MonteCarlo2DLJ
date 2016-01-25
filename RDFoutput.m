@@ -16,6 +16,7 @@ classdef RDFoutput
               addOptional(p, 'RDFdata', []);
               addOptional(p, 'numOfBins', 300);
               addOptional(p, 'N',[]);
+	      addOptional(p, 'dataFileListOrgbyT',[]);
               parse(p, varargin{:});
               Results = p.Results;
               dataFileList = Results.dataFileList;
@@ -23,6 +24,7 @@ classdef RDFoutput
               RDFdata = Results.RDFdata;
               numOfBins = Results.numOfBins;
               N = Results.N;
+	      dataFileListOrgbyT = Results.dataFileListOrgbyT;
               
               if isempty(N)
                     error(['provide number of particles,'...
@@ -30,16 +32,21 @@ classdef RDFoutput
               end
               
               obj.N = N;
+
               
               if isempty(RDFdata) 
-                  if isempty(dataFileList)
+		  if isempty(dataFileListOrgbyT)
+                  	if isempty(dataFileList) 
                   
-                      % get all data from files in folder
-                      dataFileList = dir(['N' num2str(N) '*mat']);
-                      dataFileList = {dataFileList.name};
-                  end
+                      		% get all data from files in folder
+                      		dataFileList = dir(['N' num2str(N) '*mat']);
+                      		dataFileList = {dataFileList.name};
+                  	end
                   
-                  dataFileList = getDataFileList(dataFileList);
+                  	dataFileList = getDataFileList(dataFileList);
+		  else
+			dataFileList = dataFileListOrgbyT;
+		  end
                   obj.dataFileList = dataFileList;
                   
                   % build MC2DLJoutput objects
@@ -86,14 +93,16 @@ classdef RDFoutput
               for iso = 1:Niso
                     for rho = 1:Nrho
                         if sum(histo(iso,rho,:)) == 0
-                            if ~isempty(whos(obj.MC2DLJs(iso,rho).data,'RDFhisto'))
-                                histo(iso,rho,:) = reshape(mean...
-                                        (obj.MC2DLJs(iso,rho).data.RDFhisto),...
-                                            [1,1,numOfBins]);
-                                bins(iso,rho,:) = reshape(...
-                                            obj.MC2DLJs(iso,rho).data.RDFbins,...
-                                            [1,1,numOfBins]);
-                            end
+				if ~isempty(obj.MC2DLJs(iso,rho).fileName)
+                            		if ~isempty(whos(obj.MC2DLJs(iso,rho).data,'RDFhisto'))
+                                		histo(iso,rho,:) = reshape(mean...
+                                        		(obj.MC2DLJs(iso,rho).data.RDFhisto),...
+                                            		[1,1,numOfBins]);
+                               			bins(iso,rho,:) = reshape(...
+                                            		obj.MC2DLJs(iso,rho).data.RDFbins,...
+                                            		[1,1,numOfBins]);
+					end
+                            	end
                         end
                     end
               end
@@ -127,33 +136,34 @@ classdef RDFoutput
                             j
                             i
                         end
-                        
-                        if skipExisting
-                            if isempty(whos(obj.MC2DLJs(i,j).data,'RDFhisto'))
-                                obj.MC2DLJs(i,j) =...
-                                obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins);
+			if ~isempty(obj.MC2DLJs(i,j).indIndata)	                        
+                        	if skipExisting
+                            		if isempty(whos(obj.MC2DLJs(i,j).data,'RDFhisto'))
+                                		obj.MC2DLJs(i,j) =...
+                                			obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins);
                                 
-                            end
-                        else
-                           obj.MC2DLJs(i,j) =...
-                                obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins); 
-                        end
+                            		end
+                        	else
+                           		obj.MC2DLJs(i,j) =...
+                                		obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins); 
+                        	end
                         
-                        obj.length2plot(i,j) =...
-                            length(obj.MC2DLJs(i,j).data.RDFbins); 
+                        	obj.length2plot(i,j) =...
+                            		length(obj.MC2DLJs(i,j).data.RDFbins); 
  
-                        a = obj.MC2DLJs(i,j).data.RDFbins(1,...
-                            1:obj.length2plot(i,j));
-                        obj.data.bins(i,j,1:obj.length2plot(i,j)) =...
-                            reshape(a,[1,1,obj.length2plot(i,j)]);
+	                        a = obj.MC2DLJs(i,j).data.RDFbins(1,...
+        		                    1:obj.length2plot(i,j));
+                       		 obj.data.bins(i,j,1:obj.length2plot(i,j)) =...
+                           		 reshape(a,[1,1,obj.length2plot(i,j)]);
                         
-                        a = obj.MC2DLJs(i,j).data.RDFhisto(1,...
-                            1:obj.length2plot(i,j));
-                        obj.data.histo(i,j,1:obj.length2plot(i,j)) =...
-                            reshape(a,[1,1,obj.length2plot(i,j)]);
+                       		 a = obj.MC2DLJs(i,j).data.RDFhisto(1,...
+                           		 1:obj.length2plot(i,j));
+                       		 obj.data.histo(i,j,1:obj.length2plot(i,j)) =...
+                           		 reshape(a,[1,1,obj.length2plot(i,j)]);
                         
-                        obj.legrho{1,j} = ['\rho = '...
-                            num2str(obj.MC2DLJs(i,j).simulationParam.rho)];
+                       		 obj.legrho{1,j} = ['\rho = '...
+                           		 num2str(obj.MC2DLJs(i,j).simulationParam.rho)];
+			end
                     end
                     obj.legT{1,i} = ['T = '...
                         num2str(obj.MC2DLJs(i,1).simulationParam.T)];
@@ -414,7 +424,9 @@ classdef RDFoutput
                 if i == 1 && j == 1
                     MC2DLJs = MC2DLJoutput(fileListOrgbyT{1,1});
                 else
-                    MC2DLJs(i,j) = MC2DLJoutput(fileListOrgbyT{i,j}); 
+			if exist(fileListOrgbyT{i,j},'file') == 2
+                    		MC2DLJs(i,j) = MC2DLJoutput(fileListOrgbyT{i,j});
+			end
                 end
             end
         end
