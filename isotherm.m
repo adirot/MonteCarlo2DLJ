@@ -203,5 +203,37 @@ classdef isotherm
             xlabel('step');
             ylabel(prop);
         end
+        
+        function obj = getSnapShots(obj,step,varargin)
+           p = inputParser();
+           addOptional(p, 'saveFig', true);
+           addOptional(p, 'keepFigOpen', true);
+           addOptional(p, 'rhos', 'all');
+           addOptional(p, 'rhosInd', []);           
+           parse(p, varargin{:});
+           Results = p.Results;
+           saveFig = Results.saveFig;
+           keepFigOpen = Results.keepFigOpen;
+           rhos = Results.rhos;
+           rhosInd = Results.rhosInd;
+           
+           if ischar(rhos)
+               if strcmp(rhos,'all')
+                   rhos = obj.rho;
+               end
+           end
+           
+           if isempty(rhosInd)
+               for i = 1:length(rhos)
+                    obj.MC2DLJ(obj.rho == rhos(i)).showStep(step,...
+                        'saveFig',saveFig,'keepFigOpen',keepFigOpen);
+               end
+           else
+               for i = 1:length(rhosInd)
+                    obj.MC2DLJ(rhosInd(i)).showStep(step,...
+                        'saveFig',saveFig,'keepFigOpen',keepFigOpen);
+               end
+           end
+        end
     end
 end
