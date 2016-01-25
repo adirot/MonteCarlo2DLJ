@@ -1,23 +1,30 @@
-    function fileListOrgbyT = getDataFileList(inputFileList)
+function fileListOrgbyT = fileListOrgbyT(varargin)
+    
+
+    % check input, build isotherm object from data files if necessary
+    if nargin == 0
+        isothermsOrFileList = dir('*mat');
+        isothermsOrFileList = {isothermsOrFileList.name};
+    else
+        isothermsOrFileList = varargin{:};
+    end
+    
+    if isobject(isothermsOrFileList)
+        isotherms = isothermsOrFileList;
+    else
         fileListOrgbyT = {};
-        fileList = inputFileList;
-        rho = struct;
+        fileList = isothermsOrFileList;
         i = 1;
-        
         while ~isempty(fileList);
-            rho(i).rho = [];
             data = matfile(fileList{1,1});
             sim = data.simulationParam;
             T(i) = sim.T;
-            rho(i).rho = [rho(i).rho sim.rho];
             fileListOrgbyT{i,1} = fileList{1,1};
             
             ind = 2;
             indnewlist = 1;
             newfileList = fileList;
             for j = 2:length(fileList)
-		length(fileList)
-		j
                 data = matfile(fileList{1,j});
                 sim = data.simulationParam;
                 thisT = sim.T;
@@ -27,7 +34,6 @@
                     newfileList = ...
                         {newfileList{1,1:(indnewlist-1)}...
                         newfileList{1,(indnewlist+1):end}};
-                    rho(i).rho = [rho(i).rho sim.rho];
                     indnewlist = indnewlist - 1;
                     ind = ind + 1;
 
@@ -40,15 +46,10 @@
         end
         clear i;
         
-        % sort by Temperature
+        % sort by Temprature
         [~, indsorted] = sort(T); 
         fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
         
-        % sort by density
-        for i = 1:length(T)
-            [~, indsorted] = sort(unique(rho(i).rho));
-            fileListOrgbyT(i,indsorted) =...
-                fileListOrgbyT(i,1:length(unique(rho(i).rho)));
-        end
         
-    end
+    %colorPlot(1./rho,pressure,'addLegend',leg);
+end
