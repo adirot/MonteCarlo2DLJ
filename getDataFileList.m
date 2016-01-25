@@ -16,6 +16,7 @@
             indnewlist = 1;
             newfileList = fileList;
             for j = 2:length(fileList)
+		
                 data = matfile(fileList{1,j});
                 sim = data.simulationParam;
                 thisT = sim.T;
