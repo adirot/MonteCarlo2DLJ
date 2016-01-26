@@ -100,14 +100,14 @@ classdef RDFoutput
                                             		[1,1,numOfBins]);
                                			bins(iso,rho,:) = reshape(...
                                             		obj.MC2DLJs(iso,rho).data.RDFbins,...
-                                            		[1,1,numOfBins]);
+                          data                  		[1,1,numOfBins]);
 					end
                             	end
                         end
                     end
               end
               
-              obj.data.histo = histo;
+            RDF  obj.data.histo = histo;
               obj.data.bins = bins;
               
         end
@@ -296,72 +296,74 @@ classdef RDFoutput
                end
                
                 for j = 1:Nrho
-                     
-                     h = figure('Visible',Visible);
-                     if plotLog
-                         % don't log zeros
-                         x = zeros(Niso,obj.numOfBins);
-                         y = zeros(Niso,obj.numOfBins);
-                         length2plotlog = zeros(Niso);
-                         for i = 1:Niso 
-                            
-                            histo = obj.data.histo(i,j,1:obj.numOfBins);
-                            bins = obj.data.bins(i,j,1:obj.numOfBins);
-                            nonZeroInd = find(histo);
-                            histo = histo(1,1,nonZeroInd);
-                            bins = bins(1,1,nonZeroInd);
-                            length2plotlog(i) = length(bins);
-                            y(i,1:length2plotlog(i)) = -log(histo);
-                            x(i,1:length2plotlog(i)) = bins;
-                            length2plotlog(i) = length(bins);
-                            
-                            % save log data
-                            obj.data.logRDF(i,j,1:obj.numOfBins)...
-                             = reshape(y(i,:),[1,1,obj.numOfBins]);
-                            obj.data.length2plotlog(i,j) =...
-                                length2plotlog(i);
-                            
-                         end
-                         
-                         colorPlot(x,y,'addLegend',obj.legT,...
-                         'lineStyle','-',...
-                         'length2plot',length2plotlog...
-                         ,'figHandle',h);
-                         ylabel('-log(g(r))');
-                         
-                         
-                     else
-                         colorPlot(obj.data.bins(:,j,:)...
-                             ,obj.data.histo(:,j,:),'addLegend',obj.legT,...
+                     if ~isempty(obj.data.bins(:,j,:))
+                         h = figure('Visible',Visible);
+                         if plotLog
+                             % don't log zeros
+                             x = zeros(Niso,obj.numOfBins);
+                             y = zeros(Niso,obj.numOfBins);
+                             length2plotlog = zeros(Niso);
+                             for i = 1:Niso 
+
+                                histo = obj.data.histo(i,j,1:obj.numOfBins);
+                                bins = obj.data.bins(i,j,1:obj.numOfBins);
+                                nonZeroInd = find(histo);
+                                histo = histo(1,1,nonZeroInd);
+                                bins = bins(1,1,nonZeroInd);
+                                length2plotlog(i) = length(bins);
+                                y(i,1:length2plotlog(i)) = -log(histo);
+                                x(i,1:length2plotlog(i)) = bins;
+                                length2plotlog(i) = length(bins);
+
+                                % save log data
+                                obj.data.logRDF(i,j,1:obj.numOfBins)...
+                                 = reshape(y(i,:),[1,1,obj.numOfBins]);
+                                obj.data.length2plotlog(i,j) =...
+                                    length2plotlog(i);
+
+                             end
+
+                             colorPlot(x,y,'addLegend',obj.legT,...
                              'lineStyle','-',...
-                             'length2plot',obj.length2plot(:,j)...
+                             'length2plot',length2plotlog...
                              ,'figHandle',h);
-                         ylabel('g(r)');
-                     end
-                    
-                    title(['\rho = '...
-                        num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
-                    xlabel('distance, reduced units');
-                    ylabel('g(r)');
-                    
-                    if saveFig
-                        if plotLog
-                            logstr = 'log';
-                        else
-                            logstr = '';
+                             ylabel('-log(g(r))');
+
+
+                         else
+                                colorPlot(obj.data.bins(:,j,:)...
+                                    ,obj.data.histo(:,j,:),'addLegend',obj.legT,...
+                                    'lineStyle','-',...
+                                    'length2plot',obj.length2plot(:,j)...
+                                    ,'figHandle',h);
+                                ylabel('g(r)');
+
+                         end
+
+                        title(['\rho = '...
+                            num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
+                        xlabel('distance, reduced units');
+                        ylabel('g(r)');
+
+                        if saveFig
+                            if plotLog
+                                logstr = 'log';
+                            else
+                                logstr = '';
+                            end
+
+                            saveas(gcf,[logstr 'RDF_rho'...
+                                my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
+                                 'N' num2str(obj.N) '.fig']);
+                            saveas(gcf,[logstr 'RDF_rho'...
+                                my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
+                                 'N' num2str(obj.N) '.jpg']);
                         end
-                        
-                        saveas(gcf,[logstr 'RDF_rho'...
-                            my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                             'N' num2str(obj.N) '.fig']);
-                        saveas(gcf,[logstr 'RDF_rho'...
-                            my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                             'N' num2str(obj.N) '.jpg']);
-                    end
-                    
-                    if ~keepFigOpen
-                        close all;
-                    end
+
+                        if ~keepFigOpen
+                            close all;
+                        end
+                     end 
                 end
 
 

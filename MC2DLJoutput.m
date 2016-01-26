@@ -607,11 +607,101 @@ classdef MC2DLJoutput
                mean(obj.data.allUlrc(1,firstSteps2ignore:obj.indIndata));
        end
         
-       
-    end
+       function [obj,sP,sU] = inefficiency(obj,tau,varargin)
+           % for error calculations. see computer simulation of liquids
+           % page 192
+           
+           p = inputParser();
+           addOptional(p, 'plotSVsSqrtTau', true);
+           addOptional(p, 'saveFigSVsSqrtTau', true);           
+           addOptional(p, 'firstSteps2ignore', []);
+           addOptional(p, 'keepFigOpen', false);
+           parse(p, varargin{:});
+           Results = p.Results;
+           plotSVsSqrtTau = Results.plotSVsSqrtTau;
+           firstSteps2ignore = Results.firstSteps2ignore;
+           saveFigSVsSqrtTau = Results.saveFigSVsSqrtTau;
+           keepFigOpen = Results.keepFigOpen;
+           
+           
+           % calculate <A>
+           if isempty(firstSteps2ignore)
+                if existInMatfile(obj.fileName,'meanPlrcEq')
+                    meanP = obj.data.meanPlrcEq;
+                    meanU = obj.data.meanUlrcEq;
+                    firstSteps2ignore = obj.data.firstSteps2ignore;
+                else
+                    error(['you must provide a number of first steps'... 
+                        ' to ignore or calculate the mean in advence'... 
+                        ' with calcMeanWithoutFirstSteps']);
+                end
+           else
+               obj = calcMeanWithoutFirstSteps(obj, firstSteps2ignore);
+               meanP = obj.data.meanPlrcEq;
+               meanU = obj.data.meanUlrcEq;
+           end
+           
+           P = obj.data.allPlrc;
+           U = obj.data.allUlrc;
+
+           
+           for j = 1:length(tau)
+                % calculate <A>b
+                ind = 1;
+                for i = (firstSteps2ignore+1):tau(j):(obj.indIndata-tau(j))
+                   
+                    Pmeanb(ind) = mean(P(i:(i+tau(j)-1)));
+                    Umeanb(ind) = mean(U(i:(i+tau(j)-1)));                    
+                    ind = ind + 1;
+                end
+           
+                % calculate sigma^2(<A>b) for all the different tau values
+                nb(j) = floor((obj.indIndata - firstSteps2ignore)/tau(j));
+                varMeanP(j) = (1/nb(j))*sum((Pmeanb - mean(Pmeanb)).^2);
+                varMeanU(j) = (1/nb(j))*sum((Umeanb - mean(Umeanb)).^2);
+                
+                %calculate sigma^2(A)
+                varP(j) = (1/(obj.indIndata-firstSteps2ignore))*sum((P(firstSteps2ignore:end) - meanP).^2);
+                varU(j) = (1/(obj.indIndata-firstSteps2ignore))*sum((U(firstSteps2ignore:end) - meanU).^2);
+           end
+           
+           % calculate s
+           sP = tau.*varMeanP./varP;
+           sU = tau.*varMeanU./varU;
+            
+           sP1 = nb.*varMeanP./varP;
+           sU1 = nb.*varMeanU./varU;
+            
+           if saveFigSVsSqrtTau
+               plotSVsSqrtTau = true;
+           end
+           
+           if plotSVsSqrtTau
+               figure;
+               plot(sqrt(nb),sP1);
+               hold on;
+               title('s for the pressure and energy');
+               xlabel('\sqrt{\tau_b}');
+               ylabel('s');
+               plot(sqrt(nb),sU1,'r');
+               legend('pressure','energy');
+           end
+           
+           if saveFigSVsSqrtTau
+               fileName = ['SVsSqrtTauN' num2str(obj.simulationParam.N)... 
+                   'T' my_num2str(obj.simulationParam.T)...
+                   'rho' my_num2str(obj.simulationParam.rho)];
+               saveas(gcf,[fileName '.fig']);
+               saveas(gcf,[fileName '.jpg']);
+           end
+           
+           if ~keepFigOpen
+               close gcf;
+           end
+        end
     
         
-        
+    end    
 
 end
 

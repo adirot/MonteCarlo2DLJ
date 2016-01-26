@@ -16,8 +16,12 @@
             indnewlist = 1;
             newfileList = fileList;
             for j = 2:length(fileList)
+<<<<<<< HEAD
 		length(fileList)
 		j
+=======
+		
+>>>>>>> 04e2f1ef1ca9da6dfca7481a5b9b5bbe27b385c4
                 data = matfile(fileList{1,j});
                 sim = data.simulationParam;
                 thisT = sim.T;
