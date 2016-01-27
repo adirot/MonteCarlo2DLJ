@@ -10,11 +10,13 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         addOptional(p, 'residuals', []);
         addOptional(p, 'fileNameEnd', '');
         addOptional(p, 'isotherms', []);
+        addOptional(p, 'plotIso', true);
         addOptional(p, 'fit', []);
         addOptional(p, 'canGetUfromgRind', []);
         addOptional(p, 'fileListOrgbyT', []);
         addOptional(p, 'hPvsRho', []);
         addOptional(p, 'hPvsV', []);
+        addOptional(p, 'UVsT', false);
         parse(p, varargin{:});
         Results = p.Results;
         N = Results.N;
@@ -29,6 +31,8 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         fileListOrgbyT = Results.fileListOrgbyT;
         hPvsRho = Results.hPvsRho;
         hPvsV = Results.hPvsV;
+        UVsT = Results.UVsT;
+        plotIso = Results.plotIso;
         
         if isempty(N) && isempty(isotherms) && isempty(fileListOrgbyT)
             error(['provide number of particles,'...
@@ -108,63 +112,85 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         
     end
     
-    if isempty(hPvsRho)
-        hPvsRho = figure('Visible',Visible);
-    end
-    hPvsRho = colorPlot(rho,pressure,'addLegend',leg,'figHandle',hPvsRho);
-    title(['isotherms for N = ' num2str(N)]);
-    xlabel('density, reduced units');
-    ylabel('pressure, reduced units');
-    
-    if ~isempty(fitprop) && isempty(fit)
-        for i = 1:length(fitprop)
-            fit{1,i} = fitIso(isotherms,fitprop{i},'figureHandle',hPvsRho);
+    if plotIso
+        if isempty(hPvsRho)
+            hPvsRho = figure('Visible',Visible);
         end
-    end
-    
-    if ~isempty(residuals)
-        for i = 1:length(fit)
-            if residuals{1,i}
-                for iso = 1:length(isotherms)
-                    f = fit{1,i}(1,iso);
-                    res = my_residuals(pressure(iso,:),f.P);
-                    for j = 1:length(res)
-                        text(rho(iso,j),f.P(j),num2str(res(j)));
+        hPvsRho = colorPlot(rho,pressure,'addLegend',leg,'figHandle',hPvsRho);
+        title(['isotherms for N = ' num2str(N)]);
+        xlabel('density, reduced units');
+        ylabel('pressure, reduced units');
+
+        if ~isempty(fitprop) && isempty(fit)
+            for i = 1:length(fitprop)
+                fit{1,i} = fitIso(isotherms,fitprop{i},'figureHandle',hPvsRho);
+            end
+        end
+
+        if ~isempty(residuals)
+            for i = 1:length(fit)
+                if residuals{1,i}
+                    for iso = 1:length(isotherms)
+                        f = fit{1,i}(1,iso);
+                        res = my_residuals(pressure(iso,:),f.P);
+                        for j = 1:length(res)
+                            text(rho(iso,j),f.P(j),num2str(res(j)));
+                        end
                     end
                 end
             end
         end
-    end
-    
-    if isempty(canGetUfromgRind)
-        canGetUfromgRind = canGetUfromgR(isotherms,fit,0.1);
-    end
-    
-    for i = 1:length(isotherms)
-        plot(isotherms(i).rho(find(canGetUfromgRind(i,:))),...
-            isotherms(i).pressure(find(canGetUfromgRind(i,:))),'mo');
-    end
-    
-    if strcmp(saveFig,'on')
-        saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.fig']);
-        saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.jpg']);
-    end
 
-    
-    if isempty(hPvsRho)
-        hPvsV = figure('Visible',Visible);
-    end
-    hPvsV = colorPlot(1./rho,pressure,'addLegend',leg,'figHandle',hPvsV);
-    title(['isotherms for N = ' num2str(N)]);
-    xlabel('volume, reduced units');
-    ylabel('pressure, reduced units');
+        if isempty(canGetUfromgRind)
+            canGetUfromgRind = canGetUfromgR(isotherms,fit,0.1);
+        end
+
+        for i = 1:length(isotherms)
+            plot(isotherms(i).rho(find(canGetUfromgRind(i,:))),...
+                isotherms(i).pressure(find(canGetUfromgRind(i,:))),'mo');
+        end
+
+        if strcmp(saveFig,'on')
+            saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.fig']);
+            saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.jpg']);
+        end
+
+
+        if isempty(hPvsRho)
+            hPvsV = figure('Visible',Visible);
+        end
+        hPvsV = colorPlot(1./rho,pressure,'addLegend',leg,'figHandle',hPvsV);
+        title(['isotherms for N = ' num2str(N)]);
+        xlabel('volume, reduced units');
+        ylabel('pressure, reduced units');
     
    
-    if saveFig
-        saveas(hPvsV,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.fig']);
-        saveas(hPvsV,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.jpg']);
+        if saveFig
+            saveas(hPvsV,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.fig']);
+            saveas(hPvsV,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.jpg']);
+        end
     end
     
+    if UVsT
+        U = zeros(Niso,Nrho);
+        T = zeros(Niso,Nrho);
+        N = num2str(isotherms(1).MC2DLJ(1).simulationParam.N);
+        for i = 1:Niso
+            for j = 1:Nrho
+                U(i,j) = isotherms(i).MC2DLJ(j).data.meanUlrcEq;
+                T(i,j) = isotherms(i).T;
+                if i == 1
+                    legUVsT{1,j} = ['\rho = ' my_num2str(isotherms(i).rho(j))];
+                end
+            end
+        end
+        
+        colorPlot(T,U,'addLegend',legUVsT);
+        title(['mean U Vs. T for N = ' N]);
+        xlabel('Temperature, reduced units');
+        ylabel('Energy, reduced units');
+
+    end
 end
 
 % functions used in this code
