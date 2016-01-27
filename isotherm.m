@@ -235,5 +235,11 @@ classdef isotherm
                end
            end
         end
+        
+        function obj = calcMeanWithoutFirstSteps(obj, firstSteps2ignore)
+            for i = 1:length(obj.rho)
+                obj.MC2DLJ(i).calcMeanWithoutFirstSteps(firstSteps2ignore);
+            end
+        end
     end
 end
