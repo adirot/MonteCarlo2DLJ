@@ -16,7 +16,7 @@ classdef RDFoutput
               addOptional(p, 'RDFdata', []);
               addOptional(p, 'numOfBins', 300);
               addOptional(p, 'N',[]);
-	      addOptional(p, 'dataFileListOrgbyT',[]);
+              addOptional(p, 'dataFileListOrgbyT',[]);
               parse(p, varargin{:});
               Results = p.Results;
               dataFileList = Results.dataFileList;
@@ -24,7 +24,7 @@ classdef RDFoutput
               RDFdata = Results.RDFdata;
               numOfBins = Results.numOfBins;
               N = Results.N;
-	      dataFileListOrgbyT = Results.dataFileListOrgbyT;
+              dataFileListOrgbyT = Results.dataFileListOrgbyT;
               
               if isempty(N)
                     error(['provide number of particles,'...
@@ -35,35 +35,35 @@ classdef RDFoutput
 
               
               if isempty(RDFdata) 
-		  if isempty(dataFileListOrgbyT)
-                  	if isempty(dataFileList) 
+                    if isempty(dataFileListOrgbyT)
+                        if isempty(dataFileList) 
+
+                                % get all data from files in folder
+                                dataFileList = dir(['N' num2str(N) '*mat']);
+                                dataFileList = {dataFileList.name};
+                        end
+
+                        dataFileList = getDataFileList(dataFileList);
+                    else
+                        dataFileList = dataFileListOrgbyT;
+                    end
+                    obj.dataFileList = dataFileList;
                   
-                      		% get all data from files in folder
-                      		dataFileList = dir(['N' num2str(N) '*mat']);
-                      		dataFileList = {dataFileList.name};
-                  	end
-                  
-                  	dataFileList = getDataFileList(dataFileList);
-		  else
-			dataFileList = dataFileListOrgbyT;
-		  end
-                  obj.dataFileList = dataFileList;
-                  
-                  % build MC2DLJoutput objects
-                  if isempty(MC2DLJs)
+                    % build MC2DLJoutput objects
+                    if isempty(MC2DLJs)
                         MC2DLJs = getMC2DLJs(obj.dataFileList);
                         obj.MC2DLJs = MC2DLJs;
-                  else
+                    else
                         obj.MC2DLJs = MC2DLJs;
-                  end
+                    end
                   
-                  % create RDF data matfile
-                  save(['RDF_N' num2str(N) '.mat']...
+                    % create RDF data matfile
+                    save(['RDF_N' num2str(N) '.mat']...
                       ,'MC2DLJs','dataFileList','-v7.3');
-                  obj.data = matfile(['RDF_N' num2str(N) '.mat']);
-                  obj.data = matfile(['RDF_N' num2str(N) '.mat'],...
+                    obj.data = matfile(['RDF_N' num2str(N) '.mat']);
+                    obj.data = matfile(['RDF_N' num2str(N) '.mat'],...
                       'Writable',true);
-                  clear MC2DLJs dataFileList;
+                    clear MC2DLJs dataFileList;
                   
               else
                     obj.data = matfile(RDFdata,'Writable',true);
@@ -93,21 +93,20 @@ classdef RDFoutput
               for iso = 1:Niso
                     for rho = 1:Nrho
                         if sum(histo(iso,rho,:)) == 0
-				if ~isempty(obj.MC2DLJs(iso,rho).fileName)
+                            if ~isempty(obj.MC2DLJs(iso,rho).fileName)
                             		if ~isempty(whos(obj.MC2DLJs(iso,rho).data,'RDFhisto'))
-                                		histo(iso,rho,:) = reshape(mean...
-                                        		(obj.MC2DLJs(iso,rho).data.RDFhisto),...
+                                		histo(iso,rho,:) = reshape(mean(obj.MC2DLJs(iso,rho).data.RDFhisto),...
                                             		[1,1,numOfBins]);
                                			bins(iso,rho,:) = reshape(...
                                             		obj.MC2DLJs(iso,rho).data.RDFbins,...
-                          data                  		[1,1,numOfBins]);
-					end
-                            	end
+                                            		[1,1,numOfBins]);
+                                    end
+                            end
                         end
                     end
               end
               
-            RDF  obj.data.histo = histo;
+              obj.data.histo = histo;
               obj.data.bins = bins;
               
         end
@@ -204,6 +203,7 @@ classdef RDFoutput
                         % don't log zeros
                          length2plotlog = zeros(Nrho);
                          for j = 1:Nrho
+				if ~isempty(obj.dataFileList{i,j})
                             nonZeroInd = find(obj.data.histo(i,j,:));
                             bins = obj.data.bins(i,j,1:numOfBins);
                             bins = bins(1,1,nonZeroInd);
@@ -219,7 +219,7 @@ classdef RDFoutput
                              = reshape(y(j,:),[1,1,numOfBins]);
                             obj.data.length2plotlog(i,j) =...
                                 length2plotlog(j); 
-
+				end
                          end
                     else
                         x(:,:) = obj.data.bins(i,:,:);

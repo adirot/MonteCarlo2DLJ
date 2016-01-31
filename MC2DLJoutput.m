@@ -678,12 +678,12 @@ classdef MC2DLJoutput
            
            if plotSVsSqrtTau
                figure;
-               plot(sqrt(nb),sP1);
+               plot(sqrt(tau),sP);
                hold on;
                title('s for the pressure and energy');
                xlabel('\sqrt{\tau_b}');
                ylabel('s');
-               plot(sqrt(nb),sU1,'r');
+               plot(sqrt(tau),sU,'r');
                legend('pressure','energy');
            end
            
