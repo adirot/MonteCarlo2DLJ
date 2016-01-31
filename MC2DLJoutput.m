@@ -607,7 +607,7 @@ classdef MC2DLJoutput
                mean(obj.data.allUlrc(1,firstSteps2ignore:obj.indIndata));
        end
         
-       function [obj,sP,sU] = inefficiency(obj,tau,varargin)
+       function [obj,tauP,tauU] = inefficiency(obj,n,varargin)
            % for error calculations. see computer simulation of liquids
            % page 192
            
@@ -641,36 +641,38 @@ classdef MC2DLJoutput
                meanU = obj.data.meanUlrcEq;
            end
            
-           P = obj.data.allPlrc;
-           U = obj.data.allUlrc;
+           P = obj.data.allPlrc(1,firstSteps2ignore:obj.data.indIndata);
+           U = obj.data.allUlrc(1,firstSteps2ignore:obj.data.indIndata);
 
+           nt = (obj.indIndata - firstSteps2ignore);
            
-           for j = 1:length(tau)
+           for j = 1:length(n)
                 % calculate <A>b
                 ind = 1;
-                for i = (firstSteps2ignore+1):tau(j):(obj.indIndata-tau(j))
+                for i = 1:n(j):(nt-n(j)+1)
                    
-                    Pmeanb(ind) = mean(P(i:(i+tau(j)-1)));
-                    Umeanb(ind) = mean(U(i:(i+tau(j)-1)));                    
+                    Pmeanb(ind) = mean(P(i:(i+n(j)-1)));
+                    Umeanb(ind) = mean(U(i:(i+n(j)-1)));                    
                     ind = ind + 1;
                 end
            
                 % calculate sigma^2(<A>b) for all the different tau values
-                nb(j) = floor((obj.indIndata - firstSteps2ignore)/tau(j));
-                varMeanP(j) = (1/nb(j))*sum((Pmeanb - mean(Pmeanb)).^2);
-                varMeanU(j) = (1/nb(j))*sum((Umeanb - mean(Umeanb)).^2);
                 
-                %calculate sigma^2(A)
-                varP(j) = (1/(obj.indIndata-firstSteps2ignore))*sum((P(firstSteps2ignore:end) - meanP).^2);
-                varU(j) = (1/(obj.indIndata-firstSteps2ignore))*sum((U(firstSteps2ignore:end) - meanU).^2);
+                nb(j) = length(Pmeanb);
+                varMeanP(j) = mean((Pmeanb - mean(Pmeanb)).^2);
+                varMeanU(j) = mean((Umeanb - mean(Umeanb)).^2);
+                Pmeanb = [];
+                Umeanb = [];
+                
            end
-           
-           % calculate s
-           sP = tau.*varMeanP./varP;
-           sU = tau.*varMeanU./varU;
             
-           sP1 = nb.*varMeanP./varP;
-           sU1 = nb.*varMeanU./varU;
+           %calculate sigma^2(A)
+           varP = mean((P(:) - meanP).^2);
+           varU = mean((U(:) - meanU).^2);
+
+           % calculate tau
+           tauP = n.*varMeanP/varP;
+           tauU = n.*varMeanU/varU;
             
            if saveFigSVsSqrtTau
                plotSVsSqrtTau = true;
@@ -678,12 +680,12 @@ classdef MC2DLJoutput
            
            if plotSVsSqrtTau
                figure;
-               plot(sqrt(tau),sP);
+               plot(sqrt(n),tauP);
                hold on;
                title('s for the pressure and energy');
                xlabel('\sqrt{\tau_b}');
                ylabel('s');
-               plot(sqrt(tau),sU,'r');
+               plot(sqrt(n),tauU,'r');
                legend('pressure','energy');
            end
            
