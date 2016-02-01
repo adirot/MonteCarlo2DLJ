@@ -17,6 +17,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         addOptional(p, 'hPvsRho', []);
         addOptional(p, 'hPvsV', []);
         addOptional(p, 'UVsT', false);
+        addOptional(p, 'talk', false);
         parse(p, varargin{:});
         Results = p.Results;
         N = Results.N;
@@ -33,6 +34,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         hPvsV = Results.hPvsV;
         UVsT = Results.UVsT;
         plotIso = Results.plotIso;
+        talk = Results.talk;
         
         if isempty(N) && isempty(isotherms) && isempty(fileListOrgbyT)
             error(['provide number of particles,'...
@@ -153,6 +155,9 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         if strcmp(saveFig,'on')
             saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.fig']);
             saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.jpg']);
+            if talk
+                disp(['saved: isotherms_N' num2str(N) 'P_rho' fileNameEnd]);
+            end
         end
 
 
@@ -168,6 +173,10 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         if saveFig
             saveas(hPvsV,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.fig']);
             saveas(hPvsV,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.jpg']);
+            
+            if talk
+                disp('saved: isotherms_N' num2str(N) 'P_V' fileNameEnd]);
+            end
         end
     end
     
@@ -189,6 +198,17 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         title(['mean U Vs. T for N = ' N]);
         xlabel('Temperature, reduced units');
         ylabel('Energy, reduced units');
+
+        if saveFig
+            figName = ['meanUvsT_N' num2str(N) fileNameEnd];
+            saveas(hPvsV, [figName '.fig']);
+            saveas(hPvsV,[figName '.jpg']);
+            
+            if talk
+                disp(['saved: ' figName]);
+            end
+        end
+
 
     end
 end
