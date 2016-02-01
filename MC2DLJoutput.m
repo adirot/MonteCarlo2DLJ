@@ -734,6 +734,18 @@ classdef MC2DLJoutput
            obj.Plrc = mean(obj.data.allPlrc(1,1:obj.indIndata));
        end
     
+       function obj = calcCv(obj)
+           % calculate the energy flucuations:
+           firstSteps2ignore = obj.data.firstSteps2ignore;
+           N = obj.simulationParam.N;
+           T = obj.simulationParam.T;
+           indIndata = obj.indIndata;
+           
+           sigU = mean((obj.data.allUlrc(1,firstSteps2ignore:indIndata)...
+               - obj.data.meanUlrcEq).^2) - (obj.data.meanUlrcEq)^2;
+           obj.data.sigU = sigU;
+           obj.data.cv = N + (sigU/T^2);
+       end
         
     end    
 
