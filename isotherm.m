@@ -65,9 +65,10 @@ classdef isotherm
                             if cutEquilirization
                                 
                                % check if meanPlrcEq needs to be calculated
-                               % calculate it if it was nit calculated yet
+                               % calculate it if it was not calculated yet
                                if isempty(whos(obj.MC2DLJ(i).data,...
                                        'meanPlrcEq'))
+                                   
                                    obj.MC2DLJ(i) =...
                                        obj.MC2DLJ(i).calcMeanWithoutFirstSteps(...
                                        firstSteps2ignore);
@@ -76,9 +77,23 @@ classdef isotherm
                                obj.pressure(i) =...
                                    obj.MC2DLJ(i).data.meanPlrcEq;
                             else
-                               [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
-                               obj.pressure(i) =...
-                                   obj.MC2DLJ(i).data.meanPlrc(1,s);
+                                if existInMatfile(obj.MC2DLJ(i).data,...
+                                        'allPlrc')
+                                    if ~existInMatfile(obj.MC2DLJ(i).data,...
+                                            'meanPlrc')
+                              
+                                        obj.MC2DLJ(i).meanProp('P');
+                                    end
+                                   
+                                else
+                                    obj.MC2DLJ(i).calcPressureAfterRun();
+                                    obj.MC2DLJ(i).meanProp('P');
+                                end
+                                
+                                [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
+                               
+                                obj.pressure(i) =...
+                                      obj.MC2DLJ(i).data.meanPlrc(1,s);
                             end
                             obj.rho(i) = obj.MC2DLJ(i).simulationParam.rho;
                     end

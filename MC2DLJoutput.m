@@ -601,10 +601,21 @@ classdef MC2DLJoutput
        
        function obj = calcMeanWithoutFirstSteps(obj, firstSteps2ignore)
            obj.data.firstSteps2ignore = firstSteps2ignore;
+           
+           if ~existInMatfile(obj.data,'allPlrc')
+                obj = obj.calcPressureAfterRun();
+           else
+               [~,s] = size(obj.data.allPlrc);
+               if s == 0
+                     obj = obj.calcPressureAfterRun();
+               end
+           end 
+           
            obj.data.meanPlrcEq =...
                mean(obj.data.allPlrc(1,firstSteps2ignore:obj.indIndata));
            obj.data.meanUlrcEq =...
                mean(obj.data.allUlrc(1,firstSteps2ignore:obj.indIndata));
+               
        end
         
        function [obj,tauP,tauU] = inefficiency(obj,n,varargin)
@@ -700,31 +711,53 @@ classdef MC2DLJoutput
            if ~keepFigOpen
                close gcf;
            end
-        end
+       end
+        
+       function obj = calcPressureAfterRun(obj)
+           N = obj.simulationParam.N;
+           rho = obj.simulationParam.rho;
+           rCutoff = obj.simulationParam.rCutoff;
+           T = obj.simulationParam.T;
+           Pfix = 3*pi*rho^2/rCutoff^4;
+           
+           for i = 1:obj.indIndata
+               dists = obj.data.allDists(1:N,1:N,i);
+               virial = calcVirial(dists,rho,12,6,N,rCutoff);
+               obj.data.allV(1,i) = virial;
+               P = T*rho + virial;
+               obj.data.allP(1,i) = P;
+               obj.data.allPlrc(1,i) = P - Pfix;
+           end
+           
+           obj.currentPressure = P;
+           obj.currentVir = virial;
+           obj.Plrc = mean(obj.data.allPlrc(1,1:obj.indIndata));
+       end
     
         
     end    
 
 end
 
+
         function [dist,particlesPosition] = ...
             createInitialConfig(L,N,r,initialConfig)
 
-        possibleInitialConfigs = {'random','hex'};
-        initialConfigInd = strcmp(initialConfig,possibleInitialConfigs);
-        % check if input is valid:
-        if sum(initialConfigInd) ~= 1
-            error(['choose one of the initial configurations: '...
-                my_cell2str(possibleInitialConfigs)]);
-        else
-            switch find(initialConfigInd)
-                case 1 % random initial configuration
-                    [dist,particlesPosition] = randomStart(L,N,r);
-                case 2 % hexagonal initial configuration
-                    [dist,particlesPosition] = hcp(L,N,r);
+            possibleInitialConfigs = {'random','hex'};
+            initialConfigInd = strcmp(initialConfig,possibleInitialConfigs);
+            % check if input is valid:
+            if sum(initialConfigInd) ~= 1
+                error(['choose one of the initial configurations: '...
+                    my_cell2str(possibleInitialConfigs)]);
+            else
+                switch find(initialConfigInd)
+                    case 1 % random initial configuration
+                        [dist,particlesPosition] = randomStart(L,N,r);
+                    case 2 % hexagonal initial configuration
+                        [dist,particlesPosition] = hcp(L,N,r);
+                end
             end
         end
-    end
 
         function [dist,particlesPosition] = randomStart(L,N,r)
                 % randomize first particle possition in the box 

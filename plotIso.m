@@ -90,9 +90,9 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         
         for i = 1:Niso
             if i == 1
-                isotherms = isotherm(fileListOrgbyT{i,:});
+                isotherms = isotherm('datafileList',fileListOrgbyT(i,:)','cutEquilirization',true);
             else
-                isotherms(i) = isotherm(fileListOrgbyT{i,:});
+                isotherms(i) = isotherm('datafileList',fileListOrgbyT(i,:)','cutEquilirization',true);
             end
         end
     else
@@ -175,7 +175,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
             saveas(hPvsV,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.jpg']);
             
             if talk
-                disp('saved: isotherms_N' num2str(N) 'P_V' fileNameEnd]);
+                disp(['saved: isotherms_N' num2str(N) 'P_V' fileNameEnd]);
             end
         end
     end
