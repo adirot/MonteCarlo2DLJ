@@ -67,13 +67,16 @@ classdef RDFoutput
                   
               else
                     obj.data = matfile(RDFdata,'Writable',true);
+			1
                     obj.MC2DLJs = obj.data.MC2DLJs;
+			2
                     obj.dataFileList = obj.data.dataFileList;
+			3
                     
                     if ~isempty(whos(obj.data,'length2plot'))
                         obj.data.length2plot = length2plot;
                     end
-                    
+                    4
                  
               end
               
@@ -83,32 +86,28 @@ classdef RDFoutput
               obj.numOfBins = numOfBins;
               
               if isempty(whos(obj.data,'histo'))
-                    histo = zeros(Niso,Nrho,numOfBins);
-                    bins = zeros(Niso,Nrho,numOfBins);
-              else
-                    histo = obj.data.histo;
-                    bins = obj.data.bins;
+                    obj.data.histo = zeros(Niso,Nrho,numOfBins);
+                    obj.data.bins = zeros(Niso,Nrho,numOfBins);
               end
               
               for iso = 1:Niso
                     for rho = 1:Nrho
-                        if sum(histo(iso,rho,:)) == 0
+                        if sum(obj.data.histo(iso,rho,1:numOfBins)) == 0
                             if ~isempty(obj.MC2DLJs(iso,rho).fileName)
-                            		if ~isempty(whos(obj.MC2DLJs(iso,rho).data,'RDFhisto'))
-                                		histo(iso,rho,:) = reshape(mean(obj.MC2DLJs(iso,rho).data.RDFhisto),...
-                                            		[1,1,numOfBins]);
-                               			bins(iso,rho,:) = reshape(...
-                                            		obj.MC2DLJs(iso,rho).data.RDFbins,...
-                                            		[1,1,numOfBins]);
-                                    end
+                                if ~isempty(whos(obj.MC2DLJs(iso,rho).data,'RDFhisto'))
+                                    iso
+                                    rho
+                                    obj.data.histo(iso,rho,1:numOfBins) = reshape(...
+                                         mean(obj.MC2DLJs(iso,rho).data.RDFhisto),...
+                                         [1,1,numOfBins]);
+                                    obj.data.bins(iso,rho,1:numOfBins) = reshape(...
+                                         obj.MC2DLJs(iso,rho).data.RDFbins,...
+                                         [1,1,numOfBins]);
+                                end
                             end
                         end
                     end
               end
-              
-              obj.data.histo = histo;
-              obj.data.bins = bins;
-              
         end
         
         function obj = calcAllRDF(obj,maxDist,numOfBins,varargin)
