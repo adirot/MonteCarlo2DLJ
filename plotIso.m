@@ -5,7 +5,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         p = inputParser();
         addOptional(p, 'N', []); 
         addOptional(p, 'Visible', 'on');
-        addOptional(p, 'saveFig', 'off');
+        addOptional(p, 'saveFig', true);
         addOptional(p, 'fitprop', []);
         addOptional(p, 'residuals', []);
         addOptional(p, 'fileNameEnd', '');
@@ -152,7 +152,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
                 isotherms(i).pressure(find(canGetUfromgRind(i,:))),'mo');
         end
 
-        if strcmp(saveFig,'on')
+        if saveFig
             saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.fig']);
             saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.jpg']);
             if talk
