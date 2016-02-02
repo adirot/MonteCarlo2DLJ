@@ -36,7 +36,9 @@ function fileListOrgbyT = fileListOrgbyT(varargin)
                         newfileList{1,(indnewlist+1):end}};
                     indnewlist = indnewlist - 1;
                     ind = ind + 1;
-
+                    if i == 1
+                        rho(ind) = sim.rho;
+                    end
                 end
                 indnewlist = indnewlist + 1;
             end
@@ -49,6 +51,10 @@ function fileListOrgbyT = fileListOrgbyT(varargin)
         % sort by Temprature
         [~, indsorted] = sort(T); 
         fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
+        
+        % sort by rho
+        [~, indsorted] = sort(rho);
+        fileListOrgbyT(:,:) = fileListOrgbyT(:,indsorted);
         
     end
     %colorPlot(1./rho,pressure,'addLegend',leg);
