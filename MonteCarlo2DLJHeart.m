@@ -301,7 +301,7 @@ finalDistances = dist;
                 dU = newU - oldU;
         end
     
-    function dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho)
+        function dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho)
         % calculates the change in the virial after a particle has moved
                 
                 % calculate the old virial for the relevant particle pairs
@@ -347,7 +347,7 @@ finalDistances = dist;
                 % clculate the change in the virial
                 
                 dV = newV - oldV;
-    end
+        end
         
     
             

@@ -134,34 +134,32 @@ classdef RDFoutput
                             j
                             i
                         end
-			if ~isempty(obj.MC2DLJs(i,j).indIndata)	                        
-                        	if skipExisting
-                            		if isempty(whos(obj.MC2DLJs(i,j).data,'RDFhisto'))
+                        if ~isempty(obj.MC2DLJs(i,j).indIndata)	                        
+                            if skipExisting
+                                if isempty(whos(obj.MC2DLJs(i,j).data,'RDFhisto'))
                                 		obj.MC2DLJs(i,j) =...
                                 			obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins);
                                 
-                            		end
+                                end
                         	else
                            		obj.MC2DLJs(i,j) =...
                                 		obj.MC2DLJs(i,j).calcRDF(maxDist,numOfBins); 
-                        	end
-                        
-                        	obj.length2plot(i,j) =...
-                            		length(obj.MC2DLJs(i,j).data.RDFbins); 
+                            end 
  
-	                        a = obj.MC2DLJs(i,j).data.RDFbins(1,...
-        		                    1:obj.length2plot(i,j));
-                       		 obj.data.bins(i,j,1:obj.length2plot(i,j)) =...
-                           		 reshape(a,[1,1,obj.length2plot(i,j)]);
+                            a = obj.MC2DLJs(i,j).data.RDFbins(1,...
+        		                    1:numOfBins);
+                       		obj.data.bins(i,j,1:numOfBins) =...
+                           		 reshape(a,[1,1,numOfBins]);
                         
-                       		 a = obj.MC2DLJs(i,j).data.RDFhisto(1,...
-                           		 1:obj.length2plot(i,j));
-                       		 obj.data.histo(i,j,1:obj.length2plot(i,j)) =...
-                           		 reshape(a,[1,1,obj.length2plot(i,j)]);
+                       		a = mean(obj.MC2DLJs(i,j).data.RDFhisto(...
+                                    1:obj.MC2DLJs(i,j).indIndata,...
+                                    1:numOfBins));
+                       		obj.data.histo(i,j,1:numOfBins) =...
+                           		 reshape(a,[1,1,numOfBins]);
                         
-                       		 obj.legrho{1,j} = ['\rho = '...
+                       		obj.legrho{1,j} = ['\rho = '...
                            		 num2str(obj.MC2DLJs(i,j).simulationParam.rho)];
-			end
+                        end
                     end
                     obj.legT{1,i} = ['T = '...
                         num2str(obj.MC2DLJs(i,1).simulationParam.T)];

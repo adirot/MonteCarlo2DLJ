@@ -40,7 +40,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
             error(['provide number of particles,'...
                 'for example: plotIso(''N'',625), or isotherm object, or fileListOrgbyT']);
         else
-            isothermsOrFileList = dir(['N' num2str(N) '*mat']);
+            isothermsOrFileList = dir(['N' num2str(N) 'T*mat']);
             isothermsOrFileList = {isothermsOrFileList.name};
         end
             
@@ -201,8 +201,8 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
 
         if saveFig
             figName = ['meanUvsT_N' num2str(N) fileNameEnd];
-            saveas(hPvsV, [figName '.fig']);
-            saveas(hPvsV,[figName '.jpg']);
+            saveas(gcf, [figName '.fig']);
+            saveas(gcf,[figName '.jpg']);
             
             if talk
                 disp(['saved: ' figName]);

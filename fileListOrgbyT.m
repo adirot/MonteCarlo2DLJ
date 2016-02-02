@@ -50,6 +50,6 @@ function fileListOrgbyT = fileListOrgbyT(varargin)
         [~, indsorted] = sort(T); 
         fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
         
-        
+    end
     %colorPlot(1./rho,pressure,'addLegend',leg);
 end

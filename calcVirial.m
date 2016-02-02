@@ -32,7 +32,7 @@ function virial = calcVirial(dists,rho,n,m,N,rCutoff)
 %       m - the 'm' constant in the pair potantial
 %       T - reduced Temperature 
 
-       dists = dists(dists < rCutoff);
+       dists = dists(and(dists < rCutoff,dists > 0));
        
        % V = - (2*rho'/N)*sum(m(1/r'_ij)^m - n(1/r'_ij)^n)
        vir = - (2*rho/N)*(sum(sum(m*dists.^(-m) - n*dists.^(-n))));
