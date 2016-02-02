@@ -29,70 +29,34 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         isotherms = Results.isotherms;
         fit = Results.fit;
         canGetUfromgRind = Results.canGetUfromgRind;
-        fileListOrgbyT = Results.fileListOrgbyT;
+        fileListOrg = Results.fileListOrgbyT;
         hPvsRho = Results.hPvsRho;
         hPvsV = Results.hPvsV;
         UVsT = Results.UVsT;
         plotIso = Results.plotIso;
         talk = Results.talk;
         
-        if isempty(N) && isempty(isotherms) && isempty(fileListOrgbyT)
+        if isempty(N) && isempty(isotherms) && isempty(fileListOrg)
             error(['provide number of particles,'...
                 'for example: plotIso(''N'',625), or isotherm object, or fileListOrgbyT']);
         else
-            isothermsOrFileList = dir(['N' num2str(N) 'T*mat']);
-            isothermsOrFileList = {isothermsOrFileList.name};
+            fileList = dir(['N' num2str(N) 'T*mat']);
+            fileList = {fileList.name};
         end
             
     
     if isempty(isotherms)
-        if isempty(fileListOrgbyT)
-            fileListOrgbyT = {};
-            fileList = isothermsOrFileList;
-            i = 1;
-            while ~isempty(fileList);
-                data = matfile(fileList{1,1});
-                sim = data.simulationParam;
-                T(i) = sim.T;
-                fileListOrgbyT{i,1} = fileList{1,1};
-
-                ind = 2;
-                indnewlist = 1;
-                newfileList = fileList;
-                for j = 2:length(fileList)
-                    data = matfile(fileList{1,j});
-                    sim = data.simulationParam;
-                    thisT = sim.T;
-
-                    if thisT == T(i)
-                        fileListOrgbyT{i,ind} = fileList{1,j};
-                        newfileList = ...
-                            {newfileList{1,1:(indnewlist-1)}...
-                            newfileList{1,(indnewlist+1):end}};
-                        indnewlist = indnewlist - 1;
-                        ind = ind + 1;
-
-                    end
-                    indnewlist = indnewlist + 1;
-                end
-                fileList = newfileList;
-                fileList = fileList(1,2:end);
-                i = i + 1;
-            end
-            clear i;
-
-            % sort by Temprature
-            [~, indsorted] = sort(T); 
-            fileListOrgbyT(indsorted,:) = fileListOrgbyT(:,:);
+        if isempty(fileListOrg)
+            fileListOrg = fileListOrgbyT(fileList);        
         end        
         
-        [Niso, ~] = size(fileListOrgbyT);
+        [Niso, ~] = size(fileListOrg);
         
         for i = 1:Niso
             if i == 1
-                isotherms = isotherm('datafileList',fileListOrgbyT(i,:)','cutEquilirization',true);
+                isotherms = isotherm('datafileList',fileListOrg(i,:)','cutEquilirization',true);
             else
-                isotherms(i) = isotherm('datafileList',fileListOrgbyT(i,:)','cutEquilirization',true);
+                isotherms(i) = isotherm('datafileList',fileListOrg(i,:)','cutEquilirization',true);
             end
         end
     else
