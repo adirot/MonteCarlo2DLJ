@@ -186,8 +186,8 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
         N = num2str(isotherms(1).MC2DLJ(1).simulationParam.N);
         for i = 1:Niso
             for j = 1:Nrho
-                U(i,j) = isotherms(i).MC2DLJ(j).data.meanUlrcEq;
-                T(i,j) = isotherms(i).T;
+                U(j,i) = isotherms(i).MC2DLJ(j).data.meanUlrcEq;
+                T(j,i) = isotherms(i).T;
                 if i == 1
                     legUVsT{1,j} = ['\rho = ' my_num2str(isotherms(i).rho(j))];
                 end
