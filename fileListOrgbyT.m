@@ -20,6 +20,9 @@ function fileListOrgbyT = fileListOrgbyT(varargin)
             sim = data.simulationParam;
             T(i) = sim.T;
             fileListOrgbyT{i,1} = fileList{1,1};
+            if i == 1
+                rho(1) = sim.rho;
+            end
             
             ind = 2;
             indnewlist = 1;
@@ -35,10 +38,11 @@ function fileListOrgbyT = fileListOrgbyT(varargin)
                         {newfileList{1,1:(indnewlist-1)}...
                         newfileList{1,(indnewlist+1):end}};
                     indnewlist = indnewlist - 1;
-                    ind = ind + 1;
                     if i == 1
                         rho(ind) = sim.rho;
                     end
+                    ind = ind + 1;
+                    
                 end
                 indnewlist = indnewlist + 1;
             end
