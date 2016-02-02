@@ -1,4 +1,4 @@
-function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
+function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
     
     % check input, build isotherm object from data files if necessary
 
@@ -145,8 +145,8 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV] = plotIso(varargin)
     end
     
     if UVsT
-        U = zeros(Niso,Nrho);
-        T = zeros(Niso,Nrho);
+        U = zeros(Nrho,Niso);
+        T = zeros(Nrho,Niso);
         N = num2str(isotherms(1).MC2DLJ(1).simulationParam.N);
         for i = 1:Niso
             for j = 1:Nrho
