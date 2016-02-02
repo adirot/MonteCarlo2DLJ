@@ -16,7 +16,8 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         addOptional(p, 'fileListOrgbyT', []);
         addOptional(p, 'hPvsRho', []);
         addOptional(p, 'hPvsV', []);
-        addOptional(p, 'UVsT', false);
+        addOptional(p, 'UVsT', true);
+        addOptional(p, 'plotCv', true);
         addOptional(p, 'talk', false);
         parse(p, varargin{:});
         Results = p.Results;
@@ -35,6 +36,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         UVsT = Results.UVsT;
         plotIso = Results.plotIso;
         talk = Results.talk;
+        plotCv = Results.plotCv;
         
         if isempty(N) && isempty(isotherms) && isempty(fileListOrg)
             error(['provide number of particles,'...
@@ -174,6 +176,63 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         end
 
 
+    end
+    
+    if plotCv
+        cv = zeros(Nrho,Niso);
+        T = zeros(Nrho,Niso);
+        N = num2str(isotherms(1).MC2DLJ(1).simulationParam.N);
+        for i = 1:Niso
+            for j = 1:Nrho
+                cv(j,i) = isotherms(i).MC2DLJ(j).data.cv;
+                T(j,i) = isotherms(i).T;
+                if i == 1
+                    legUVsT{1,j} = ['\rho = ' my_num2str(isotherms(i).rho(j))];
+                end
+            end
+        end
+        
+        colorPlot(T,cv,'addLegend',legUVsT);
+        title(['cv Vs. T for N = ' N]);
+        xlabel('Temperature, reduced units');
+        ylabel('cv, reduced units');
+
+        if saveFig
+            figName = ['cvVsT_N' num2str(N) fileNameEnd];
+            saveas(gcf, [figName '.fig']);
+            saveas(gcf,[figName '.jpg']);
+            
+            if talk
+                disp(['saved: ' figName]);
+            end
+        end
+        
+        cv = zeros(Niso, Nrho);
+        rho = zeros(Niso, Nrho);
+        N = num2str(isotherms(1).MC2DLJ(1).simulationParam.N);
+        for i = 1:Niso
+            legcvVsrho{1,j} = ['T = ' my_num2str(isotherms(i).T)];
+
+            for j = 1:Nrho
+                cv(i,j) = isotherms(i).MC2DLJ(j).data.cv;
+                rho(i,j) = isotherms(i).rho;
+            end
+        end
+        
+        colorPlot(T,cv,'addLegend',legcvVsrho);
+        title(['cv Vs. rho for N = ' N]);
+        xlabel('rho, reduced units');
+        ylabel('cv, reduced units');
+
+        if saveFig
+            figName = ['cvVsrho_N' num2str(N) fileNameEnd];
+            saveas(gcf, [figName '.fig']);
+            saveas(gcf,[figName '.jpg']);
+            
+            if talk
+                disp(['saved: ' figName]);
+            end
+        end
     end
 end
 

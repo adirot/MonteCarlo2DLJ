@@ -3,6 +3,7 @@ classdef isotherm
     properties
         pressure, rho, T;
         MC2DLJ, datafileList;
+        cv;
         simulationParam;
         cutEquilirization, firstSteps2ignore;
     end
@@ -254,6 +255,13 @@ classdef isotherm
         function obj = calcMeanWithoutFirstSteps(obj, firstSteps2ignore)
             for i = 1:length(obj.rho)
                 obj.MC2DLJ(i).calcMeanWithoutFirstSteps(firstSteps2ignore);
+            end
+        end
+        
+        function obj = calcCv(obj)
+            for i = 1:length(obj.rho)
+                obj.MC2DLJ(i) = obj.MC2DLJ(i).calcCv();
+                obj.cv(i) = obj.MC2DLJ(i).data.cv;
             end
         end
     end
