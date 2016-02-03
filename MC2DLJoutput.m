@@ -741,8 +741,10 @@ classdef MC2DLJoutput
            T = obj.simulationParam.T;
            indIndata = obj.indIndata;
            
-           sigU = mean((obj.data.allUlrc(1,firstSteps2ignore:indIndata)...
-               - obj.data.meanUlrcEq).^2) - (obj.data.meanUlrcEq)^2;
+           meanU = obj.data.meanUlrcEq;
+           U = obj.data.allUlrc(1,firstSteps2ignore:indIndata);
+           sigU = mean((U - meanU).^2);
+
            obj.data.sigU = sigU;
            obj.data.cv = N + (sigU/T^2);
        end

@@ -115,13 +115,31 @@ classdef isotherm
                     
                     for i = 1:length(rho)
                         if i == 1
+                            if strcmp(initialConfig,'auto')
+                                if rho(i) > 0.4
+                                    init = 'hex';
+                                else
+                                    init = 'random';
+                                end
+                            else
+                                init = initialConfig;
+                            end
                             obj.MC2DLJ = MC2DLJoutput(N,T,rho(i),initialmaxdr,...
-                                initialConfig,rCutoff,r,...
+                                init,rCutoff,r,...
                                 'verelet',rl,'pressure',true,...
                                 'fileNameInit',fileNameInit);
                         else
+                            if strcmp(initialConfig,'auto')
+                                if rho(i) > 0.4
+                                    init = 'hex';
+                                else
+                                    init = 'random';
+                                end
+                            else
+                                init = initialConfig;
+                            end
                             obj.MC2DLJ(i) = MC2DLJoutput(N,T,rho(i),initialmaxdr,...
-                                initialConfig,rCutoff,r,...
+                                init,rCutoff,r,...
                                 'verelet',rl,'pressure',true,...
                                 'fileNameInit',fileNameInit);
                         end

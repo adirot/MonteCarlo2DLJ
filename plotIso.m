@@ -4,6 +4,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
 
         p = inputParser();
         addOptional(p, 'N', []); 
+        addOptional(p, 'fileListOrg', []); 
         addOptional(p, 'Visible', 'on');
         addOptional(p, 'saveFig', true);
         addOptional(p, 'fitprop', []);
@@ -13,7 +14,6 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         addOptional(p, 'plotIso', true);
         addOptional(p, 'fit', []);
         addOptional(p, 'canGetUfromgRind', []);
-        addOptional(p, 'fileListOrgbyT', []);
         addOptional(p, 'hPvsRho', []);
         addOptional(p, 'hPvsV', []);
         addOptional(p, 'UVsT', true);
@@ -30,13 +30,13 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         isotherms = Results.isotherms;
         fit = Results.fit;
         canGetUfromgRind = Results.canGetUfromgRind;
-        fileListOrg = Results.fileListOrgbyT;
         hPvsRho = Results.hPvsRho;
         hPvsV = Results.hPvsV;
         UVsT = Results.UVsT;
         plotIso = Results.plotIso;
         talk = Results.talk;
         plotCv = Results.plotCv;
+        fileListOrg = Results.fileListOrg;
         
         if isempty(N) && isempty(isotherms) && isempty(fileListOrg)
             error(['provide number of particles,'...
@@ -79,6 +79,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         leg{1,i} = ['T = ' num2str(isotherms(i).T)];
         
     end
+        N = isotherms(1).MC2DLJ(1).simulationParam.N;
     
     if plotIso
         if isempty(hPvsRho)
@@ -119,6 +120,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         end
 
         if saveFig
+            
             saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.fig']);
             saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.jpg']);
             if talk
@@ -175,7 +177,8 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
             end
         end
 
-
+    else
+        U = 0;
     end
     
     if plotCv
@@ -211,15 +214,15 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         rho = zeros(Niso, Nrho);
         N = num2str(isotherms(1).MC2DLJ(1).simulationParam.N);
         for i = 1:Niso
-            legcvVsrho{1,j} = ['T = ' my_num2str(isotherms(i).T)];
+            legcvVsrho{1,i} = ['T = ' my_num2str(isotherms(i).T)];
 
             for j = 1:Nrho
                 cv(i,j) = isotherms(i).MC2DLJ(j).data.cv;
-                rho(i,j) = isotherms(i).rho;
+                rho(i,j) = isotherms(i).rho(j);
             end
         end
         
-        colorPlot(T,cv,'addLegend',legcvVsrho);
+        colorPlot(rho,cv,'addLegend',legcvVsrho);
         title(['cv Vs. rho for N = ' N]);
         xlabel('rho, reduced units');
         ylabel('cv, reduced units');

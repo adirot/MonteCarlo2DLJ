@@ -11,6 +11,7 @@ T = Results.T;
         
 rhorand = [0.0001 0.0003 0.0005 0.0007 0.001 0.003 0.005 0.007 0.01 0.03 0.05 0.07 0.1 0.2 0.3 0.4];
 rhohex  = 0.42:0.02:0.7;
+rho = [rhorand, rhohex];
 maxdr = 1;
 rCutoff = 2.5;
 saveEvery = 10;
@@ -25,35 +26,38 @@ saveEvery = 10;
 r = 2^(1/6)/2; % particle radius in reduced units 
 
 for i = 1:length(T)
-    Irand(i) = isotherm('N',N,'T',T(i),'rho',rhorand,'initialmaxdr',maxdr,...
-        'initialConfig','random','rCutoff',2.5,'r',r,...
-        'cutEquilirization',false);
-    Ihex(i) = isotherm('N',N,'T',T(i),'rho',rhohex,'initialmaxdr',maxdr,...
-        'initialConfig','hex','rCutoff',2.5,'r',r,...
+    I(i) = isotherm('N',N,'T',T(i),'rho',rho,'initialmaxdr',maxdr,...
+        'initialConfig','auto','rCutoff',2.5,'r',r,...
         'cutEquilirization',false);
 end
+
+
 
 disp(['created Isotherms N = ' num2str(N)]);
 save(['isoObjN' num2str(N)],'-v7.3');
 
 for i = 1:length(T)
-    Irand(i) = Irand(i).calcIso(Nsteps,10);
-    Ihex(i) = Ihex(i).calcIso(Nsteps,10);
+    I(i) = I(i).calcIso(Nsteps,10);
 end
 
 disp(['calculated Isotherms N = ' num2str(N)]);
 save(['isoObjN' num2str(N)],'-v7.3');
 
 for i = 1:length(T)
+    I(i) = I(i).calcCv();
+end
+
+disp(['calculated Cv N = ' num2str(N)]);
+save(['isoObjN' num2str(N)],'-v7.3');
+
+for i = 1:length(T)
     
-    [Irand(i), h] = Irand(i).plotPropVsStep('U');
-    [Ihex(i), h] = Ihex(i).plotPropVsStep('U','figHandle',h);
+    [I(i), h] = I(i).plotPropVsStep('U');
     saveas(h,['UvsStepN' num2str(N) 'T' my_num2str(T(i)) '.fig']);
     saveas(h,['UvsStepN' num2str(N) 'T' my_num2str(T(i)) '.jpg']);
     close all;
     
-    [Irand(i), h] = Irand(i).plotPropVsStep('P');
-    [Ihex(i), h] = Ihex(i).plotPropVsStep('P','figHandle',h);
+    [I(i), h] = I(i).plotPropVsStep('P');
     saveas(h,['PvsStepN' num2str(N) 'T' my_num2str(T(i)) '.fig']);
     saveas(h,['PvsStepN' num2str(N) 'T' my_num2str(T(i)) '.jpg']);
     close all;
@@ -62,19 +66,14 @@ end
 
 disp(['ploted PvsStep N = ' num2str(N)]);
 
-[~,fitrand,canGetUfromgRindrand,hPvsRho,hPvsV] = plotIso('isotherms',Irand,...
+[~,fit,canGetUfromgRind,~,~,~,~] = plotIso('isotherms',I,...
     'N',N,'fitprop',{'plotLin', 'plotVirialExp'},...
-    'residuals',{false, false});
-
-[~,fithex,canGetUfromgRindhex,~,~] = plotIso('isotherms',Ihex,...
-    'N',N,'fitprop',{'plotLin', 'plotVirialExp'}...
-    ,'hPvsRho',hPvsRho,'hPvsV',hPvsV,...
-    'residuals',{false, false});
+    'residuals',{false, false},'talk',true);
 
 disp(['ploted isotherms N = ' num2str(N)]);
 save(['isoObjN' num2str(N)],'-v7.3');
 
-clear Irand Ihex fithex fitrand canGetUfromgRindrand canGetUfromgRindhex;
+clear I fit canGetUfromgRind;
 
 RDF = RDFoutput('N',N);
 save(['RDFObjN' num2str(N)],'-v7.3');
