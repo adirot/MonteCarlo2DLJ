@@ -39,7 +39,7 @@ classdef RDFoutput
                         if isempty(dataFileList) 
 
                                 % get all data from files in folder
-                                dataFileList = dir(['N' num2str(N) '*mat']);
+                                dataFileList = dir(['N' num2str(N) 'T*mat']);
                                 dataFileList = {dataFileList.name};
                         end
 
