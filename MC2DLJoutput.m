@@ -148,11 +148,13 @@ classdef MC2DLJoutput
                     addOptional(p, 'verelet', []);
                     addOptional(p, 'pressure', false);
                     addOptional(p, 'fileNameInit', '');
+                    addOptional(p, 'm', 6);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
                     pressure = Results.pressure;
                     fileNameInit = Results.fileNameInit;
+                    m = REsults.m;
                     
                     % create a simulation output object for a new
                     % simulation
@@ -174,6 +176,7 @@ classdef MC2DLJoutput
                     obj.simulationParam.r = r;
                     obj.simulationParam.rl = rl;
                     obj.simulationParam.pressure = pressure;
+                    obj.simulationParam.m = m;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
@@ -197,7 +200,8 @@ classdef MC2DLJoutput
                         my_num2str(initialmaxdr) 'initialconfig_'...
                         initialConfig 'rCutoff'...
                          my_num2str(rCutoff) vereletstr '_' pressurestr...
-                         'date'...
+                          '_m' num2str(m) ...
+                          'date'...
                         nowdatetimestr()];
                         
                     % create initial configuration
@@ -209,13 +213,13 @@ classdef MC2DLJoutput
                         
                     % calculate initial energy
                     d = reshapeDist(allDists);
-                    allU = pairU(d,rCutoff);
+                    allU = pairU(d,rCutoff,m);
                     allUlrc = allU - pi*rho*N/rCutoff^4;
                     
                     % calculate initial virial and pressere
                     if pressure
                         allV = ...
-                            calcVirial(d,rho,12,6,N,rCutoff);
+                            calcVirial(d,rho,12,m,N,rCutoff);
                         allP = T*rho + allV;
                         allPlrc = allP - 3*pi*rho^2/rCutoff^4;
                     else
@@ -252,9 +256,11 @@ classdef MC2DLJoutput
         end
         
        function obj = MonteCarlo(obj,Nsteps,saveEvery)
-            N = obj.simulationParam.N; rho = obj.simulationParam.rho;
-                rCutoff = obj.simulationParam.rCutoff;        
-                    
+            N = obj.simulationParam.N; 
+            rho = obj.simulationParam.rho;
+            rCutoff = obj.simulationParam.rCutoff;        
+            m = obj.simulationParam.m;        
+            
             stepCount = 0;
             while(stepCount < Nsteps)
                 [finalU,finalV,finalPressure,...
@@ -271,7 +277,8 @@ classdef MC2DLJoutput
                     obj.currentDists,...
                     obj.currentU,...
                     'verelet',obj.simulationParam.rl,...
-                    'virial',obj.currentVir);
+                    'virial',obj.currentVir,...
+                    'm',m);
                 
                 stepCount = stepCount + obj.simulationParam.N*saveEvery;
                 obj.currentStep = obj.currentStep...
@@ -285,9 +292,10 @@ classdef MC2DLJoutput
                 
             
                 % long range correction
-                obj.Ulrc = obj.currentU - pi*N*rho/rCutoff^4;
+                obj.Ulrc = obj.currentU + 4*pi*N*rho/((2-m)*rCutoff^(m-2));
                 if obj.simulationParam.pressure
-                    obj.Plrc = obj.currentPressure - 3*pi*rho^2/rCutoff^4;
+                    obj.Plrc = obj.currentPressure -...
+                        2*m*pi*rho^2/((2-m)*rCutoff^(m-2));
                 end
             
                 obj = obj.addStep2data(obj.currentStep,finalConfiguration,...

@@ -81,14 +81,15 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
         leg{1,i} = ['T = ' num2str(isotherms(i).T)];
         
     end
-        N = isotherms(1).MC2DLJ(1).simulationParam.N;
+    N = isotherms(1).MC2DLJ(1).simulationParam.N;
+    m = isotherms(1).MC2DLJ(1).simulationParam.m;
     
     if plotIso
         if isempty(hPvsRho)
             hPvsRho = figure('Visible',Visible);
         end
         hPvsRho = colorPlot(rho,pressure,'addLegend',leg,'figHandle',hPvsRho);
-        title(['isotherms for N = ' num2str(N)]);
+        title(['isotherms for N = ' num2str(N) 'm = ' num2str(m)]);
         xlabel('density, reduced units');
         ylabel('pressure, reduced units');
 
@@ -122,11 +123,12 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
         end
 
         if saveFig
-            
-            saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.fig']);
-            saveas(hPvsRho,['isotherms_N' num2str(N) 'P_rho' fileNameEnd '.jpg']);
+            fileName = ['isotherms_N' num2str(N) 'P_rho'...
+                '_m' num2str(m) fileNameEnd];
+            saveas(hPvsRho,[fileName '.fig']);
+            saveas(hPvsRho,[fileName '.jpg']);
             if talk
-                disp(['saved: isotherms_N' num2str(N) 'P_rho' fileNameEnd]);
+                disp(['saved: ' fileName]);
             end
         end
 
@@ -135,17 +137,18 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
             hPvsV = figure('Visible',Visible);
         end
         hPvsV = colorPlot(1./rho,pressure,'addLegend',leg,'figHandle',hPvsV);
-        title(['isotherms for N = ' num2str(N)]);
+        title(['isotherms for N = ' num2str(N) ' m = ' num2str(m)]);
         xlabel('volume, reduced units');
         ylabel('pressure, reduced units');
     
    
         if saveFig
-            saveas(hPvsV,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.fig']);
-            saveas(hPvsV,['isotherms_N' num2str(N) 'P_V' fileNameEnd '.jpg']);
+            fileName = ['isotherms_N' num2str(N) 'P_V_m' num2str(m) fileNameEnd];
+            saveas(hPvsV,[fileName '.fig']);
+            saveas(hPvsV,[fileName '.jpg']);
             
             if talk
-                disp(['saved: isotherms_N' num2str(N) 'P_V' fileNameEnd]);
+                disp(['saved: ' fileName]);
             end
         end
     end
@@ -165,12 +168,12 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
         end
         
         colorPlot(T,U,'addLegend',legUVsT);
-        title(['mean U Vs. T for N = ' N]);
+        title(['mean U Vs. T for N = ' N ' m = ' num2str(m)]);
         xlabel('Temperature, reduced units');
         ylabel('Energy, reduced units');
 
         if saveFig
-            figName = ['meanUvsT_N' num2str(N) fileNameEnd];
+            figName = ['meanUvsT_N' num2str(N) 'm' num2str(m) fileNameEnd];
             saveas(gcf, [figName '.fig']);
             saveas(gcf,[figName '.jpg']);
             
@@ -198,12 +201,12 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
         end
         
         colorPlot(T,P,'addLegend',legPVsT);
-        title(['mean P Vs. T for N = ' N]);
+        title(['mean P Vs. T for N = ' N ' m = ' num2str(m)]);
         xlabel('Temperature, reduced units');
         ylabel('Pressure, reduced units');
 
         if saveFig
-            figName = ['meanPvsT_N' num2str(N) fileNameEnd];
+            figName = ['meanPvsT_N' num2str(N) 'm' num2str(m) fileNameEnd];
             saveas(gcf, [figName '.fig']);
             saveas(gcf,[figName '.jpg']);
             
@@ -231,12 +234,12 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
         end
         
         colorPlot(T,cv,'addLegend',legUVsT);
-        title(['cv Vs. T for N = ' N]);
+        title(['cv Vs. T for N = ' N ' m = ' num2str(m)]);
         xlabel('Temperature, reduced units');
         ylabel('cv, reduced units');
 
         if saveFig
-            figName = ['cvVsT_N' num2str(N) fileNameEnd];
+            figName = ['cvVsT_N' num2str(N) 'm' num2str(m) fileNameEnd];
             saveas(gcf, [figName '.fig']);
             saveas(gcf,[figName '.jpg']);
             
@@ -258,12 +261,12 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
         end
         
         colorPlot(rho,cv,'addLegend',legcvVsrho);
-        title(['cv Vs. rho for N = ' N]);
+        title(['cv Vs. rho for N = ' N ' m = ' num2str(m)]);
         xlabel('rho, reduced units');
         ylabel('cv, reduced units');
 
         if saveFig
-            figName = ['cvVsrho_N' num2str(N) fileNameEnd];
+            figName = ['cvVsrho_N' num2str(N) 'm' num2str(m) fileNameEnd];
             saveas(gcf, [figName '.fig']);
             saveas(gcf,[figName '.jpg']);
             

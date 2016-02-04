@@ -78,14 +78,16 @@ classdef RhoDistriboutput
                 
                 p = inputParser();
                 addOptional(p, 'talk', false);
+                addOptional(p, 'startFrom', 1);
                 parse(p, varargin{:});
                 Results = p.Results;
                 talk = Results.talk;
-
+                startFrom = Results.startFrom;
                 
                 [Niso, Nrho] = size(obj.MC2DLJs);
                 [obj.MC2DLJs(1,1), rhoNorm, PL] =...
-                    obj.MC2DLJs(1,1).calcRhoDistrib(squares,numOfBins);
+                    obj.MC2DLJs(1,1).calcRhoDistrib(squares,...
+                    numOfBins,'startFrom',startFrom);
                 obj.data.histo = zeros(Niso,Nrho,numOfBins);
                 obj.data.bins = zeros(Niso,Nrho,numOfBins);
                 obj.data.histo(1,1,1:numOfBins) =...
@@ -104,7 +106,7 @@ classdef RhoDistriboutput
                         if ~and(i == 1,j==1)
                             [obj.MC2DLJs(i,j), rhoNorm, PL] =...
                                 obj.MC2DLJs(i,j).calcRhoDistrib(squares,...
-                                    numOfBins); 
+                                    numOfBins,'startFrom',startFrom); 
                             obj.data.bins(i,j,1:numOfBins) =...
                                 reshape(rhoNorm, [1,1,numOfBins]);
                             obj.data.histo(i,j,1:numOfBins) =...

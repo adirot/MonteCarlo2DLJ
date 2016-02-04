@@ -19,6 +19,9 @@ function [finalU,finalVirial,finalPressure,finalConfiguration,finalDistances,mov
 % optional: 'verelet', rl : use verelet neighbor algorithm with rCutoff
 %           (rc) inner radius and rl outer radius. see section 5.3.1 in the
 %           book computer simulation of liquids for more information.
+% optional: the 'm' in the intetraction (U = 4((1/r)^12 - (1/r)^-m)),
+%           default is 6.
+
 
 % outputs:
 % finalU - the energy in each step (1 by Nstep matrix)
@@ -29,7 +32,8 @@ function [finalU,finalVirial,finalPressure,finalConfiguration,finalDistances,mov
 % moveCount - counts accepted moves
 
 % the potantial of Lennard-Jonse in reduced units:
-%   U = 4*[(1/r)^12 - (1/r)^6]
+%   U = 4*[(1/r)^12 - (1/r)^6] 
+%   (you can change the 6 with the optional input 'm')
 
 % the potantial of Lennard-Jonse in non-reduced units:
 %   U = 4*epsilon*[(sigma/r)^12 - (sigma/r)^6]
@@ -54,11 +58,12 @@ function [finalU,finalVirial,finalPressure,finalConfiguration,finalDistances,mov
 p = inputParser();
 addOptional(p, 'verelet', []); 
 addOptional(p, 'virial', []);
+addOptional(p, 'm', 6);
 parse(p, varargin{:});
 Results = p.Results;
 rl = Results.verelet;
 virial = Results.virial;
-
+m = Results.m;
 
 % initiate virables
 dist = initialDistances;
@@ -115,11 +120,11 @@ for step = 1:Nsteps
             newParticlesPosition,N,L,nlist);
         
         % calculate the change in energy
-        dU = Uchange(movedParticle,dist,newDist,N,rCutoff);
+        dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m);
         
         % calculate the change in the virial 
         if ~isempty(virial)
-            dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho);
+            dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho,m);
         end
         
         % if dU < 0 eccept move
@@ -257,21 +262,21 @@ finalDistances = dist;
                 end   
         end
     
-        function dU = Uchange(movedParticle,dist,newDist,N,rCutoff)
+        function dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m)
         % calculates the change in energy after a particle has moved
                 
                 % calculate the old energy for the relevant particle pairs
                 
                 if movedParticle > 1
                     oldUrow = ...
-                        pairU(dist(movedParticle,1:(movedParticle - 1)),rCutoff);
+                        pairU(dist(movedParticle,1:(movedParticle - 1)),rCutoff,m);
                 else 
                     oldUrow = 0;
                 end
                 
                 if movedParticle < N
                     oldUcol = ...
-                        pairU(dist((movedParticle + 1):N,movedParticle),rCutoff);
+                        pairU(dist((movedParticle + 1):N,movedParticle),rCutoff,m);
                 else 
                     oldUcol = 0;
                 end
@@ -282,14 +287,14 @@ finalDistances = dist;
                 
                 if movedParticle > 1
                     newUrow = pairU(newDist...
-                            (movedParticle,1:(movedParticle - 1)),rCutoff);
+                            (movedParticle,1:(movedParticle - 1)),rCutoff,m);
                 else 
                     newUrow = 0;
                 end
                 
                 if movedParticle < N
                     newUcol = pairU(newDist...
-                        ((movedParticle + 1):N,movedParticle),rCutoff);
+                        ((movedParticle + 1):N,movedParticle),rCutoff,m);
                 else 
                     newUcol = 0;
                 end
@@ -301,7 +306,7 @@ finalDistances = dist;
                 dU = newU - oldU;
         end
     
-        function dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho)
+        function dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho,m)
         % calculates the change in the virial after a particle has moved
                 
                 % calculate the old virial for the relevant particle pairs
@@ -309,7 +314,7 @@ finalDistances = dist;
                 if movedParticle > 1
                     oldVrow = ...
                         calcVirial(dist(movedParticle,1:(movedParticle - 1))...
-                        ,rho,12,6,N,rCutoff);
+                        ,rho,12,m,N,rCutoff);
                 else 
                     oldVrow = 0;
                 end
@@ -317,7 +322,7 @@ finalDistances = dist;
                 if movedParticle < N
                     oldVcol = ...
                         calcVirial(dist((movedParticle + 1):N,movedParticle)...
-                        ,rho,12,6,N,rCutoff);
+                        ,rho,12,m,N,rCutoff);
                 else 
                     oldVcol = 0;
                 end
@@ -329,7 +334,7 @@ finalDistances = dist;
                 if movedParticle > 1
                     newVrow = calcVirial(newDist...
                             (movedParticle,1:(movedParticle - 1))...
-                            ,rho,12,6,N,rCutoff);
+                            ,rho,12,m,N,rCutoff);
                 else 
                     newVrow = 0;
                 end
@@ -337,7 +342,7 @@ finalDistances = dist;
                 if movedParticle < N
                     newVcol = calcVirial(newDist...
                         ((movedParticle + 1):N,movedParticle)...
-                        ,rho,12,6,N,rCutoff);
+                        ,rho,12,m,N,rCutoff);
                 else 
                     newVcol = 0;
                 end

@@ -56,12 +56,14 @@ classdef RDFoutput
                     else
                         obj.MC2DLJs = MC2DLJs;
                     end
-                  
+                    
+                    m = obj.MC2DLJs(1).simulationParam.m;
+                    
                     % create RDF data matfile
-                    save(['RDF_N' num2str(N) '.mat']...
+                    save(['RDF_N' num2str(N) '' '.mat']...
                       ,'MC2DLJs','dataFileList','-v7.3');
-                    obj.data = matfile(['RDF_N' num2str(N) '.mat']);
-                    obj.data = matfile(['RDF_N' num2str(N) '.mat'],...
+                    obj.data = matfile(['RDF_N' num2str(N) 'm' num2str(m) '.mat']);
+                    obj.data = matfile(['RDF_N' num2str(N) 'm' num2str(m) '.mat'],...
                       'Writable',true);
                     clear MC2DLJs dataFileList;
                   
@@ -182,7 +184,8 @@ classdef RDFoutput
            Visible = Results.Visible;
            plotLog = Results.plotLog;
            
-
+           m = obj.MC2DLJs(1).simulationParam.m;
+           
            [Niso, Nrho] = size(obj.MC2DLJs);
            
            [~, b, numOfBins] = size(obj.data.bins(1,:,:));
@@ -240,25 +243,22 @@ classdef RDFoutput
                        ylabel('g(r)');
                    end
                    
-                   title(['T = ' num2str(obj.MC2DLJs(i,1).simulationParam.T)]);
+                   title(['T = ' num2str(obj.MC2DLJs(i,1).simulationParam.T) ...
+                       'm = ' num2str(m)]);
                    xlabel('distance, reduced units');
                    
 
                    if saveFig
-                       if plotLog
-                           saveas(gcf,['logRDF_T'...
+                       figName = ['RDF_T'...
                            my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                            'N' num2str(obj.N)  '.fig']);
-                           saveas(gcf,['logRDF_T'...
-                               my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                                'N' num2str(obj.N)  '.jpg']);
+                            'N' num2str(obj.N) 'm' num2str(m)];
+                           
+                       if plotLog
+                           saveas(gcf,['log' figName  '.fig']);
+                           saveas(gcf,['log' figName '.jpg']);
                        else
-                           saveas(gcf,['RDF_T'...
-                               my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                                'N' num2str(obj.N)  '.fig']);
-                           saveas(gcf,['RDF_T'...
-                               my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                                'N' num2str(obj.N)  '.jpg']);
+                           saveas(gcf,[figName '.fig']);
+                           saveas(gcf,[figName '.jpg']);
                        end
                    end
 
@@ -285,6 +285,8 @@ classdef RDFoutput
                keepFigOpen = Results.keepFigOpen;
                Visible = Results.Visible; 
                plotLog = Results.plotLog;
+                          
+               m = obj.MC2DLJs(1).simulationParam.m;
                
                [Niso, Nrho] = size(obj.MC2DLJs);
                if plotLog
@@ -336,7 +338,8 @@ classdef RDFoutput
                          end
 
                         title(['\rho = '...
-                            num2str(obj.MC2DLJs(1,j).simulationParam.rho)]);
+                            num2str(obj.MC2DLJs(1,j).simulationParam.rho)... 
+                            ' m = ' num2str(m)]);
                         xlabel('distance, reduced units');
                         ylabel('g(r)');
 
@@ -346,13 +349,12 @@ classdef RDFoutput
                             else
                                 logstr = '';
                             end
-
-                            saveas(gcf,[logstr 'RDF_rho'...
+                            
+                            figName = [logstr 'RDF_rho'...
                                 my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                                 'N' num2str(obj.N) '.fig']);
-                            saveas(gcf,[logstr 'RDF_rho'...
-                                my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                                 'N' num2str(obj.N) '.jpg']);
+                                 'N' num2str(obj.N) 'm' num2str(m)];
+                            saveas(gcf,[figName '.fig']);
+                            saveas(gcf,[figName '.jpg']);
                         end
 
                         if ~keepFigOpen
