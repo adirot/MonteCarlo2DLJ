@@ -1,4 +1,4 @@
-function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
+function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin)
     
     % check input, build isotherm object from data files if necessary
 
@@ -17,6 +17,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         addOptional(p, 'hPvsRho', []);
         addOptional(p, 'hPvsV', []);
         addOptional(p, 'UVsT', true);
+        addOptional(p, 'PVsT', true);        
         addOptional(p, 'plotCv', true);
         addOptional(p, 'talk', false);
         parse(p, varargin{:});
@@ -33,6 +34,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
         hPvsRho = Results.hPvsRho;
         hPvsV = Results.hPvsV;
         UVsT = Results.UVsT;
+        PVsT = Results.PVsT;
         plotIso = Results.plotIso;
         talk = Results.talk;
         plotCv = Results.plotCv;
@@ -179,6 +181,39 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,U,T] = plotIso(varargin)
 
     else
         U = 0;
+    end
+    
+    if PVsT
+        P = zeros(Nrho,Niso);
+        T = zeros(Nrho,Niso);
+        N = num2str(isotherms(1).MC2DLJ(1).simulationParam.N);
+        for i = 1:Niso
+            for j = 1:Nrho
+                P(j,i) = isotherms(i).MC2DLJ(j).data.meanPlrcEq;
+                T(j,i) = isotherms(i).T;
+                if i == 1
+                    legPVsT{1,j} = ['\rho = ' my_num2str(isotherms(i).rho(j))];
+                end
+            end
+        end
+        
+        colorPlot(T,P,'addLegend',legPVsT);
+        title(['mean P Vs. T for N = ' N]);
+        xlabel('Temperature, reduced units');
+        ylabel('Pressure, reduced units');
+
+        if saveFig
+            figName = ['meanPvsT_N' num2str(N) fileNameEnd];
+            saveas(gcf, [figName '.fig']);
+            saveas(gcf,[figName '.jpg']);
+            
+            if talk
+                disp(['saved: ' figName]);
+            end
+        end
+
+    else
+        P = 0;
     end
     
     if plotCv

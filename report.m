@@ -42,7 +42,7 @@ function percent_done = report(varargin)
                 count_done = count_done + data.stepInd(1,s); 
             end
 
-            percent_done = count_done*100/len*500000;
+            percent_done = count_done*100/(len*500000);
         end
         
 end
