@@ -184,7 +184,12 @@ classdef RDFoutput
            Visible = Results.Visible;
            plotLog = Results.plotLog;
            
-           m = obj.MC2DLJs(1).simulationParam.m;
+           sim =  obj.MC2DLJs(1).simulationParam;
+           if isfield(sim,'m')
+                m = obj.MC2DLJs(1).simulationParam.m;
+           else
+                m = '';
+           end
            
            [Niso, Nrho] = size(obj.MC2DLJs);
            
@@ -285,9 +290,14 @@ classdef RDFoutput
                keepFigOpen = Results.keepFigOpen;
                Visible = Results.Visible; 
                plotLog = Results.plotLog;
-                          
-               m = obj.MC2DLJs(1).simulationParam.m;
-               
+
+               sim =  obj.MC2DLJs(1).simulationParam;           
+               if isfield(sim,'m')
+                    m = obj.MC2DLJs(1).simulationParam.m;
+               else
+                    m = '';
+               end
+
                [Niso, Nrho] = size(obj.MC2DLJs);
                if plotLog
                    obj.data.logRDF = zeros(Niso,Nrho,obj.numOfBins);

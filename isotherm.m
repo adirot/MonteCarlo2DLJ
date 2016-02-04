@@ -22,6 +22,7 @@ classdef isotherm
                     addOptional(p, 'initialConfig', []);
                     addOptional(p, 'rCutoff', []);
                     addOptional(p, 'r', []);
+                    addOptional(p, 'm', 6);
                     addOptional(p, 'fileNameInit', '');
                     addOptional(p, 'cutEquilirization', false);
                     addOptional(p, 'firstSteps2ignore', 50);
@@ -36,6 +37,7 @@ classdef isotherm
                     initialConfig = Results.initialConfig;
                     rCutoff = Results.rCutoff;
                     r = Results.r;
+                    m = Results.m;
                     rl = Results.verelet;
                     fileNameInit = Results.fileNameInit;
                     cutEquilirization = Results.cutEquilirization;
@@ -112,6 +114,7 @@ classdef isotherm
                     obj.simulationParam.rCutoff = rCutoff;
                     obj.simulationParam.r = r;
                     obj.simulationParam.rl = rl;
+                    obj.simulationParam.m = m;
                     
                     for i = 1:length(rho)
                         if i == 1
@@ -127,7 +130,7 @@ classdef isotherm
                             obj.MC2DLJ = MC2DLJoutput(N,T,rho(i),initialmaxdr,...
                                 init,rCutoff,r,...
                                 'verelet',rl,'pressure',true,...
-                                'fileNameInit',fileNameInit);
+                                'fileNameInit',fileNameInit,'m',m);
                         else
                             if strcmp(initialConfig,'auto')
                                 if rho(i) > 0.4
@@ -141,7 +144,7 @@ classdef isotherm
                             obj.MC2DLJ(i) = MC2DLJoutput(N,T,rho(i),initialmaxdr,...
                                 init,rCutoff,r,...
                                 'verelet',rl,'pressure',true,...
-                                'fileNameInit',fileNameInit);
+                                'fileNameInit',fileNameInit,'m',m);
                         end
                         obj.datafileList{1,i} = obj.MC2DLJ(i).fileName;
                     end

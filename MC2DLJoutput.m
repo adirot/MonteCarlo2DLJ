@@ -154,7 +154,7 @@ classdef MC2DLJoutput
                     rl = Results.verelet;
                     pressure = Results.pressure;
                     fileNameInit = Results.fileNameInit;
-                    m = REsults.m;
+                    m = Results.m;
                     
                     % create a simulation output object for a new
                     % simulation
