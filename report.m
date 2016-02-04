@@ -17,7 +17,7 @@ function percent_done = report(varargin)
                 N = num2str(N);
             end
             
-            fileList = dir(['N' N '*.mat']);
+            fileList = dir(['N' N 'T*.mat']);
             fileList = {fileList.name};
         end
 
@@ -26,7 +26,7 @@ function percent_done = report(varargin)
         
         if ~isempty(existsInMat)
             for i = 1:len
-                if existInMatfile(fileList{1,i},existInMat)
+                if existInMatfile(fileList{1,i},existsInMat)
                     count_done = count_done + 1;
                 end
             end

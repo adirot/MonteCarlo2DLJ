@@ -12,25 +12,34 @@ classdef RhoDistriboutput
             
               p = inputParser();
               addOptional(p, 'dataFileList', []);
+              addOptional(p, 'fileListOrg', []);
               addOptional(p, 'N', '');              
               addOptional(p, 'rhoDistribdata', []);
               addOptional(p, 'dataFileNameEnd', '');
               parse(p, varargin{:});
               Results = p.Results;
               dataFileList = Results.dataFileList;
+              fileListOrg = Results.fileListOrg;
               N = Results.N;
               rhoDistribdata = Results.rhoDistribdata;
               dataFileNameEnd = Results.dataFileNameEnd;
               
               if isempty(rhoDistribdata)
                     
-                  if isempty(dataFileList)
+                  if isempty(dataFileList) && isempty(fileListOrg)
                       % get all data from files in folder
                       dataFileList = dir(['N' num2str(N) 'T*.mat']);
                       dataFileList = {dataFileList.name};
+                      dataFileList = getDataFileList(dataFileList);
+                      
+                  else
+                      if ~isempty(fileListOrg)
+                          dataFileList = fileListOrg;
+                      else
+                          dataFileList = getDataFileList(dataFileList); 
+                      end
                   end
                   
-                  dataFileList = getDataFileList(dataFileList);
                   
                   obj.dataFileList = dataFileList;
                   
@@ -223,16 +232,3 @@ classdef RhoDistriboutput
 
 end
             
-    function MC2DLJs = getMC2DLJs(fileListOrgbyT)
-        [Niso, Nrho] = size(fileListOrgbyT);
-        
-        for i = 1:Niso
-            for j = 1:Nrho
-                if i == 1 && j == 1
-                    MC2DLJs = MC2DLJoutput(fileListOrgbyT{1,1});
-                else
-                    MC2DLJs(i,j) = MC2DLJoutput(fileListOrgbyT{i,j}); 
-                end
-            end
-        end
-    end
