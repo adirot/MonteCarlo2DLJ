@@ -9,7 +9,7 @@ parse(p, varargin{:});
 Results = p.Results;
 T = Results.T;
 m = Results.m;
-
+firstSteps2ignore = 10;
         
 rhorand = [0.0001 0.0003 0.0005 0.0007 0.001 0.003 0.005 0.007 0.01 0.03 0.05 0.07 0.1 0.2 0.3 0.4];
 rhohex  = 0.42:0.02:0.7;
@@ -35,21 +35,22 @@ end
 
 
 
-disp(['created Isotherms N = ' num2str(N)]);
+disp(['created Isotherms N = ' num2str(N) ' m = ' num2str(m)]);
 save(['isoObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
 for i = 1:length(T)
     I(i) = I(i).calcIso(Nsteps,10);
 end
 
-disp(['calculated Isotherms N = ' num2str(N)]);
+disp(['calculated Isotherms N = ' num2str(N) ' m = ' num2str(m)]);
 save(['isoObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
 for i = 1:length(T)
+    I(i) = I(i).calcMeanWithoutFirstSteps(50);
     I(i) = I(i).calcCv();
 end
 
-disp(['calculated Cv N = ' num2str(N)]);
+disp(['calculated Cv N = ' num2str(N) ' m = ' num2str(m)]);
 save(['isoObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
 for i = 1:length(T)
@@ -66,13 +67,13 @@ for i = 1:length(T)
 
 end
 
-disp(['ploted PvsStep N = ' num2str(N)]);
+disp(['ploted PvsStep N = ' num2str(N) ' m = ' num2str(m)]);
 
 [isotherms,fit,canGetUfromgRind,~,~,P,U,T] = plotIso('isotherms',I,...
     'N',N,'fitprop',{'plotLin', 'plotVirialExp'},...
     'residuals',{false, false},'talk',true);
 
-disp(['ploted isotherms N = ' num2str(N)]);
+disp(['ploted isotherms N = ' num2str(N) ' m = ' num2str(m)]);
 save(['isoObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
 clear I fit canGetUfromgRind;
@@ -83,12 +84,12 @@ list = {list.name};
 RDF = RDFoutput('dataFileList',list,'N',N);
 save(['RDFObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
-disp(['created RDFobj N = ' num2str(N)]);
+disp(['created RDFobj N = ' num2str(N) ' m = ' num2str(m)]);
 
 RDF = RDF.calcAllRDF(10,300);
 save(['RDFObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
-disp(['calculated RDFs N = ' num2str(N)]);
+disp(['calculated RDFs N = ' num2str(N) ' m = ' num2str(m)]);
 
 RDF = RDF.plotRDFT('keepFigOpen',false);
 save(['RDFObjN' num2str(N) 'm' num2str(m)],'-v7.3');
@@ -102,7 +103,7 @@ save(['RDFObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 RDF = RDF.plotRDFrho('keepFigOpen',false,'plotLog',true);
 save(['RDFObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
-disp(['ploted RDF N = ' num2str(N)]);
+disp(['ploted RDF N = ' num2str(N) ' m = ' num2str(m)]);
 
 clear RDF;
 

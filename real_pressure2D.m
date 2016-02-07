@@ -1,5 +1,5 @@
 function [P,rho,rho_times_B2,good_ind,cantusevirial_ind...
-    ,problem_ind] = real_pressure2D(T,rho,my_eps,potantial)
+    ,problem_ind] = real_pressure2D(T,rho,my_eps,potantial,varargin)
 
 %% find the pressure of a Lennard-Jonse 2 dimantional gas with reduced
 %% temprature T and reduced density rho, up to the second virial term.
@@ -29,6 +29,12 @@ function [P,rho,rho_times_B2,good_ind,cantusevirial_ind...
 % B2stdb = [1365.01, 21.4645 , 5.40892, 2.25374 , 1.52603, 1.0259,...
 %     0.387399, -0.00116176, -0.448385 , -0.588563 , -1.49065 , -1.56293];
 
+p = inputParser();
+addOptional(p,'m',6);
+parse(p, varargin{:});
+Results = p.Results;
+m = Results.m;
+
 P = zeros(1,length(rho));
 rho_times_B2 = zeros(1,length(rho));
 good_ind = [];
@@ -37,7 +43,7 @@ problem_ind = [];
 
 for ii = 1:length(rho)
     [P(ii),errorind,rho_times_B2(ii)] =...
-        calc_real_pressure(T,rho(ii),my_eps,potantial);
+        calc_real_pressure(T,rho(ii),my_eps,potantial,m);
     
     switch errorind
         case 0 % no error
@@ -51,13 +57,13 @@ for ii = 1:length(rho)
 end
 
     function [P,errorind,rho_times_B2] = ...
-            calc_real_pressure(T,rho,my_eps,potantial)
+            calc_real_pressure(T,rho,my_eps,potantial,m)
         
         switch potantial
             case 'st'
                 B2 = B2stdb(ind);
             otherwise
-                B2 = calc_B2(T);
+                B2 = calc_B2(T,m);
         end
 
 
@@ -81,12 +87,6 @@ end
     end
     
 
-    function B2 = calc_B2(T)
-        beta = 1/T;
-        B2 = pi*(1/(2^(2/3)))*beta^(1/6)*(-gamma(5/6)*...
-            hypergeom(-(1/6), 1/2, beta) +... 
-               sqrt(beta)*gamma(4/3)*hypergeom(1/3, 3/2, beta));
-        
-    end
+ 
 end
 

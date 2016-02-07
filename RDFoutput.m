@@ -208,23 +208,25 @@ classdef RDFoutput
                         % don't log zeros
                          length2plotlog = zeros(Nrho);
                          for j = 1:Nrho
-				if ~isempty(obj.dataFileList{i,j})
-                            nonZeroInd = find(obj.data.histo(i,j,:));
-                            bins = obj.data.bins(i,j,1:numOfBins);
-                            bins = bins(1,1,nonZeroInd);
-                            histo = obj.data.histo(i,j,1:numOfBins);
-                            histo = histo(1,1,nonZeroInd);
-                            length2plotlog(j) = length(bins);
-                            y(j,1:length2plotlog(j)) = -log(histo);
-                            x(j,1:length2plotlog(j)) = bins;
-                            length2plotlog(j) = length(bins);
-                                    
-                            % save log data
-                            obj.data.logRDF(i,j,1:numOfBins)...
-                             = reshape(y(j,:),[1,1,numOfBins]);
-                            obj.data.length2plotlog(i,j) =...
-                                length2plotlog(j); 
-				end
+                            if ~isempty(obj.dataFileList{i,j})
+                                nonZeroInd = find(obj.data.histo(i,j,:));
+                                bins = obj.data.bins(i,j,1:numOfBins);
+                                bins = bins(1,1,nonZeroInd);
+                                histo = obj.data.histo(i,j,1:numOfBins);
+                                histo = histo(1,1,nonZeroInd);
+                                length2plotlog(j) = length(bins);
+                                if length2plotlog(i) ~= 0
+                                    y(j,1:length2plotlog(j)) = -log(histo);
+                                    x(j,1:length2plotlog(j)) = bins;
+                                    length2plotlog(j) = length(bins);
+                                end
+
+                                % save log data
+                                obj.data.logRDF(i,j,1:numOfBins)...
+                                 = reshape(y(j,:),[1,1,numOfBins]);
+                                obj.data.length2plotlog(i,j) =...
+                                    length2plotlog(j); 
+                            end
                          end
                     else
                         x(:,:) = obj.data.bins(i,:,:);
@@ -320,9 +322,11 @@ classdef RDFoutput
                                 histo = histo(1,1,nonZeroInd);
                                 bins = bins(1,1,nonZeroInd);
                                 length2plotlog(i) = length(bins);
-                                y(i,1:length2plotlog(i)) = -log(histo);
-                                x(i,1:length2plotlog(i)) = bins;
-                                length2plotlog(i) = length(bins);
+                                if length2plotlog(i) ~= 0
+                                    y(i,1:length2plotlog(i)) = -log(histo);
+                                    x(i,1:length2plotlog(i)) = bins;
+                                    length2plotlog(i) = length(bins);
+                                end
 
                                 % save log data
                                 obj.data.logRDF(i,j,1:obj.numOfBins)...

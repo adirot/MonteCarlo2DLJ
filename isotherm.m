@@ -280,6 +280,7 @@ classdef isotherm
         end
         
         function obj = calcCv(obj)
+            
             for i = 1:length(obj.rho)
                 obj.MC2DLJ(i) = obj.MC2DLJ(i).calcCv();
                 obj.cv(i) = obj.MC2DLJ(i).data.cv;
