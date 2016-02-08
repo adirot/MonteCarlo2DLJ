@@ -103,6 +103,7 @@ classdef MC2DLJoutput
           currentVir,Ulrc,Plrc,currentStep;
       fileName,data,indIndata;
       RDFhisto, RDFbins;
+      runNum;
       
    end
     methods
@@ -137,6 +138,11 @@ classdef MC2DLJoutput
                         obj.currentVir = obj.data.allV(1,obj.indIndata);
                         obj.currentPressure = obj.data.allP(1,obj.indIndata);
                     end
+                    
+                    if ~isempty(obj.data.runNum)
+                        obj.runNum = obj.data.runNum;
+                    end
+                    
                     obj.currentStep = obj.data.stepInd(1,obj.indIndata);
 
                 end
@@ -149,12 +155,14 @@ classdef MC2DLJoutput
                     addOptional(p, 'pressure', false);
                     addOptional(p, 'fileNameInit', '');
                     addOptional(p, 'm', 6);
+                    addOptional(p, 'runNum', []);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
                     pressure = Results.pressure;
                     fileNameInit = Results.fileNameInit;
                     m = Results.m;
+                    runNum = Results.runNum;
                     
                     % create a simulation output object for a new
                     % simulation
@@ -181,6 +189,7 @@ classdef MC2DLJoutput
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
                     obj.indIndata = 0;
+                    obj.runNum = runNum;
                     
                     if ~isempty(rl)
                         vereletstr = ['verelet' my_num2str(rl)];
@@ -201,6 +210,7 @@ classdef MC2DLJoutput
                         initialConfig 'rCutoff'...
                          my_num2str(rCutoff) vereletstr '_' pressurestr...
                           '_m' num2str(m) ...
+                          'runNum' num2str(runNum) ...
                           'date'...
                         nowdatetimestr()];
                         
@@ -238,7 +248,7 @@ classdef MC2DLJoutput
                     save(obj.fileName, 'allDists','allCoords',...
                             'allU','allUlrc','allV','allP','allPlrc','stepInd',...
                             'moveCount','indIndata'...
-                            ,'currentmaxdr','simulationParam','-v7.3');
+                            ,'currentmaxdr','simulationParam','runNum','-v7.3');
                     obj.data = matfile(obj.fileName);
                     obj.data = matfile(obj.fileName,'Writable',true);
                         
