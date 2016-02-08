@@ -19,6 +19,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
         addOptional(p, 'UVsT', true);
         addOptional(p, 'PVsT', true);        
         addOptional(p, 'plotCv', true);
+        addOptional(p, 'plotCompressibility', true);
         addOptional(p, 'talk', false);
         parse(p, varargin{:});
         Results = p.Results;
@@ -38,6 +39,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
         plotIso = Results.plotIso;
         talk = Results.talk;
         plotCv = Results.plotCv;
+        plotCompressibility = Results.plotCompressibility;
         fileListOrg = Results.fileListOrg;
         
         if isempty(N) && isempty(isotherms) && isempty(fileListOrg)
@@ -267,6 +269,26 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin
 
         if saveFig
             figName = ['cvVsrho_N' num2str(N) 'm' num2str(m) fileNameEnd];
+            saveas(gcf, [figName '.fig']);
+            saveas(gcf,[figName '.jpg']);
+            
+            if talk
+                disp(['saved: ' figName]);
+            end
+        end
+    end
+    
+    if plotCompressibility
+        Z = zeros(Niso,Nrho);
+        Zx = zeros(Niso,Nrho);
+        for i = 1:Niso
+            Zy(i,:) = (1/(I(i).T))*(I(i).pressure)./(I(i).rho);
+            legZ{1,i} = ['T = ' I(i).T];
+        end
+        
+        colorPlot(Zx,Z,'addLegend',legZ);
+        if saveFig
+            figName = ['ZvsP_N' num2str(N) 'm' num2str(m) fileNameEnd];
             saveas(gcf, [figName '.fig']);
             saveas(gcf,[figName '.jpg']);
             
