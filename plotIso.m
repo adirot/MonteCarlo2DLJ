@@ -1,4 +1,4 @@
-function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T] = plotIso(varargin)
+function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(varargin)
     
     % check input, build isotherm object from data files if necessary
 
