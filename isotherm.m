@@ -27,6 +27,7 @@ classdef isotherm
                     addOptional(p, 'cutEquilirization', false);
                     addOptional(p, 'firstSteps2ignore', 50);
                     addOptional(p, 'datafileList', []);
+                    addOptional(p, 'runNum', []);
                     parse(p, varargin{:});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -43,6 +44,7 @@ classdef isotherm
                     cutEquilirization = Results.cutEquilirization;
                     datafileList = Results.datafileList;
                     firstSteps2ignore  = Results.firstSteps2ignore;
+                    runNum = Results.runNum;
                     
                     obj.cutEquilirization = cutEquilirization;
 
@@ -130,7 +132,8 @@ classdef isotherm
                             obj.MC2DLJ = MC2DLJoutput(N,T,rho(i),initialmaxdr,...
                                 init,rCutoff,r,...
                                 'verelet',rl,'pressure',true,...
-                                'fileNameInit',fileNameInit,'m',m);
+                                'fileNameInit',fileNameInit,'m',m,...
+                                'runNum',runNum);
                         else
                             if strcmp(initialConfig,'auto')
                                 if rho(i) > 0.4
@@ -144,7 +147,8 @@ classdef isotherm
                             obj.MC2DLJ(i) = MC2DLJoutput(N,T,rho(i),initialmaxdr,...
                                 init,rCutoff,r,...
                                 'verelet',rl,'pressure',true,...
-                                'fileNameInit',fileNameInit,'m',m);
+                                'fileNameInit',fileNameInit,'m',m,...
+                                'runNum',runNum);
                         end
                         obj.datafileList{1,i} = obj.MC2DLJ(i).fileName;
                     end
