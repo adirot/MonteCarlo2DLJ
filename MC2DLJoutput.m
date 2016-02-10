@@ -139,7 +139,7 @@ classdef MC2DLJoutput
                         obj.currentPressure = obj.data.allP(1,obj.indIndata);
                     end
                     
-                    if ~isempty(obj.data.runNum)
+                    if existInMatfile(obj.fileName,'runNum')
                         obj.runNum = obj.data.runNum;
                     end
                     
@@ -775,7 +775,7 @@ end
         function [dist,particlesPosition] = ...
             createInitialConfig(L,N,r,initialConfig)
 
-            possibleInitialConfigs = {'random','hex'};
+            possibleInitialConfigs = {'random','hex','auto'};
             initialConfigInd = strcmp(initialConfig,possibleInitialConfigs);
             % check if input is valid:
             if sum(initialConfigInd) ~= 1
@@ -787,6 +787,12 @@ end
                         [dist,particlesPosition] = randomStart(L,N,r);
                     case 2 % hexagonal initial configuration
                         [dist,particlesPosition] = hcp(L,N,r);
+                    case 3 % choose automatically
+                        if N/L^2 > 0.4
+                            [dist,particlesPosition] = hcp(L,N,r);
+                        else
+                            [dist,particlesPosition] = randomStart(L,N,r);
+                        end
                 end
             end
         end
