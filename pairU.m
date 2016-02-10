@@ -8,6 +8,6 @@ function U = pairU(dist,rCutoff,m)
 
     dist_lt_rCutoff = dist(dist < rCutoff);
     % u is the energies of each pair
-    u = 4*(((1./dist_lt_rCutoff).^12)-((1./dist_lt_rCutoff).^(-m))); 
+    u = 4*(((1./dist_lt_rCutoff).^12)-((1./dist_lt_rCutoff).^m)); 
     U = sum(u);
 end
