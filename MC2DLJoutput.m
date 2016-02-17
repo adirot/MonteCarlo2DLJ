@@ -203,6 +203,12 @@ classdef MC2DLJoutput
                         pressurestr = '';
                     end
                     
+                    % make sure that L/2 is larger than rCutoff:
+                    if obj.simulationParam.L/2 < rCutoff
+                        error(['choose a larger number of particles, so that'
+                             'L/2 will be larger than rCutoff']);
+                    end
+                    
                     obj.fileName = [fileNameInit 'N' num2str(N)...
                         'T' my_num2str(T)...
                         'rho' my_num2str(rho) 'initialmaxdr'...
@@ -375,6 +381,7 @@ classdef MC2DLJoutput
             %       for more information
             %   http://www2.msm.ctw.utwente.nl/sluding/TEACHING/APiE_Script_v2011.pdf
             %       page 48 - "Radial distribution function"
+            
             
               N = obj.simulationParam.N;
               rho = obj.simulationParam.rho;
