@@ -282,8 +282,8 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
         Z = zeros(Niso,Nrho);
         Zx = zeros(Niso,Nrho);
         for i = 1:Niso
-            Zy(i,:) = (1/(I(i).T))*(I(i).pressure)./(I(i).rho);
-            legZ{1,i} = ['T = ' I(i).T];
+            Zy(i,:) = (1/(isotherms(i).T))*(isotherms(i).pressure)./(isotherms(i).rho);
+            legZ{1,i} = ['T = ' isotherms(i).T];
         end
         
         colorPlot(Zx,Z,'addLegend',legZ);

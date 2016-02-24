@@ -38,14 +38,14 @@ end
 disp(['created Isotherms N = ' num2str(N) ' m = ' num2str(m)]);
 save(['isoObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
-for i = 1:length(T)
+for i = 1:length(I)
     I(i) = I(i).calcIso(Nsteps,10);
 end
 
 disp(['calculated Isotherms N = ' num2str(N) ' m = ' num2str(m)]);
 save(['isoObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
-for i = 1:length(T)
+for i = 1:length(I)
     I(i) = I(i).calcMeanWithoutFirstSteps(50);
     I(i) = I(i).calcCv();
 end
@@ -69,7 +69,7 @@ end
 
 disp(['ploted PvsStep N = ' num2str(N) ' m = ' num2str(m)]);
 
-[isotherms,fit,canGetUfromgRind,~,~,P,U,T] = plotIso('isotherms',I,...
+[isotherms,fit,canGetUfromgRind,~,~,P,U,T,Z,Zx] = plotIso('isotherms',I,...
     'N',N,'fitprop',{'plotLin', 'plotVirialExp'},...
     'residuals',{false, false},'talk',true);
 
@@ -86,7 +86,7 @@ save(['RDFObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
 disp(['created RDFobj N = ' num2str(N) ' m = ' num2str(m)]);
 
-RDF = RDF.calcAllRDF(10,300);
+RDF = RDF.calcAllRDF(10,300,'skipExisting',true);
 save(['RDFObjN' num2str(N) 'm' num2str(m)],'-v7.3');
 
 disp(['calculated RDFs N = ' num2str(N) ' m = ' num2str(m)]);

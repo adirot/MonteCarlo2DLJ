@@ -87,12 +87,12 @@ classdef isotherm
                                     if ~existInMatfile(obj.MC2DLJ(i).data,...
                                             'meanPlrc')
                               
-                                        obj.MC2DLJ(i).meanProp('P');
+                                        obj.MC2DLJ(i).meanProp();
                                     end
                                    
                                 else
                                     obj.MC2DLJ(i).calcPressureAfterRun();
-                                    obj.MC2DLJ(i).meanProp('P');
+                                    obj.MC2DLJ(i).meanProp();
                                 end
                                 
                                 [~,s] = size(obj.MC2DLJ(i).data.meanPlrc);
@@ -170,7 +170,7 @@ classdef isotherm
                         
                         if obj.cutEquilirization
                                 % check if meanPlrcEq needs to be calculated
-                                % calculate it if it was nit calculated yet
+                                % calculate it if it was not calculated yet
                             if isempty...
                                     (whos(obj.MC2DLJ(i).data,'meanPlrcEq'))
                                 obj.MC2DLJ(i) =...

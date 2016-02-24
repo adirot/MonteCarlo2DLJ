@@ -143,6 +143,11 @@ classdef MC2DLJoutput
                         obj.runNum = obj.data.runNum;
                     end
                     
+                    if existInMatfile(obj.fileName,'RDFhisto')
+                        obj.RDFhisto = mean(obj.data.RDFhisto);
+                        obj.RDFbins = mean(obj.data.RDFbins);
+                    end
+                    
                     obj.currentStep = obj.data.stepInd(1,obj.indIndata);
 
                 end
