@@ -153,6 +153,11 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
                 disp(['saved: ' fileName]);
             end
         end
+    else
+        fit = [];
+        canGetUfromgRind = [];
+        hPvsRho = [];
+        hPvsV = [];
     end
     
     if UVsT
@@ -164,7 +169,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
                 U(j,i) = isotherms(i).MC2DLJ(j).data.meanUlrcEq;
                 T(j,i) = isotherms(i).T;
                 if i == 1
-                    legUVsT{1,j} = ['\rho = ' my_num2str(isotherms(i).rho(j))];
+                    legUVsT{1,j} = ['\rho = ' num2str(isotherms(i).rho(j))];
                 end
             end
         end
@@ -186,6 +191,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
 
     else
         U = 0;
+        T = 0;
     end
     
     if PVsT
@@ -197,7 +203,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
                 P(j,i) = isotherms(i).MC2DLJ(j).data.meanPlrcEq;
                 T(j,i) = isotherms(i).T;
                 if i == 1
-                    legPVsT{1,j} = ['\rho = ' my_num2str(isotherms(i).rho(j))];
+                    legPVsT{1,j} = ['\rho = ' num2str(isotherms(i).rho(j))];
                 end
             end
         end
@@ -230,7 +236,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
                 cv(j,i) = isotherms(i).MC2DLJ(j).data.cv;
                 T(j,i) = isotherms(i).T;
                 if i == 1
-                    legUVsT{1,j} = ['\rho = ' my_num2str(isotherms(i).rho(j))];
+                    legUVsT{1,j} = ['\rho = ' num2str(isotherms(i).rho(j))];
                 end
             end
         end
@@ -254,7 +260,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
         rho = zeros(Niso, Nrho);
         N = num2str(isotherms(1).MC2DLJ(1).simulationParam.N);
         for i = 1:Niso
-            legcvVsrho{1,i} = ['T = ' my_num2str(isotherms(i).T)];
+            legcvVsrho{1,i} = ['T = ' num2str(isotherms(i).T)];
 
             for j = 1:Nrho
                 cv(i,j) = isotherms(i).MC2DLJ(j).data.cv;
@@ -282,8 +288,9 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
         Z = zeros(Niso,Nrho);
         Zx = zeros(Niso,Nrho);
         for i = 1:Niso
-            Zy(i,:) = (1/(isotherms(i).T))*(isotherms(i).pressure)./(isotherms(i).rho);
-            legZ{1,i} = ['T = ' isotherms(i).T];
+            Z(i,:) = (1/(isotherms(i).T))*(isotherms(i).pressure)./(isotherms(i).rho);
+            Zx(i,:) = isotherms(i).pressure;
+            legZ{1,i} = ['T = ' num2str(isotherms(i).T)];
         end
         
         colorPlot(Zx,Z,'addLegend',legZ);

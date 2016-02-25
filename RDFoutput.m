@@ -177,12 +177,14 @@ classdef RDFoutput
            addOptional(p, 'keepFigOpen', true);
            addOptional(p, 'Visible', 'on');
            addOptional(p, 'plotLog', false);
+           addOptional(p, 'fileNameEnd', '');           
            parse(p, varargin{:});
            Results = p.Results;
            saveFig = Results.saveFig;
            keepFigOpen = Results.keepFigOpen;
            Visible = Results.Visible;
            plotLog = Results.plotLog;
+           fileNameEnd = Results.fileNameEnd;
            
            sim =  obj.MC2DLJs(1).simulationParam;
            if isfield(sim,'m')
@@ -258,7 +260,7 @@ classdef RDFoutput
                    if saveFig
                        figName = ['RDF_T'...
                            my_num2str(obj.MC2DLJs(i,1).simulationParam.T)...
-                            'N' num2str(obj.N) 'm' num2str(m)];
+                            'N' num2str(obj.N) 'm' num2str(m) fileNameEnd];
                            
                        if plotLog
                            saveas(gcf,['log' figName  '.fig']);
@@ -286,13 +288,15 @@ classdef RDFoutput
                addOptional(p, 'keepFigOpen', true);
                addOptional(p, 'Visible' , 'on');
                addOptional(p, 'plotLog' , false);
+               addOptional(p, 'fileNameEnd', '');
                parse(p, varargin{:});
                Results = p.Results;
                saveFig = Results.saveFig;
                keepFigOpen = Results.keepFigOpen;
                Visible = Results.Visible; 
                plotLog = Results.plotLog;
-
+               fileNameEnd = Results.fileNameEnd; 
+               
                sim =  obj.MC2DLJs(1).simulationParam;           
                if isfield(sim,'m')
                     m = obj.MC2DLJs(1).simulationParam.m;
@@ -366,7 +370,7 @@ classdef RDFoutput
                             
                             figName = [logstr 'RDF_rho'...
                                 my_num2str(obj.MC2DLJs(1,j).simulationParam.rho)...
-                                 'N' num2str(obj.N) 'm' num2str(m)];
+                                 'N' num2str(obj.N) 'm' num2str(m) fileNameEnd];
                             saveas(gcf,[figName '.fig']);
                             saveas(gcf,[figName '.jpg']);
                         end
