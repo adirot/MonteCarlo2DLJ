@@ -742,6 +742,89 @@ classdef MC2DLJoutput
                close gcf;
            end
        end
+       
+       function [obj, varU, varP, steps, varVarU, varVarP] = varOfvar(obj,varargin)
+           % calculate the variance of the variance of P,U as a function of
+           % steps in the simulation.
+           
+           p = inputParser();
+           addOptional(p,'startFrom',1);
+           addOptional(p, 'plotVarVsStep', true);
+           addOptional(p, 'plotVarVarVsStep', true);
+           addOptional(p, 'saveFig', true);           
+           addOptional(p, 'keepFigOpen', false);
+           parse(p, varargin{:});
+           Results = p.Results;
+           plotVarVsStep = Results.plotVarVsStep;
+           plotVarVarVsStep = Results.plotVarVarVsStep;
+           saveFig = Results.saveFig;
+           keepFigOpen = Results.keepFigOpen;
+           
+           for i = 1:obj.data.indIndata
+               i
+               varU(i) = var(obj.data.allUlrc(1,1:i));
+               varVarU(i) = var(varU);
+               varP(i) = var(obj.data.allPlrc(1,1:i));
+               varVarP(i) = var(varP);
+           end
+           
+           obj.data.varU = varU;
+           obj.data.varP = varP;
+           obj.data.varVarU = varVarU;
+           obj.data.varVarP = varVarP;
+           
+           steps = obj.data.stepInd;
+           
+           if plotVarVsStep
+               figure;
+               hold on;
+               plot(steps,varU);
+               plot(steps,varP,'r');
+               legend({'Energy variance','Pressure variance'});
+               xlabel('steps');
+               ylabel('Energy or Pressure variance');
+               title(['variance for Energy and Pressure Vs. steps, T = '...
+                   num2str(obj.simulationParam.T) ' N = '...
+                   num2str(obj.simulationParam.N) ' \rho = '... 
+                   num2str(obj.simulationParam.rho)]);
+           end
+           
+           if saveFig
+               name = ['varUPvsSteps_T' my_num2str(obj.simulationParam.T)...
+                   'N' my_num2str(obj.simulationParam.N) 'rho'...
+                   my_num2str(obj.simulationParam.rho)];
+               saveas(gcf,[name '.fig']);
+               saveas(gcf,[name '.jpg']);
+           end
+           
+           if plotVarVarVsStep
+               figure;
+               hold on;
+               plot(steps,varVarU);
+               plot(steps,varVarP,'r');
+               legend({'Energy variance of variance',...
+                   'Pressure variance of variance'});
+               xlabel('steps');
+               ylabel('Energy or Pressure variance of variance');
+               title(['variance of variance '...
+                   'for Energy and Pressure Vs. steps, T = '...
+                   num2str(obj.simulationParam.T) ' N = '...
+                   num2str(obj.simulationParam.N) ' \rho = ' 
+                   num2str(obj.simulationParam.rho)]);
+           end
+           
+           if saveFig
+               name = ['varVarUPvsSteps_T' my_num2str(obj.simulationParam.T)...
+                   'N' my_num2str(obj.simulationParam.N) 'rho' 
+                   my_num2str(obj.simulationParam.rho)];
+               saveas(gcf,[name '.fig']);
+               saveas(gcf,[name '.jpg']);
+           end
+           
+           if ~keepFigOpen
+               close all;
+           end
+       end
         
        function obj = calcPressureAfterRun(obj)
            N = obj.simulationParam.N;
