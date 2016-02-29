@@ -436,6 +436,89 @@ classdef MC2DLJoutput
             obj.RDFbins = bins;
             obj.RDFhisto = obj.RDFhisto/obj.indIndata;
        end
+       
+       function obj = RDFvarVar(obj,varargin)
+           % calculates the variance and variance of the variance for
+           % spesific points in the RDF: the peaks higher than 2 + the
+           % first peak. 
+           
+           p = inputParser();
+           addOptional(p, 'plotFig', true);
+           addOptional(p, 'saveFig', true);           
+           addOptional(p, 'keepFigOpen', false);
+           parse(p, varargin{:});
+           Results = p.Results;
+           plotFig = Results.plotFig;
+           saveFig = Results.saveFig;
+           keepFigOpen = Results.keepFigOpen;           
+           
+           % check if RDF was calculated calculated allready
+           if ~existInMatfile(obj.data,'RDFhisto')
+               error('calculate RDF first');
+           end
+           
+           % find peaks
+           [~,locs] = findpeaks(obj.RDFhisto,'MINPEAKHEIGHT',2);
+           [~, ind] = min(abs(2^(1/6) - obj.RDFbins)); % find location
+                                                       % of the first peak
+           locs = unique([locs ind]);
+           [Nsteps, ~] = size(obj.data.RDFhisto);
+           peaks = zeros(length(locs),Nsteps);
+           steps = zeros(length(locs),Nsteps);
+           
+           for i = 1:Nsteps
+               peaks(:,i) = obj.data.RDFhisto(i,locs);
+               
+               % find variance and variance of variance in the peaks
+               for j = 1:length(locs)
+                    varPeaks(j,i) = var(peaks(j,1:i));
+                    varVarPeaks(j,i) = var(varPeaks(j,1:i));
+               end
+           end
+           
+           for j = 1:length(locs)
+               steps(j,:) = obj.data.stepInd;
+           end
+           
+           if plotFig
+               
+               for j = 1:length(locs)
+                   leg{1,j} = ['peak distance '...
+                       num2str(obj.RDFbins(locs(j)))]; 
+               end
+               
+               colorPlot(steps,varPeaks,'addLegend',leg);
+               xlabel('steps');
+               ylabel('RDF peaks variance');
+               
+               if saveFig
+                    name = ['varRDFpeaksVsSteps_T'...
+                    my_num2str(obj.simulationParam.T)...
+                    'N' my_num2str(obj.simulationParam.N) 'rho'...
+                    my_num2str(obj.simulationParam.rho)];
+                    saveas(gcf,[name '.fig']);
+                    saveas(gcf,[name '.jpg']);
+               end
+             
+               colorPlot(steps,varVarPeaks,'addLegend',leg);
+               xlabel('steps');
+               ylabel('RDF peaks variance of variance');
+               
+               if saveFig
+                    name = ['varVarRDFpeaksVsSteps_T'...
+                    my_num2str(obj.simulationParam.T)...
+                    'N' my_num2str(obj.simulationParam.N) 'rho'...
+                    my_num2str(obj.simulationParam.rho)];
+                    saveas(gcf,[name '.fig']);
+                    saveas(gcf,[name '.jpg']);
+               end
+               
+               if ~keepFigOpen
+                   close all;
+               end
+           end
+               
+       end
 
        function [obj, rhoNorm, PL] =...
                calcRhoDistrib(obj,squares,numOfbins,varargin)
@@ -743,7 +826,8 @@ classdef MC2DLJoutput
            end
        end
        
-       function [obj, varU, varP, steps, varVarU, varVarP] = varOfvar(obj,varargin)
+       function [obj, varU, varP, steps, varVarU, varVarP] =...
+               varOfvar(obj,varargin)
            % calculate the variance of the variance of P,U as a function of
            % steps in the simulation.
            
@@ -761,7 +845,7 @@ classdef MC2DLJoutput
            keepFigOpen = Results.keepFigOpen;
            
            for i = 1:obj.data.indIndata
-               i
+               
                varU(i) = var(obj.data.allUlrc(1,1:i));
                varVarU(i) = var(varU);
                varP(i) = var(obj.data.allPlrc(1,1:i));
@@ -809,13 +893,13 @@ classdef MC2DLJoutput
                title(['variance of variance '...
                    'for Energy and Pressure Vs. steps, T = '...
                    num2str(obj.simulationParam.T) ' N = '...
-                   num2str(obj.simulationParam.N) ' \rho = ' 
+                   num2str(obj.simulationParam.N) ' \rho = '... 
                    num2str(obj.simulationParam.rho)]);
            end
            
            if saveFig
                name = ['varVarUPvsSteps_T' my_num2str(obj.simulationParam.T)...
-                   'N' my_num2str(obj.simulationParam.N) 'rho' 
+                   'N' my_num2str(obj.simulationParam.N) 'rho'...
                    my_num2str(obj.simulationParam.rho)];
                saveas(gcf,[name '.fig']);
                saveas(gcf,[name '.jpg']);

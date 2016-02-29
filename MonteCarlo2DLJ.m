@@ -98,26 +98,26 @@ clear I fit canGetUfromgRind;
 %list = dir(['N' num2str(N) 'T*m' num2str(m) '*mat']);
 %list = {list.name};
 
-RDF = RDFoutput('dataFileList',list,'N',N);
+RDFm5 = RDFoutput('dataFileList',list,'N',N);
 save(['RDFObjN' num2str(N) 'm' num2str(m) 'sigma3_6'],'-v7.3');
 
 disp(['created RDFobj N = ' num2str(N) ' m = ' num2str(m)]);
 
-RDF = RDF.calcAllRDF(10,300,'skipExisting',true);
+RDFm5 = RDFm5.calcAllRDF(10,300,'skipExisting',true);
 save(['RDFObjN' num2str(N) 'm' num2str(m) 'sigma3_6'],'-v7.3');
 
 disp(['calculated RDFs N = ' num2str(N) ' m = ' num2str(m)]);
 
-RDF = RDF.plotRDFT('keepFigOpen',false,'fileNameEnd','sigma3_6');
+RDFm5 = RDFm5.plotRDFT('keepFigOpen',false,'fileNameEnd','sigma3_6');
 save(['RDFObjN' num2str(N) 'm' num2str(m) 'sigma3_6'],'-v7.3');
 
-RDF = RDF.plotRDFT('keepFigOpen',false,'plotLog',true,'fileNameEnd','sigma3_6');
+RDFm5 = RDFm5.plotRDFT('keepFigOpen',false,'plotLog',true,'fileNameEnd','sigma3_6');
 save(['RDFObjN' num2str(N) 'm' num2str(m) 'sigma3_6'],'-v7.3');
 
-RDF = RDF.plotRDFrho('keepFigOpen',false,'fileNameEnd','sigma3_6');
+RDFm5 = RDFm5.plotRDFrho('keepFigOpen',false,'fileNameEnd','sigma3_6');
 save(['RDFObjN' num2str(N) 'm' num2str(m) 'sigma3_6'],'-v7.3');
 
-RDF = RDF.plotRDFrho('keepFigOpen',false,'plotLog',true,'fileNameEnd','sigma3_6');
+RDFm5 = RDFm5.plotRDFrho('keepFigOpen',false,'plotLog',true,'fileNameEnd','sigma3_6');
 save(['RDFObjN' num2str(N) 'm' num2str(m) 'sigma3_6'],'-v7.3');
 
 disp(['ploted RDF N = ' num2str(N) ' m = ' num2str(m)]);
