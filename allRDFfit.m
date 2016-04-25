@@ -6,57 +6,99 @@ list = dir('N*mat');
 list = {list.name}';
 start = 4000;
 
-for i = 1:length(list)
-   tic;     
-        
-        M = MC2DLJoutput(list{i,1});
-        T = M.simulationParam.T;
-        rho = M.simulationParam.rho;
-        m = M.simulationParam.m;
-        
-        if i == 1
-            x = M.data.RDFbins;
-            xs = [x;x;x;x;x;x;x];
-        end
-        
-        RDF10 = mean(M.data.RDFhisto(start:(start+10),1:300));
-        RDF50 = mean(M.data.RDFhisto(start:(start+50),1:300));
-        RDF100 = mean(M.data.RDFhisto(start:(start+100),1:300));
-        RDF1k = mean(M.data.RDFhisto(start:(start+1000),1:300));
-        RDF2k = mean(M.data.RDFhisto(start:(start+2000),1:300));
-        RDF6k = mean(M.data.RDFhisto(start:(start+6000),1:300));
-        RDF12k = mean(M.data.RDFhisto(start:(start+12000),1:300));
-        
-        ys = [-log(RDF10);-log(RDF50);-log(RDF100);-log(RDF1k);...
-            -log(RDF2k);-log(RDF6k);-log(RDF12k)];
+tind = 0;
+rind = 0;
+mind = 0;
 
-        [fitresult,mfit,merror, gof] = createFitRDF(xs, ys, T, rho,m,steps);
+for t = [0.45,0.6,0.8,1,1.5,2]
+    tind = tind + 1;
+    for r = [0.005,0.01,0.05,0.1]
+        rind = rind + 1;
+        for m = [3,4,5,6]
+            mind = mind + 1; 
+            
+            disp(t); 
+            disp(r);
+            disp(m);
+            disp('-----');
+            
+            list = dir(['*T' my_num2str(t) 'rho' my_num2str(r) '*_m' num2str(m)...
+                '*mat']);
+            list = {list.name}';
 
-	allT(i) = T;
-		allrho(i) = rho;
-		allm(i) = m;
-		allfittedm10(i) = mfit(1);
-		allfittedm50(i) = mfit(2);
-		allfittedm100(i) = mfit(3);
-		allfittedm1k(i) = mfit(4);
-		allfittedm2k(i) = mfit(5);
-		allfittedm6k(i) = mfit(6);
-		allfittedm12k(i) = mfit(7);
-		allmerror10{i} = merror(1);
-		allmerror50{i} = merror(2);
-		allmerror100{i} = merror(3);
-		allmerror1k{i} = merror(4);
-		allmerror2k{i} = merror(5);
-		allmerror6k{i} = merror(6);
-		allmerror12k{i} = merror(7);
+            if length(list) > 1
+                disp('more than one file!');
+            end
 
-        saveas(gcf,['fitRDFT' my_num2str(T)...
-            'rho' my_num2str(rho) 'm' num2str(m) 'steps.fig']);
-        saveas(gcf,['fitRDFT' my_num2str(T)...
-            'rho' my_num2str(rho) 'm' num2str(m) 'steps.jpg']);
-        close all;
-        disp(i);
-toc
+            M = MC2DLJoutput(list{1,1});
+
+            if and(and(t == 0.45,r == 0.005), m==3)
+                x = M.data.RDFbins;
+            end
+            xs = [x;x;x;x;x;x;x;];
+            
+            tic;     
+        
+            RDF10 = mean(M.data.RDFhisto(start:(start+10),1:300));
+            RDF50 = mean(M.data.RDFhisto(start:(start+50),1:300));
+            RDF100 = mean(M.data.RDFhisto(start:(start+100),1:300));
+            RDF1k = mean(M.data.RDFhisto(start:(start+1000),1:300));
+            RDF2k = mean(M.data.RDFhisto(start:(start+2000),1:300));
+            RDF6k = mean(M.data.RDFhisto(start:(start+6000),1:300));
+            RDF12k = mean(M.data.RDFhisto(start:(start+12000),1:300));
+        
+            ys = [-log(RDF10);-log(RDF50);-log(RDF100);-log(RDF1k);...
+                -log(RDF2k);-log(RDF6k);-log(RDF12k)];
+
+            % with n set to 12
+            %[fitresult,mfit,merror, gof] = createFitRDF(xs, ys, t, r,m,steps);
+        
+            % with free n
+            [fitresult,mfit,merror,nfit,nerror, gof] =...
+                createFitRDF(xs, ys, t, r,m,steps,'freen',true);
+        
+
+            allfittedm10{tind,rind,mind} = mfit(1);
+            allfittedm50{tind,rind,mind} = mfit(2);
+            allfittedm100{tind,rind,mind} = mfit(3);
+            allfittedm1k{tind,rind,mind} = mfit(4);
+            allfittedm2k{tind,rind,mind} = mfit(5);
+            allfittedm6k{tind,rind,mind} = mfit(6);
+            allfittedm12k{tind,rind,mind} = mfit(7);
+            
+            allmerror10{tind,rind,mind} = merror(1);
+            allmerror50{tind,rind,mind} = merror(2);
+            allmerror100{tind,rind,mind} = merror(3);
+            allmerror1k{tind,rind,mind} = merror(4);
+            allmerror2k{tind,rind,mind} = merror(5);
+            allmerror6k{tind,rind,mind} = merror(6);
+            allmerror12k{tind,rind,mind} = merror(7);
+
+            allfittedn10{tind,rind,mind} = nfit(1);
+            allfittedn50{tind,rind,mind} = nfit(2);
+            allfittedn100{tind,rind,mind} = nfit(3);
+            allfittedn1k{tind,rind,mind} = nfit(4);
+            allfittedn2k{tind,rind,mind} = nfit(5);
+            allfittedn6k{tind,rind,mind} = nfit(6);
+            allfittedn12k{tind,rind,mind} = nfit(7);
+            
+            allnerror10{tind,rind,mind} = nerror(1);
+            allnerror50{tind,rind,mind} = nerror(2);
+            allnerror100{tind,rind,mind} = nerror(3);
+            allnerror1k{tind,rind,mind} = nerror(4);
+            allnerror2k{tind,rind,mind} = nerror(5);
+            allnerror6k{tind,rind,mind} = nerror(6);
+            allnerror12k{tind,rind,mind} = nerror(7);
+
+            saveas(gcf,['fitRDFT' my_num2str(t)...
+                'rho' my_num2str(r) 'm' num2str(m) 'freen_steps.fig']);
+            saveas(gcf,['fitRDFT' my_num2str(t)...
+                'rho' my_num2str(r) 'm' num2str(m) 'freen_steps.jpg']);
+            close all;
+       
+        toc
+        end 
+    end
 end
 
-save('all_fittedm.mat');
+save('all_fittedm_freen.mat');
