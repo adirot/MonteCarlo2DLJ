@@ -60,6 +60,10 @@ for i = 1:Nplots
     x = xs(i,:);
     [xData, yData] = prepareCurveData( x, y );
 
+    % stop warning about no starting point provided
+    warning('off','curvefit:fit:noStartPoint');
+    % stop warning about removing nan and inf data
+    warning('off','curvefit:prepareFittingData:removingNaNAndInf');
 
     % Fit model to data.
 %     [fitresult, gof] = fit( xData, yData, ft, opts );
