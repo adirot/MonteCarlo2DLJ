@@ -104,6 +104,7 @@ classdef MC2DLJoutput
       fileName,data,indIndata;
       RDFhisto, RDFbins;
       runNum;
+      RDFpeakLocs;
       
    end
     methods
@@ -357,7 +358,8 @@ classdef MC2DLJoutput
             
        end
        
-       function obj = calcRDF(obj,maxDist,numOfBins)
+       function [obj, bins, RDFhisto] =...
+               calcRDF(obj,maxDist,numOfBins,varargin)
             %% calculate 2D radial distribution function, with pediodic boundary
             %% conditions.
             
@@ -387,15 +389,24 @@ classdef MC2DLJoutput
             %   http://www2.msm.ctw.utwente.nl/sluding/TEACHING/APiE_Script_v2011.pdf
             %       page 48 - "Radial distribution function"
             
+            p = inputParser();
+            addOptional(p, 'save2data', true);
+            parse(p, varargin{:});
+            Results = p.Results;
+            save2data = Results.save2data;
+                    
             
               N = obj.simulationParam.N;
               rho = obj.simulationParam.rho;
               
-              
-              obj.data.RDFhisto = zeros(obj.indIndata,numOfBins);      
               bins = linspace(0,maxDist,numOfBins); 
-              obj.data.RDFbins = bins;
-              obj.RDFhisto = zeros(1,numOfBins);
+              if save2data
+                    obj.data.RDFhisto = zeros(obj.indIndata,numOfBins);      
+                    obj.data.RDFbins = bins;
+                    obj.RDFhisto = zeros(1,numOfBins);
+              else 
+                    RDFhisto = zeros(obj.indIndata,numOfBins);
+              end
               
               for step = 1:obj.indIndata
 
@@ -430,54 +441,98 @@ classdef MC2DLJoutput
 
                     end
                         histo = 2*histo/(N-1);
-                        obj.data.RDFhisto(step,:) = histo;
-                        obj.RDFhisto = obj.RDFhisto + histo;
+                        if save2data
+                                obj.data.RDFhisto(step,:) = histo;
+                                obj.RDFhisto = obj.RDFhisto + histo;
+                        else
+                                RDFhisto(step,:) = histo;
+                        end
+                            
               end
-            obj.RDFbins = bins;
-            obj.RDFhisto = obj.RDFhisto/obj.indIndata;
+              
+              if save2data
+                    obj.RDFbins = bins;
+                    obj.RDFhisto = obj.RDFhisto/obj.indIndata;
+              end
        end
        
-       function obj = RDFvarVar(obj,varargin)
-           % calculates the variance and variance of the variance for
-           % spesific points in the RDF: the peaks higher than 2 + the
-           % first peak. 
+       function [obj, RDFlocs] = findRDFpeaks(obj,varargin)
            
            p = inputParser();
-           addOptional(p, 'plotFig', true);
-           addOptional(p, 'saveFig', true);           
+           addOptional(p, 'minPeakHeight', 2);
+           parse(p, varargin{:});
+           Results = p.Results;
+           minPeakHeight = Results.minPeakHeight;
+           
+           % find peaks
+           RDFlocs = [];RDFlocsmin = [];
+           %  find peaks and valies larger than
+           % minPeakHight
+           [~, RDFlocs] =...
+               findpeaks(obj.RDFhisto,'MINPEAKHEIGHT',minPeakHeight);
+           [~, RDFlocsmin] =...
+               findpeaks(2-obj.RDFhisto,...
+               'MINPEAKHEIGHT',minPeakHeight);
+           [~, RDFind] = min(abs(2^(1/6) - obj.RDFbins)); % find location
+                                                       % of the first peak
+           RDFlocs = unique([RDFlocs RDFind RDFlocsmin]);
+           obj.RDFpeakLocs = RDFlocs;
+                     
+       end
+       
+       function [obj, varVarPeaks] = RDFvarVar(obj,varargin)
+           % calculates the variance and variance of the variance for
+           % spesific points in the RDF:  the first peak. 
+           
+           p = inputParser();
+           addOptional(p, 'plotFig', false);
+           addOptional(p, 'saveFig', false);           
            addOptional(p, 'keepFigOpen', false);
+           addOptional(p, 'firstSteps2ignore', 0);
            parse(p, varargin{:});
            Results = p.Results;
            plotFig = Results.plotFig;
            saveFig = Results.saveFig;
-           keepFigOpen = Results.keepFigOpen;           
+           keepFigOpen = Results.keepFigOpen;
+           firstSteps2ignore = Results.firstSteps2ignore;
            
-           % check if RDF was calculated calculated allready
+           % check if RDF was calculated allready
            if ~existInMatfile(obj.data,'RDFhisto')
                error('calculate RDF first');
            end
            
-           % find peaks
-           [~,locs] = findpeaks(obj.RDFhisto,'MINPEAKHEIGHT',2);
-           [~, ind] = min(abs(2^(1/6) - obj.RDFbins)); % find location
-                                                       % of the first peak
-           locs = unique([locs ind]);
            [Nsteps, ~] = size(obj.data.RDFhisto);
-           peaks = zeros(length(locs),Nsteps);
-           steps = zeros(length(locs),Nsteps);
            
-           for i = 1:Nsteps
-               peaks(:,i) = obj.data.RDFhisto(i,locs);
+           if firstSteps2ignore == 0
+               minInd = 1;
+           else
+               % find the relevent initial index
+               [~, minInd] = min(abs(firstSteps2ignore - obj.data.stepInd));
+           end
+           
+           % find peaks
+%            [obj, locs] = obj.findRDFpeaks();
+            locs = 30;
+            peaks = zeros(length(locs),Nsteps-minInd+1);
+            steps = zeros(length(locs),Nsteps-minInd+1);
+            
+
+           for i = minInd:Nsteps
+               for k = 1:length(locs)
+                   peaks(k,i-minInd+1) =...
+                       obj.data.RDFhisto(i,locs(k));
+               end
                
                % find variance and variance of variance in the peaks
                for j = 1:length(locs)
-                    varPeaks(j,i) = var(peaks(j,1:i));
-                    varVarPeaks(j,i) = var(varPeaks(j,1:i));
+                    varPeaks(j,i-minInd+1) = var(peaks(j,1:(i-minInd+1)));
+                    varVarPeaks(j,i-minInd+1) =...
+                        var(varPeaks(j,1:(i-minInd+1)));
                end
            end
            
            for j = 1:length(locs)
-               steps(j,:) = obj.data.stepInd;
+               steps(j,:) = obj.data.stepInd(1,minInd:Nsteps);
            end
            
            if plotFig
@@ -665,7 +720,7 @@ classdef MC2DLJoutput
        end
        
        function obj = meanProp(obj)
-            % makes mean vectors for U,P.
+            % makes mean vectors for U,P,RDFpeaks.
             % meanProp(i) is the mean of all the values of property on
             % steps 1 to i.
             
@@ -673,6 +728,12 @@ classdef MC2DLJoutput
             obj.data.meanUlrc = my_mean(obj.data.allUlrc);
             obj.data.meanP = my_mean(obj.data.allP);
             obj.data.meanPlrc = my_mean(obj.data.allPlrc);
+            [obj, locs] = obj.findRDFpeaks;
+            if isempty(obj.RDFhisto)
+                obj.RDFhisto = mean(obj.data.RDFhisto);
+                obj.RDFbins = obj.data.RDFbins;
+            end
+            obj.data.meanRDFpeaks = obj.RDFhisto(1,locs);
             
        end
        
@@ -728,7 +789,14 @@ classdef MC2DLJoutput
                mean(obj.data.allPlrc(1,firstSteps2ignore:obj.indIndata));
            obj.data.meanUlrcEq =...
                mean(obj.data.allUlrc(1,firstSteps2ignore:obj.indIndata));
-               
+           
+           if isempty(obj.RDFpeakLocs)
+               [obj, ~] = obj.findRDFpeaks();
+           end
+           
+           obj.data.meanRDFpeaksEq = ...
+               mean(obj.data.RDFhisto(firstSteps2ignore:obj.indIndata,...
+               obj.RDFpeakLocs));
        end
         
        function [obj,tauP,tauU] = inefficiency(obj,n,varargin)
@@ -753,6 +821,7 @@ classdef MC2DLJoutput
                 if existInMatfile(obj.fileName,'meanPlrcEq')
                     meanP = obj.data.meanPlrcEq;
                     meanU = obj.data.meanUlrcEq;
+                    meanRDF = obj.data.meanRDFpeaksEq;
                     firstSteps2ignore = obj.data.firstSteps2ignore;
                 else
                     error(['you must provide a number of first steps'... 
@@ -763,10 +832,14 @@ classdef MC2DLJoutput
                obj = calcMeanWithoutFirstSteps(obj, firstSteps2ignore);
                meanP = obj.data.meanPlrcEq;
                meanU = obj.data.meanUlrcEq;
+               meanRDFpeaks = obj.data.meanRDFpeaksEq;
            end
            
            P = obj.data.allPlrc(1,firstSteps2ignore:obj.data.indIndata);
            U = obj.data.allUlrc(1,firstSteps2ignore:obj.data.indIndata);
+           RDFpeaks = obj.RDFhisto(firstSteps2ignore:obj.data.indIndata,...
+               obj.RDFlocs);
+           [~, Npeaks] = size(RDFpeaks);
 
            nt = (obj.indIndata - firstSteps2ignore);
            
@@ -776,7 +849,9 @@ classdef MC2DLJoutput
                 for i = 1:n(j):(nt-n(j)+1)
                    
                     Pmeanb(ind) = mean(P(i:(i+n(j)-1)));
-                    Umeanb(ind) = mean(U(i:(i+n(j)-1)));                    
+                    Umeanb(ind) = mean(U(i:(i+n(j)-1)));
+                    RDFpeaksMeanb(ind,1:Npeaks) =...
+                        mean(RDFpeaks(i:(i+n(j)-1),1:Npeaks));
                     ind = ind + 1;
                 end
            
@@ -785,19 +860,29 @@ classdef MC2DLJoutput
                 nb(j) = length(Pmeanb);
                 varMeanP(j) = mean((Pmeanb - mean(Pmeanb)).^2);
                 varMeanU(j) = mean((Umeanb - mean(Umeanb)).^2);
+                varMeanRDFpeaks(j,1:Npeaks) =...
+                    mean((RDFpeaksMeanb - mean(RDFpeaksMeanb)).^2);
                 Pmeanb = [];
                 Umeanb = [];
+                RDFpeaksMeanb = [];
                 
            end
             
            %calculate sigma^2(A)
            varP = mean((P(:) - meanP).^2);
            varU = mean((U(:) - meanU).^2);
+           varRDFpeaks = mean((RDFpeaks - meanP).^2);
 
            % calculate tau
            tauP = n.*varMeanP/varP;
            tauU = n.*varMeanU/varU;
-            
+           
+           for i = 1:Npeaks
+                tauRDFpeaks(i,:) = n.*varMeanRDFpeaks(:,i)/varRDFpeaks(:,i);
+                tauRDFpeaksX(i,:) = sqrt(n);
+                RDFpeaksLeg{1,i} = ['peak num: ' num2str(i)];
+           end
+           
            if saveFigSVsSqrtTau
                plotSVsSqrtTau = true;
            end
@@ -806,20 +891,40 @@ classdef MC2DLJoutput
                figure;
                plot(sqrt(n),tauP);
                hold on;
-               title('s for the pressure and energy');
-               xlabel('\sqrt{\tau_b}');
-               ylabel('s');
+               title('$$t_A^c$$ for the pressure and energy',...
+                   24,'Interpreter','latex');
+               xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
+               ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
+                   'FontSize',24,'Interpreter','latex');
                plot(sqrt(n),tauU,'r');
                legend('pressure','energy');
+               
+               if saveFigSVsSqrtTau
+                   fileName = ['SVsSqrtTauN' num2str(obj.simulationParam.N)... 
+                       'T' my_num2str(obj.simulationParam.T)...
+                       'rho' my_num2str(obj.simulationParam.rho)];
+                   saveas(gcf,[fileName '.fig']);
+                   saveas(gcf,[fileName '.jpg']);
+               end
+
+               
+               colorPlot(tauRDFpeaksX,tauRDFpeaks,'addLegend',RDFpeaksLeg);
+               title('$$t_A^c$$ for RDF peaks',...
+                   24,'Interpreter','latex');
+               xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
+               ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
+                   'FontSize',24,'Interpreter','latex');
+               
+               if saveFigSVsSqrtTau
+                   fileName = ['SVsSqrtTauNRDF' num2str(obj.simulationParam.N)... 
+                       'T' my_num2str(obj.simulationParam.T)...
+                       'rho' my_num2str(obj.simulationParam.rho)];
+                   saveas(gcf,[fileName '.fig']);
+                   saveas(gcf,[fileName '.jpg']);
+               end
+               
            end
            
-           if saveFigSVsSqrtTau
-               fileName = ['SVsSqrtTauN' num2str(obj.simulationParam.N)... 
-                   'T' my_num2str(obj.simulationParam.T)...
-                   'rho' my_num2str(obj.simulationParam.rho)];
-               saveas(gcf,[fileName '.fig']);
-               saveas(gcf,[fileName '.jpg']);
-           end
            
            if ~keepFigOpen
                close gcf;
@@ -832,7 +937,7 @@ classdef MC2DLJoutput
            % steps in the simulation.
            
            p = inputParser();
-           addOptional(p,'startFrom',1);
+           addOptional(p,'startFromStep',0);
            addOptional(p, 'plotVarVsStep', true);
            addOptional(p, 'plotVarVarVsStep', true);
            addOptional(p, 'saveFig', true);           
@@ -843,13 +948,22 @@ classdef MC2DLJoutput
            plotVarVarVsStep = Results.plotVarVarVsStep;
            saveFig = Results.saveFig;
            keepFigOpen = Results.keepFigOpen;
+           startFromStep = Results.startFromStep;
            
-           for i = 1:obj.data.indIndata
+           if startFromStep == 0
+               minInd = 1;
+           else
+               % find the relevent initial index
+               [~, minInd] = min(abs(startFromStep - obj.data.stepInd));
+           end
+           
+           
+           for i = minInd:obj.data.indIndata
                
-               varU(i) = var(obj.data.allUlrc(1,1:i));
-               varVarU(i) = var(varU);
-               varP(i) = var(obj.data.allPlrc(1,1:i));
-               varVarP(i) = var(varP);
+               varU(i-minInd+1) = var(obj.data.allUlrc(1,minInd:i));
+               varVarU(i-minInd+1) = var(varU);
+               varP(i-minInd+1) = var(obj.data.allPlrc(1,minInd:i));
+               varVarP(i-minInd+1) = var(varP);
            end
            
            obj.data.varU = varU;
@@ -857,7 +971,7 @@ classdef MC2DLJoutput
            obj.data.varVarU = varVarU;
            obj.data.varVarP = varVarP;
            
-           steps = obj.data.stepInd;
+           steps = obj.data.stepInd(1,minInd:obj.indIndata);
            
            if plotVarVsStep
                figure;

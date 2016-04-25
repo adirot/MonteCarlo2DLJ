@@ -55,7 +55,7 @@ end
   end
           
    if isempty(figHandle)
-       figHandle = figure;
+       figHandle = figure('units','normalized','outerposition',[0 0 1 1]);
    else
        figure(figHandle);
    end

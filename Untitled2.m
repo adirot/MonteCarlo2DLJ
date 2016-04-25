@@ -1,0 +1,1 @@
+obj = obj.calcAllRDF(10,10,'talk',true)
