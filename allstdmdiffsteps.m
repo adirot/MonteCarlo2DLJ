@@ -50,8 +50,8 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             end
 
             for j = 1:10
-disp(j);
-tic
+            disp(j);
+            tic
                 rndind = unidrnd(12000,1,10)+start;
                 RDF10 = [];
                 for k = 1:length(rndind)
@@ -95,7 +95,7 @@ tic
                 [fitresult, mfit, mError, gof] =...
                     createFitRDF(x, -log(RDF1k), t, r,m,steps,'plotFig', false);
                 mfit1k = [mfit1k mfit];
-   toc             
+                toc             
             end
             
             allmean10(tind,rind,mind) = mean(mfit10);
@@ -121,7 +121,7 @@ tic
             plot(x,y,'m');
             legend(steps);
             title(['m from fit to -log(RDF), for different number of steps. T = '...
-                my_num2str(T) ' \rho = ' num2str(rho) ' m = ' num2str(m)]);
+                my_num2str(t) ' \rho = ' num2str(r) ' m = ' num2str(m)]);
             xlabel('m');
             ylabel('count');
 
