@@ -15,9 +15,10 @@ function U = pairU(dist,rCutoff,m,varargin)
 % and the second angle is the angle of the vector connecting the two cells,
 % with respect to the oriantation of A. 
 % for example, an angle dependence might be:
-% f(a,b) = @(a,b) cos(a)*sin(b)
+% f(cos(a),cos(b)) = @(a,b) a*b
 % meaning that the distance dependent potantial is multiplied by this
-% factor.
+% factor. (we use a function of cos(a) and cos(b) because calculation of
+% trigonometric functions is time consuming.)
 % so we will calculate the pair potantial with:
 % U = pairU(dist,rCutoff,m,'angleDependence',f,'relativeCellAngles',relativeCellAngles)
 % where relativeCellAngles is a vactor of 2 by N, noteing the two angles
