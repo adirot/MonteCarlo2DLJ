@@ -17,6 +17,10 @@ classdef MC2DLJoutput
 %                               algorithm will not be used.
 %       simulationParam.pressure - true or false, calculate the pressure or
 %                                   not.
+%       simulationParam.angleDependent - true or false (if the simulation
+%               particles have an angle that defines them)
+%       simulationParam.angleDependence - an anonymous function of two angles,
+%               describing the angle dependence of the potantial. 
 
 % currentU - the energy in the last step calculated
 % Ulrc - the energy in the last step calculated, with long range
@@ -43,7 +47,7 @@ classdef MC2DLJoutput
 % to save time, only the current step is saved in the object. the rest of
 % the data is stored in a mat file. you can excess the data useing obj.data.
 
-% data inclides:
+% data includes:
 %       data.allCoords - all the coordinates in each step saved (size: 2 by N by
 %           indIndata)
 %       data.allDists - all the pair distances in each step saved (size: N by N by
@@ -162,6 +166,8 @@ classdef MC2DLJoutput
                     addOptional(p, 'fileNameInit', '');
                     addOptional(p, 'm', 6);
                     addOptional(p, 'runNum', []);
+                    addOptional(p, 'angleDependent', false);
+                    addOptional(p, 'angleDependence', @(alpha,beta) 1);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -169,6 +175,8 @@ classdef MC2DLJoutput
                     fileNameInit = Results.fileNameInit;
                     m = Results.m;
                     runNum = Results.runNum;
+                    angleDependent = Results.angleDependent;
+                    angleDependence = Results.angleDependence;
                     
                     % create a simulation output object for a new
                     % simulation
@@ -191,6 +199,8 @@ classdef MC2DLJoutput
                     obj.simulationParam.rl = rl;
                     obj.simulationParam.pressure = pressure;
                     obj.simulationParam.m = m;
+                    obj.simulationParam.angleDependent = angleDependent;
+                    obj.simulationParam.angleDependence = angleDependence;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
@@ -209,6 +219,12 @@ classdef MC2DLJoutput
                         pressurestr = '';
                     end
                     
+                    if angleDependent
+                        angleDependencestr = 'angleDependent_';
+                    else
+                        angleDependencestr = '';
+                    end
+                    
                     % make sure that L/2 is larger than rCutoff:
                     if obj.simulationParam.L/2 < rCutoff
                         error(['choose a larger number of particles, so that'
@@ -222,6 +238,7 @@ classdef MC2DLJoutput
                         initialConfig 'rCutoff'...
                          my_num2str(rCutoff) vereletstr '_' pressurestr...
                           '_m' num2str(m) ...
+                          angleDependencestr ...
                           'runNum' num2str(runNum) ...
                           'date'...
                         nowdatetimestr()];
@@ -232,9 +249,28 @@ classdef MC2DLJoutput
                     [allDists(:,:,1),allCoords(:,:,1)] = ...
                             createInitialConfig(obj.simulationParam.L,N,r...
                             ,initialConfig);
+                    if angleDependent
+                        allAngles = rand(1,N,2)*pi;
+                        % alpha(i,j) is the angle between the oriantations
+                        % of cells i,j. we save the cosine of this angle
+                        allrelativeCellAnglescosalpha =...
+                            tril(cos(bsxfun(@minus,allAngles,allAngles')),-1);
+                        
+                        % beta(i,j) is the angle between the oriantation
+                        % of cell i and the and the angle of the vector
+                        % connecting the cells i,j. 
+                        %  we save the cosine of this angle
+                        xdist = bsxfun(@minus,allCoords(1,:,1),allCoords(1,:,1)');
+                        allrelativeCellAnglescosbeta = ...
+                            tril(cos(xdist./allDists(:,:,1)),-1);
+                    end
+                    
                         
                     % calculate initial energy
                     d = reshapeDist(allDists);
+                    if angleDependent
+                        ang = [reshapeDist(allrelativeCellAnglescosalpha);...
+                            reshapeDist(allrelativeCellAnglescosbeta)];
                     allU = pairU(d,rCutoff,m);
                     allUlrc = allU - pi*rho*N/rCutoff^4;
                     
