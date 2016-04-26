@@ -1,4 +1,4 @@
-function [fitresult, mfit, mError, nfit, nError, gof] =...
+function [fitresult, mfit, mError, nfit, nError, Tfit, TError, gof] =...
     createFitRDF(xs, ys, T, rho,m , steps, varargin)
 %CREATEFIT(X,Y)
 %  Create a fit for RDF.
@@ -15,11 +15,15 @@ function [fitresult, mfit, mError, nfit, nError, gof] =...
 p = inputParser();
 addOptional(p, 'plotFig', true);
 addOptional(p, 'freen', false);
+addOptional(p, 'freeTandn', false);
 parse(p, varargin{:});
 Results = p.Results;
 plotFig = Results.plotFig;
 freen = Results.freen;
                     
+if freeTandn
+    freen = false;
+end
 
 [Nplots, ~] = size(ys);
 
@@ -31,10 +35,18 @@ if plotFig
             num2str(rho) ' m = ' num2str(m) ' n free']);
         message = sprintf(['4*(1/' num2str(T) ')*((1/x)^n - (1/x)^m)']);
     else
-        title(['RDF with fit for T = ' num2str(T) ' \rho = '...
-            num2str(rho) ' m = ' num2str(m) ' n set to 12']);
+        if freeTandn
+            title(['RDF with fit for T = ' num2str(T) ' \rho = '...
+                num2str(rho) ' m = ' num2str(m) ' n,T free']);
+
+            message = sprintf('4*(1/T)*((1/x)^n - (1/x)^m)');
         
-        message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
+        else
+            title(['RDF with fit for T = ' num2str(T) ' \rho = '...
+                num2str(rho) ' m = ' num2str(m) ' n set to 12']);
+
+            message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
+        end
     end
     
     text(2,7,message);
@@ -45,8 +57,14 @@ if freen
     ft = fittype( ['4*(1/' num2str(T) ')*((1/x)^n - (1/x)^m)'],...
         'independent', 'x', 'dependent', 'y' );
 else
-    ft = fittype( ['4*(1/' num2str(T) ')*((1/x)^12 - (1/x)^m)'],...
-            'independent', 'x', 'dependent', 'y' );
+    if freeTandn
+        ft = fittype('4*(1/T)*((1/x)^12 - (1/x)^m)',...
+                'independent', 'x', 'dependent', 'y' );
+    
+    else
+        ft = fittype( ['4*(1/' num2str(T) ')*((1/x)^12 - (1/x)^m)'],...
+                'independent', 'x', 'dependent', 'y' );
+    end
 end
 % opts = fitoptions( ft );
 % opts.Display = 'Off';
@@ -74,12 +92,19 @@ for i = 1:Nplots
     mfit(i) = coeff(1);
     mError(i,1) = conf(1,1);
     mError(i,2) = conf(2,1);
-    if freen
+    if or(freen,freeTandn) 
         nfit(i) = coeff(2);
         nError(i,1) = conf(1,2);
         nError(i,2) = conf(2,2);
+        if freeTandn
+            Tfit(i) = coeff(3);
+            TError(i,1) = conf(1,3);
+            TError(i,2) = conf(2,3);
+        else 
+            Tfit = []; TError = [];
+        end
     else 
-        nfit = []; nError = [];
+        nfit = []; nError = []; Tfit = []; TError = [];
     end
         
     if plotFig
@@ -98,9 +123,19 @@ for i = 1:Nplots
                 num2str(coeff(2))...
                 ' (' num2str(conf(1,2)) ',' num2str(conf(2,2)) ')']);
         else
-            message = sprintf(['steps: ' steps{i} '\n' 'm = '...
+            if freeTandn
+                message = sprintf(['steps: ' steps{i} '\n' 'm = '...
                 num2str(coeff(1))...
-                ' (' num2str(conf(1,1)) ',' num2str(conf(2,1)) ')']);
+                ' (' num2str(conf(1,1)) ',' num2str(conf(2,1)) ')\nn = '...
+                num2str(coeff(2))...
+                ' (' num2str(conf(1,2)) ',' num2str(conf(2,2)) ')\nT = '...
+                num2str(coeff(3))...
+                ' (' num2str(conf(1,3)) ',' num2str(conf(2,3)) ')']);
+            else
+                message = sprintf(['steps: ' steps{i} '\n' 'm = '...
+                    num2str(coeff(1))...
+                    ' (' num2str(conf(1,1)) ',' num2str(conf(2,1)) ')']);
+            end
         end
         text(2,7-i,message,'EdgeColor','k');
     end
@@ -108,7 +143,7 @@ end
 
 if plotFig
     ylim([-3 8])
-    set(findall(gcf,'-property','FontSize'),'FontSize',16);
+    set(findall(gcf,'-property','FontSize'),'FontSize',12);
 
     % Label axes
     xlabel( 'distance' );
