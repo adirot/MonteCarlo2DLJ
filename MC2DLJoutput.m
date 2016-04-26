@@ -391,25 +391,31 @@ classdef MC2DLJoutput
             
             p = inputParser();
             addOptional(p, 'save2data', true);
+            addOptional(p, 'startFrom', 1);
+            addOptional(p, 'talk', false);
             parse(p, varargin{:});
             Results = p.Results;
             save2data = Results.save2data;
-                    
+            startFrom = Results.startFrom;
+            talk = Results.talk;
             
               N = obj.simulationParam.N;
               rho = obj.simulationParam.rho;
               
               bins = linspace(0,maxDist,numOfBins); 
               if save2data
-                    obj.data.RDFhisto = zeros(obj.indIndata,numOfBins);      
+                    obj.data.RDFhisto = ...
+                        zeros(obj.indIndata-startFrom+1,numOfBins);      
                     obj.data.RDFbins = bins;
                     obj.RDFhisto = zeros(1,numOfBins);
               else 
-                    RDFhisto = zeros(obj.indIndata,numOfBins);
+                    RDFhisto = zeros(obj.indIndata-startFrom+1,numOfBins);
               end
               
-              for step = 1:obj.indIndata
-
+              for step = startFrom:obj.indIndata
+                    if talk
+                        disp(['calcRDF step: ' num2str(step)]);
+                    end
                     dist = obj.data.allDists(:,:,step);
                     d = reshape(dist,1,[]);
                     d = nonzeros(d);
@@ -452,7 +458,7 @@ classdef MC2DLJoutput
               
               if save2data
                     obj.RDFbins = bins;
-                    obj.RDFhisto = obj.RDFhisto/obj.indIndata;
+                    obj.RDFhisto = obj.RDFhisto/(obj.indIndata-startFrom+1);
               end
        end
        
