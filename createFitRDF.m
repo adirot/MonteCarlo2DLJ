@@ -20,7 +20,8 @@ parse(p, varargin{:});
 Results = p.Results;
 plotFig = Results.plotFig;
 freen = Results.freen;
-                    
+freeTandn = Results.freeTandn;
+
 if freeTandn
     freen = false;
 end
@@ -58,7 +59,7 @@ if freen
         'independent', 'x', 'dependent', 'y' );
 else
     if freeTandn
-        ft = fittype('4*(1/T)*((1/x)^12 - (1/x)^m)',...
+        ft = fittype('4*(1/T)*((1/x)^n - (1/x)^m)',...
                 'independent', 'x', 'dependent', 'y' );
     
     else
