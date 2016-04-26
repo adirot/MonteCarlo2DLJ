@@ -45,9 +45,9 @@ for t = [0.45,0.6,0.8,1,1.5,2]
 
             M = MC2DLJoutput(list{1,1});
 
-            if and(and(t == 0.45,r == 0.005), m==3)
+            
                 x = M.data.RDFbins;
-            end
+            
 
             for j = 1:10
             disp(j);
@@ -80,19 +80,19 @@ for t = [0.45,0.6,0.8,1,1.5,2]
                 end
                 RDF1k = mean(RDF1k);
             
-                [fitresult, mfit, mError, gof] =...
+                [fitresult, mfit, mError, nfit, nError, gof] =...
                     createFitRDF(x, -log(RDF10), t, r,m,steps,'plotFig', false);
                 mfit10 = [mfit10 mfit];
 
-                [fitresult, mfit, mError, gof] =...
+                [fitresult, mfit, mError, nfit, nError, gof] =...
                     createFitRDF(x, -log(RDF50), t, r,m,steps,'plotFig', false);
                 mfit50 = [mfit50 mfit];
                
-                [fitresult, mfit, mError, gof] =...
+                [fitresult, mfit, mError, nfit, nError, gof] =...
                     createFitRDF(x, -log(RDF100), t, r,m,steps,'plotFig', false);
                 mfit100 = [mfit100 mfit];
                 
-                [fitresult, mfit, mError, gof] =...
+                [fitresult, mfit, mError, nfit, nError, gof] =...
                     createFitRDF(x, -log(RDF1k), t, r,m,steps,'plotFig', false);
                 mfit1k = [mfit1k mfit];
                 toc             

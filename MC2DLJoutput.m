@@ -274,7 +274,7 @@ classdef MC2DLJoutput
                     obj.currentStep = stepInd;
                     obj.indIndata = 1;
                 end
-
+            
         end
         
        function obj = MonteCarlo(obj,Nsteps,saveEvery)
