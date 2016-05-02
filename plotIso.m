@@ -1,10 +1,12 @@
-function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(varargin)
+function [isotherms,fit,residuals_out,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx]...
+    = plotIso(varargin)
     
     % check input, build isotherm object from data files if necessary
 
         p = inputParser();
         addOptional(p, 'N', []); 
-        addOptional(p, 'fileListOrg', []); 
+        addOptional(p, 'fileListOrg', []);
+        addOptional(p, 'startFrom', 1);
         addOptional(p, 'Visible', 'on');
         addOptional(p, 'saveFig', true);
         addOptional(p, 'fitprop', []);
@@ -25,6 +27,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
         Results = p.Results;
         N = Results.N;
         Visible = Results.Visible;
+        startFrom = Results.startFrom;
         saveFig = Results.saveFig;
         fitprop = Results.fitprop;
         residuals = Results.residuals;
@@ -60,9 +63,11 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
         
         for i = 1:Niso
             if i == 1
-                isotherms = isotherm('datafileList',fileListOrg(i,:)','cutEquilirization',true);
+                isotherms = isotherm('datafileList',fileListOrg(i,:)',...
+                    'cutEquilirization',true,'firstSteps2ignore',startFrom);
             else
-                isotherms(i) = isotherm('datafileList',fileListOrg(i,:)','cutEquilirization',true);
+                isotherms(i) = isotherm('datafileList',fileListOrg(i,:)',...
+                    'cutEquilirization',true,'firstSteps2ignore',startFrom);
             end
         end
     else
@@ -76,6 +81,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
     Nrho = length(isotherms(1).rho);
     pressure = zeros(Niso,Nrho);
     rho = zeros(Niso,Nrho);
+    residuals_out = {zeros(Niso,Nrho),zeros(Niso,Nrho)};
     
     for i = 1:Niso
         rho(i,:) = isotherms(i).rho;
@@ -107,6 +113,7 @@ function [isotherms,fit,canGetUfromgRind,hPvsRho,hPvsV,P,U,T,Z,Zx] = plotIso(var
                     for iso = 1:length(isotherms)
                         f = fit{1,i}(1,iso);
                         res = my_residuals(pressure(iso,:),f.P);
+                        residuals_out{1,i}(iso,:) = abs(res);
                         for j = 1:length(res)
                             text(rho(iso,j),f.P(j),num2str(res(j)));
                         end
