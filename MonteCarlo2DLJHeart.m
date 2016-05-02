@@ -59,15 +59,31 @@ p = inputParser();
 addOptional(p, 'verelet', []); 
 addOptional(p, 'virial', []);
 addOptional(p, 'm', 6);
+addOptional(p, 'angleDependent',false);
+addOptional(p, 'initialAng', []);
+addOptional(p, 'initialCosAlpha', []);
+addOptional(p, 'initialCosBeta', []);
+addOptional(p, 'maxdCosAng', []);
 parse(p, varargin{:});
 Results = p.Results;
 rl = Results.verelet;
 virial = Results.virial;
 m = Results.m;
+angleDependent = Results.angleDependent;
+initialAng = Results.initialAng;
+initialCosAlpha = Results.initialCosAlpha;
+initialCosBeta = Results.initialCosBeta;
+maxdCosAng = Results.maxdCosAng;
+
 
 % initiate virables
 dist = initialDistances;
 particlesPosition = initialConfig;
+if angleDependent
+    particlesAngs = initialAng;
+    particlesCosAlpha = initialCosAlpha;
+    particlesCosBeta = initialCosBeta;
+end
 U = initialU;
 if ~isempty(virial)
     V = virial;
@@ -110,14 +126,31 @@ for step = 1:Nsteps
         displacex = maxdr*rand - (maxdr/2);
         displacey = maxdr*rand - (maxdr/2);
         displace = sqrt(displacex^2 + displacey^2);
-
+        
+        % choose rotation:
+        if angleDependent
+            dAng = maxdCosAng*rand - (maxdCosAng/2);
+        end
+        
         % move particle
         newParticlesPosition = movePBC(particlesPosition,movedParticle,...
             displacex,displacey,L);
+        
+        % rotate particle
+        if angleDependent
+            newParticlesAngs(movedParticle) =...
+                newParticlesAngs(movedParticle) + dAng; 
+        end
+        
+    
 
         % calculate new distances
         newDist = reCalcDist(dist,movedParticle,...
             newParticlesPosition,N,L,nlist);
+        
+        % calculate new relative angles
+        if angleDependent
+            
         
         % calculate the change in energy
         dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m);
@@ -213,9 +246,11 @@ finalDistances = dist;
                 newparticlesPosition(2,movedParticle) = y;
         end
     
-        function newdist = reCalcDist(dist,movedParticles,...
+        function varargout = reCalcDist(dist,movedParticles,...
                 newParticlesPosition,N,L,nlist)
-                
+                % if one output is requested, only the new distances will
+                % be calculated.
+            
                 for i = 1:length(movedParticles)
                     movedP = movedParticles(i);
                     % recalculates pair distances after moving a particle    

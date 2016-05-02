@@ -32,6 +32,12 @@ classdef MC2DLJoutput
 %           calculated (2 by N matrix)
 % currentDists - the pair distances of all particles in the last step 
 %           calculated (N by N matrix)
+% currentAngs - list of current cell angles
+% currentAlphas - list of current alpha angles (alpha(i,j) is the angle
+%       between the oriantations of cells i,j)
+% currentThetas - list of current Theta angles (theta(i,j) is the angle
+%       between the oriantation of cell i and the connecting vector of
+%       cells i,j.  
 % moveCount - counts accepted moves
 % currentPressure - the pressure in the last step calculated
 % currentmaxdr - the current maximum displacement of the Monte Carlo step.
@@ -61,9 +67,15 @@ classdef MC2DLJoutput
 %       data.currentmaxdr - the current maximum displacement of the Monte
 %               Carlo step.
 %       data.simulationParam - all prameters of the simulation.
-%       histo - histogram of the radial distribution function (for every
+%       data.RDFhisto - histogram of the radial distribution function (for every
 %                   step saved)
-%       bins - bins of the radial distribution function
+%       data.RDFbins - bins of the radial distribution function
+%       data.allAng - all cell oriantations in each step
+%       data.allAlphas - all alpha angles (allAlphas(i,j,k) is the angle between
+%                   the oriantations of cells i,j in the k'th step)
+%       data.allThetas - all Theta angles (allThetas(i,j,k) is the angle between
+%                   the oriantation of cell i and the vector connecting
+%                   cells i,j in the k'th step)
 
 
 % usage example: 
@@ -104,11 +116,13 @@ classdef MC2DLJoutput
       simulationParam = struct;
       currentmaxdr,...
           moveCount,currentCoords,currentDists,currentU,currentPressure,...
-          currentVir,Ulrc,Plrc,currentStep;
+          currentVir,Ulrc,Plrc,currentStep,...
+          currentThetas,currentAlphas,currentAngs;
       fileName,data,indIndata;
       RDFhisto, RDFbins;
       runNum;
       RDFpeakLocs;
+      
       
    end
     methods
@@ -139,6 +153,13 @@ classdef MC2DLJoutput
                     obj.currentCoords = obj.data.allCoords(:,:,obj.indIndata);
                     obj.currentDists = obj.data.allDists(:,:,obj.indIndata);
                     obj.currentU = obj.data.allU(1,obj.indIndata);
+                    
+                    if obj.simulationParam.angleDependence
+                   
+                        obj.currentAngs = obj.data.allAngs(:,:,obj.indIndata);
+                        obj.currentAlphas = obj.data.allAlphas(:,:,obj.indIndata);
+                        obj.currentThetas = obj.data.allThetas(:,:,obj.indIndata);
+                    end
                     if ~isempty(obj.data.allV)
                         obj.currentVir = obj.data.allV(1,obj.indIndata);
                         obj.currentPressure = obj.data.allP(1,obj.indIndata);
@@ -167,7 +188,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'm', 6);
                     addOptional(p, 'runNum', []);
                     addOptional(p, 'angleDependent', false);
-                    addOptional(p, 'angleDependence', @(alpha,beta) 1);
+                    addOptional(p, 'angleDependence', []);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -249,29 +270,32 @@ classdef MC2DLJoutput
                     [allDists(:,:,1),allCoords(:,:,1)] = ...
                             createInitialConfig(obj.simulationParam.L,N,r...
                             ,initialConfig);
+                    allAngles = [];
+                    allCosAlpha = [];
+                    allCosTheta = [];
                     if angleDependent
                         allAngles = rand(1,N,2)*pi;
-                        % alpha(i,j) is the angle between the oriantations
-                        % of cells i,j. we save the cosine of this angle
-                        allrelativeCellAnglescosalpha =...
+                        allCosAlpha =...
                             tril(cos(bsxfun(@minus,allAngles,allAngles')),-1);
                         
-                        % beta(i,j) is the angle between the oriantation
-                        % of cell i and the and the angle of the vector
-                        % connecting the cells i,j. 
-                        %  we save the cosine of this angle
-                        xdist = bsxfun(@minus,allCoords(1,:,1),allCoords(1,:,1)');
-                        allrelativeCellAnglescosbeta = ...
-                            tril(cos(xdist./allDists(:,:,1)),-1);
+                         xdist = bsxfun(@minus,allCoords(1,:,1),allCoords(1,:,1)');
+                         ydist = bsxfun(@minus,allCoords(2,:,1),allCoords(2,:,1)');
+                        allCosTheta = ...
+                            (ydist*sqrt(1-allCosAlpha.^2)+xdist*allCosAlpha)./allDists(:,:,1);
+                        
                     end
-                    
+                   
                         
                     % calculate initial energy
                     d = reshapeDist(allDists);
-                    if angleDependent
-                        ang = [reshapeDist(allrelativeCellAnglescosalpha);...
-                            reshapeDist(allrelativeCellAnglescosbeta)];
-                    allU = pairU(d,rCutoff,m);
+                    ang = [reshapeDist(allCosAlpha);...
+                            reshapeDist(allCosTheta)];
+                    allU = pairU(d,rCutoff,m,...
+                        'angleDependence',angleDependence,...
+                        'relativeCellAngles',ang);
+                    
+                    %%% this is the long range correction - should be fixed
+                    %%% for the case of angle dependence
                     allUlrc = allU - pi*rho*N/rCutoff^4;
                     
                     % calculate initial virial and pressere
@@ -285,7 +309,7 @@ classdef MC2DLJoutput
                         allP = [];
                         allPlrc = [];
                     end
-                    clear d;
+                    clear d; clear ang;
                     
                     % save to data file
                     stepInd = 0;
@@ -296,12 +320,18 @@ classdef MC2DLJoutput
                     save(obj.fileName, 'allDists','allCoords',...
                             'allU','allUlrc','allV','allP','allPlrc','stepInd',...
                             'moveCount','indIndata'...
-                            ,'currentmaxdr','simulationParam','runNum','-v7.3');
+                            ,'currentmaxdr','simulationParam','runNum',...
+                            'allrelativeCellAnglescosalpha',...
+                            'allrelativeCellAnglescosbeta',...
+                            'allAngles','-v7.3');
                     obj.data = matfile(obj.fileName);
                     obj.data = matfile(obj.fileName,'Writable',true);
                         
                     obj.currentCoords = allCoords;
                     obj.currentDists = allDists;
+                    obj.currentAng = allAngles;
+                    obj.currentCosAlpha = allCosAlpha;
+                    obj.currentCosBeta = allCosTheta;
                     obj.currentU = allU;
                     obj.Ulrc = allUlrc;
                     obj.currentVir = allV;
@@ -318,6 +348,7 @@ classdef MC2DLJoutput
             rho = obj.simulationParam.rho;
             rCutoff = obj.simulationParam.rCutoff;        
             m = obj.simulationParam.m;        
+            angleDependent = obj.simulationParam.angleDependent;
             
             stepCount = 0;
             while(stepCount < Nsteps)
