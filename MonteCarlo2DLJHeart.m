@@ -389,12 +389,12 @@ end
                     
                     if ~isempty(angleDependence)
                         relAng = [];
-                        relAng(1,:) = alphas(movedParticle,1:(movedParticle - 1));
-                        relAng(2,:) = thetas(movedParticle,1:(movedParticle - 1));
+                        relAng(:,1) = alphas(movedParticle,1:(movedParticle - 1));
+                        relAng(:,2) = thetas(movedParticle,1:(movedParticle - 1));
                     else
                         relAng = [];
                     end
-                    distrow = dist(movedParticle,1:(movedParticle - 1));
+                    distrow = dist(movedParticle,1:(movedParticle - 1))';
                     oldUrow = ...
                         pairU(distrow,rCutoff,m,...
                         'angleDependence',angleDependence,...
@@ -406,9 +406,9 @@ end
                 if movedParticle < N
                     if ~isempty(angleDependence)
                         relAng = [];
-                        relAng(1,:) =...
+                        relAng(:,1) =...
                             alphas((movedParticle + 1):N,movedParticle);
-                        relAng(2,:) =...
+                        relAng(:,2) =...
                             thetas((movedParticle + 1):N,movedParticle);
                     else
                         relAng = [];
@@ -429,14 +429,14 @@ end
                 if movedParticle > 1
                     if ~isempty(angleDependence)
                         relAng = [];
-                        relAng(1,:) =...
+                        relAng(:,1) =...
                             newAlphas(movedParticle,1:(movedParticle - 1));
-                        relAng(2,:) =...
+                        relAng(:,2) =...
                             newThetas(movedParticle,1:(movedParticle - 1));
                     else
                         relAng = [];
                     end
-                    distrow = newDist(movedParticle,1:(movedParticle - 1));
+                    distrow = newDist(movedParticle,1:(movedParticle - 1))';
                     newUrow = pairU(distrow,rCutoff,m,...
                         'angleDependence',angleDependence,...
                         'relativeCellAngles',relAng);
@@ -447,9 +447,9 @@ end
                 if movedParticle < N
                     if ~isempty(angleDependence)
                         relAng = [];
-                        relAng(1,:) =...
+                        relAng(:,1) =...
                             newAlphas((movedParticle + 1):N,movedParticle);
-                        relAng(2,:) =...
+                        relAng(:,2) =...
                             newThetas((movedParticle + 1):N,movedParticle);
                     else
                         relAng = [];

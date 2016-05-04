@@ -35,11 +35,15 @@ function U = pairU(dist,rCutoff,m,varargin)
     dist_lt_rCutoff = dist(cutoffInd);
     % u is the energies of each pair
     u = 4*(((1./dist_lt_rCutoff).^12)-((1./dist_lt_rCutoff).^m)); 
-    
-    if ~isempty(angleDependence)
-        angleFactor = angleDependence(...
-            relativeCellAngles(1,:),relativeCellAngles(2,:));
-        u = u.*angleFactor;
+    if isempty(u)
+        u = 0;
+    else
+        if ~isempty(angleDependence)
+            angleFactor = angleDependence(...
+                relativeCellAngles(cutoffInd,1),relativeCellAngles(cutoffInd,2));
+
+            u = u.*angleFactor;
+        end
     end
     
     U = sum(u);
