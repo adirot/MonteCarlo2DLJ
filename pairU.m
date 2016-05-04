@@ -26,15 +26,17 @@ function U = pairU(dist,rCutoff,m,varargin)
     p = inputParser();
     addOptional(p, 'angleDependence', []);
     addOptional(p, 'relativeCellAngles', []);
+    addOptional(p, 'ufunc', @(r) 4*(((1./r).^12)-((1./r).^m)));
     parse(p, varargin{:});
     Results = p.Results;
     angleDependence = Results.angleDependence;
     relativeCellAngles = Results.relativeCellAngles;
+    ufunc = Results.ufunc;
     
     cutoffInd = dist < rCutoff;
     dist_lt_rCutoff = dist(cutoffInd);
     % u is the energies of each pair
-    u = 4*(((1./dist_lt_rCutoff).^12)-((1./dist_lt_rCutoff).^m)); 
+    u = ufunc(dist_lt_rCutoff); 
     if isempty(u)
         u = 0;
     else

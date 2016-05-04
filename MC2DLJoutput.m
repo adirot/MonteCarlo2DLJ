@@ -193,6 +193,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'angleDependent', false);
                     addOptional(p, 'angleDependence', []);
                     addOptional(p, 'maxdAng', []);
+                    addOptional(p, 'ufunc', []);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -203,6 +204,14 @@ classdef MC2DLJoutput
                     angleDependent = Results.angleDependent;
                     angleDependence = Results.angleDependence;
                     maxdAng = Results.maxdAng;
+                    ufunc = Results.ufunc;
+                    
+                    if isempty(ufunc)
+                        ufunc = @(r) 4*(((1./r).^12)-((1./r).^m));
+                        ufuncstr = '';
+                    else
+                        ufuncstr ='_ufunccustum_';
+                    end
                     
                     % create a simulation output object for a new
                     % simulation
@@ -228,6 +237,7 @@ classdef MC2DLJoutput
                     obj.simulationParam.angleDependent = angleDependent;
                     obj.simulationParam.angleDependence = angleDependence;
                     obj.simulationParam.maxdAng = maxdAng;
+                    obj.simulationParam.ufunc = ufunc;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
@@ -273,6 +283,7 @@ classdef MC2DLJoutput
                           '_m' num2str(m) ...
                           angleDependencestr ...
                           maxdAngstr ...
+                          ufuncstr ...
                           'runNum' num2str(runNum) ...
                           'date'...
                         nowdatetimestr()];
@@ -310,7 +321,7 @@ classdef MC2DLJoutput
                             reshapeDist(allThetas)];
                     allU = pairU(d,rCutoff,m,...
                         'angleDependence',angleDependence,...
-                        'relativeCellAngles',ang);
+                        'relativeCellAngles',ang,'ufunc',ufunc);
                     
                     %%% this is the long range correction - should be fixed
                     %%% for the case of angle dependence
@@ -368,6 +379,7 @@ classdef MC2DLJoutput
             angleDependent = obj.simulationParam.angleDependent;
             angleDependence = obj.simulationParam.angleDependence;
             maxdAng = obj.simulationParam.maxdAng;
+            ufunc = obj.simulationParam.ufunc;
             
             stepCount = 0;
             while(stepCount < Nsteps)
@@ -393,7 +405,8 @@ classdef MC2DLJoutput
                     'initialAng',obj.currentAngs,...
                     'initialAlphas',obj.currentAlphas,...
                     'initialThetas',obj.currentThetas,...
-                    'maxdAng',maxdAng);
+                    'maxdAng',maxdAng,...
+                    'ufunc',ufunc);
                 
                 stepCount = stepCount + obj.simulationParam.N*saveEvery;
                 obj.currentStep = obj.currentStep...

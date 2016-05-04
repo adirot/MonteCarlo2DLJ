@@ -66,6 +66,7 @@ addOptional(p, 'initialAng', []);
 addOptional(p, 'initialAlphas', []);
 addOptional(p, 'initialThetas', []);
 addOptional(p, 'maxdAng', []);
+addOptional(p, 'ufunc', []);
 parse(p, varargin{:});
 Results = p.Results;
 rl = Results.verelet;
@@ -77,7 +78,11 @@ initialAngs = Results.initialAng;
 initialAlphas = Results.initialAlphas;
 initialThetas = Results.initialThetas;
 maxdAng = Results.maxdAng;
+ufunc = Results.ufunc;
 
+if isempty(ufunc)
+    ufunc = @(r) 4*(((1./r).^12)-((1./r).^m));
+end
 
 % initiate virables
 dist = initialDistances;
@@ -163,7 +168,7 @@ for step = 1:Nsteps
         % calculate the change in energy
         dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m,...
             particlesAlphas,newAlphas,particlesThetas,newThetas,...
-            angleDependence);
+            angleDependence,ufunc);
         
         % calculate the change in the virial 
         if ~isempty(virial)
@@ -380,7 +385,7 @@ end
         end
         
         function dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m,...
-                alphas,newAlphas,thetas,newThetas,angleDependence)
+                alphas,newAlphas,thetas,newThetas,angleDependence,ufunc)
         % calculates the change in energy after a particle has moved
         
                 % calculate the old energy for the relevant particle pairs
@@ -398,7 +403,7 @@ end
                     oldUrow = ...
                         pairU(distrow,rCutoff,m,...
                         'angleDependence',angleDependence,...
-                        'relativeCellAngles',relAng);
+                        'relativeCellAngles',relAng,'ufunc',ufunc);
                 else 
                     oldUrow = 0;
                 end
@@ -417,7 +422,7 @@ end
                     oldUcol = ...
                         pairU(distcol,rCutoff,m,...
                         'angleDependence',angleDependence,...
-                        'relativeCellAngles',relAng);
+                        'relativeCellAngles',relAng,'ufunc',ufunc);
                 else 
                     oldUcol = 0;
                 end
@@ -439,7 +444,7 @@ end
                     distrow = newDist(movedParticle,1:(movedParticle - 1))';
                     newUrow = pairU(distrow,rCutoff,m,...
                         'angleDependence',angleDependence,...
-                        'relativeCellAngles',relAng);
+                        'relativeCellAngles',relAng,'ufunc',ufunc);
                 else 
                     newUrow = 0;
                 end
@@ -457,7 +462,7 @@ end
                     distcol = newDist((movedParticle + 1):N,movedParticle);
                     newUcol = pairU(distcol,rCutoff,m,...
                         'angleDependence',angleDependence,...
-                        'relativeCellAngles',relAng);
+                        'relativeCellAngles',relAng,'ufunc',ufunc);
                 else 
                     newUcol = 0;
                 end
