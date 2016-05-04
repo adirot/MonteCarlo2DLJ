@@ -194,6 +194,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'angleDependence', []);
                     addOptional(p, 'maxdAng', []);
                     addOptional(p, 'ufunc', []);
+                    addOptional(p, 'hardCoreRep', 0);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -205,6 +206,7 @@ classdef MC2DLJoutput
                     angleDependence = Results.angleDependence;
                     maxdAng = Results.maxdAng;
                     ufunc = Results.ufunc;
+                    hardCoreRepRad = Results.hardCoreRepRad;
                     
                     if isempty(ufunc)
                         ufunc = @(r) 4*(((1./r).^12)-((1./r).^m));
@@ -238,6 +240,7 @@ classdef MC2DLJoutput
                     obj.simulationParam.angleDependence = angleDependence;
                     obj.simulationParam.maxdAng = maxdAng;
                     obj.simulationParam.ufunc = ufunc;
+                    obj.simulationParam.hardCoreRepRad = hardCoreRepRad;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
@@ -380,6 +383,7 @@ classdef MC2DLJoutput
             angleDependence = obj.simulationParam.angleDependence;
             maxdAng = obj.simulationParam.maxdAng;
             ufunc = obj.simulationParam.ufunc;
+            hardCoreRepRad = obj.simulationParam.hardCoreRepRad;
             
             stepCount = 0;
             while(stepCount < Nsteps)
@@ -406,7 +410,8 @@ classdef MC2DLJoutput
                     'initialAlphas',obj.currentAlphas,...
                     'initialThetas',obj.currentThetas,...
                     'maxdAng',maxdAng,...
-                    'ufunc',ufunc);
+                    'ufunc',ufunc,...
+                    'hardCoreRep',hardCoreRepRad);
                 
                 stepCount = stepCount + obj.simulationParam.N*saveEvery;
                 obj.currentStep = obj.currentStep...

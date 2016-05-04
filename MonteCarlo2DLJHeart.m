@@ -67,6 +67,7 @@ addOptional(p, 'initialAlphas', []);
 addOptional(p, 'initialThetas', []);
 addOptional(p, 'maxdAng', []);
 addOptional(p, 'ufunc', []);
+addOptional(p, 'hardCoreRepRad', 0);
 parse(p, varargin{:});
 Results = p.Results;
 rl = Results.verelet;
@@ -79,6 +80,7 @@ initialAlphas = Results.initialAlphas;
 initialThetas = Results.initialThetas;
 maxdAng = Results.maxdAng;
 ufunc = Results.ufunc;
+hardCoreRepRad = Results.hardCoreRepRad;
 
 if isempty(ufunc)
     ufunc = @(r) 4*(((1./r).^12)-((1./r).^m));
@@ -154,6 +156,10 @@ for step = 1:Nsteps
         % calculate new distances
         newDist = reCalcDist(dist,movedParticle,...
             newParticlesPosition,N,L,nlist);
+        
+        hardCoreCheck = isempty(find(newDist < hardCoreRepRad, 1));
+        
+        if hardCoreCheck 
         
         % calculate new relative angles
         if angleDependent
