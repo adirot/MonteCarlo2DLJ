@@ -1,4 +1,5 @@
-function [finalU,finalVirial,finalPressure,finalConfiguration,finalDistances,moveCount] = ...
+function [finalU,finalVirial,finalPressure,finalConfiguration,...
+    finalDistances,moveCount,finalAngs,finalAlphas,finalThetas] = ...
     MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
     ,initialDistances,initialU,varargin)
 
@@ -60,29 +61,31 @@ addOptional(p, 'verelet', []);
 addOptional(p, 'virial', []);
 addOptional(p, 'm', 6);
 addOptional(p, 'angleDependent',false);
+addOptional(p, 'angleDependence',false);
 addOptional(p, 'initialAng', []);
-addOptional(p, 'initialCosAlpha', []);
-addOptional(p, 'initialCosBeta', []);
-addOptional(p, 'maxdCosAng', []);
+addOptional(p, 'initialAlphas', []);
+addOptional(p, 'initialThetas', []);
+addOptional(p, 'maxdAng', []);
 parse(p, varargin{:});
 Results = p.Results;
 rl = Results.verelet;
 virial = Results.virial;
 m = Results.m;
 angleDependent = Results.angleDependent;
-initialAng = Results.initialAng;
-initialCosAlpha = Results.initialCosAlpha;
-initialCosBeta = Results.initialCosBeta;
-maxdCosAng = Results.maxdCosAng;
+angleDependence = Results.angleDependence;
+initialAngs = Results.initialAng;
+initialAlphas = Results.initialAlphas;
+initialThetas = Results.initialThetas;
+maxdAng = Results.maxdAng;
 
 
 % initiate virables
 dist = initialDistances;
 particlesPosition = initialConfig;
 if angleDependent
-    particlesAngs = initialAng;
-    particlesCosAlpha = initialCosAlpha;
-    particlesCosBeta = initialCosBeta;
+    particlesAngs = initialAngs;
+    particlesAlphas = initialAlphas;
+    particlesThetas = initialThetas;
 end
 U = initialU;
 if ~isempty(virial)
@@ -129,7 +132,7 @@ for step = 1:Nsteps
         
         % choose rotation:
         if angleDependent
-            dAng = maxdCosAng*rand - (maxdCosAng/2);
+            dAng = maxdAng*rand - (maxdAng/2);
         end
         
         % move particle
@@ -138,11 +141,10 @@ for step = 1:Nsteps
         
         % rotate particle
         if angleDependent
+            newParticlesAngs = particlesAngs;
             newParticlesAngs(movedParticle) =...
-                newParticlesAngs(movedParticle) + dAng; 
+                particlesAngs(movedParticle) + dAng; 
         end
-        
-    
 
         % calculate new distances
         newDist = reCalcDist(dist,movedParticle,...
@@ -150,10 +152,18 @@ for step = 1:Nsteps
         
         % calculate new relative angles
         if angleDependent
-            
+            newAlphas = reCalcAlphas(particlesAlphas,movedParticle,N,dAng);
+            newThetas = reCalcThetas(movedParticle,...
+                newParticlesPosition,N,particlesThetas,newAlphas);
+        else
+            newAlphas = [];
+            newThetas = [];
+        end
         
         % calculate the change in energy
-        dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m);
+        dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m,...
+            particlesAlphas,newAlphas,particlesThetas,newThetas,...
+            angleDependence);
         
         % calculate the change in the virial 
         if ~isempty(virial)
@@ -175,6 +185,12 @@ for step = 1:Nsteps
                 particlesPosition = newParticlesPosition;
                 moveCount = moveCount + 1; 
                 
+                if angleDependent
+                    particlesAngs = newParticlesAngs;
+                    particlesAlphas = newAlphas;
+                    particlesThetas = newThetas;
+                end
+                    
                 % update verelet displacement count
                 if ~isempty(nlist)
                     nlist = nlist.updateDisplace(movedParticle,displace);
@@ -194,6 +210,12 @@ for step = 1:Nsteps
                     dist = newDist;
                     particlesPosition = newParticlesPosition;
                     moveCount = moveCount + 1;
+                    
+                    if angleDependent
+                        particlesAngs = newParticlesAngs;
+                        particlesAlphas = newAlphas;
+                        particlesThetas = newThetas;
+                    end
                     
                     % update verelet displacement count
                     if ~isempty(nlist)
@@ -215,6 +237,16 @@ else
 end
 finalConfiguration = particlesPosition;
 finalDistances = dist;
+
+if angleDependent
+    finalAngs = particlesAngs;
+    finalAlphas = particlesAlphas;
+    finalThetas = particlesThetas;
+else 
+    finalAngs = [];
+    finalAlphas = [];
+    finalThetas = [];
+end
 
 %% functions used in main code %%
 
@@ -246,11 +278,9 @@ finalDistances = dist;
                 newparticlesPosition(2,movedParticle) = y;
         end
     
-        function varargout = reCalcDist(dist,movedParticles,...
+        function newdist = reCalcDist(dist,movedParticles,...
                 newParticlesPosition,N,L,nlist)
-                % if one output is requested, only the new distances will
-                % be calculated.
-            
+                
                 for i = 1:length(movedParticles)
                     movedP = movedParticles(i);
                     % recalculates pair distances after moving a particle    
@@ -296,22 +326,98 @@ finalDistances = dist;
                     end
                 end   
         end
-    
-        function dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m)
-        % calculates the change in energy after a particle has moved
+        
+        function newAlphas = reCalcAlphas(alphas,movedParticles,N,dAng)
                 
+                for i = 1:length(movedParticles)
+                    movedP = movedParticles(i);
+                    % recalculates alphas after moving a particle    
+
+                    newAlphas = alphas;
+
+                    % recalculate the relevent row elements in alpha matrix
+
+                    if movedP > 1                        
+                        newAlphas(movedP,1:(movedP-1)) =...
+                            alphas(movedP,1:(movedP-1)) + dAng;
+                    end
+
+                    % recalculate the relevent column elements in alpha matrix
+
+                    if movedP < N
+                        newAlphas((movedP + 1):N,movedP) =...
+                            alphas((movedP + 1):N,movedP) + dAng;
+                    end
+                end   
+        end
+    
+        function newThetas = reCalcThetas(movedParticles,...
+                newParticlesPosition,N,thetas,newAlphas)
+                
+                for i = 1:length(movedParticles)
+                    movedP = movedParticles(i);
+                    % recalculates thetas after moving a particle    
+
+                    xi = newParticlesPosition(1,movedP);
+                    yi = newParticlesPosition(2,movedP);
+
+                    newThetas = thetas;
+                    
+                    % recalculate the relevent row elements in theta matrix
+
+                    if movedP > 1
+                        newThetas(movedP,1:(movedP-1)) =...
+                            newAlphas(movedP,1:(movedP-1)) - atan(yi/xi);
+                    end
+
+                    % recalculate the relevent column elements in theta matrix
+
+                    if movedP < N
+                        newThetas((movedP + 1):N,movedP) =...
+                            newAlphas((movedP + 1):N,movedP) - atan(yi/xi);
+                    end
+                end   
+        end
+        
+        function dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m,...
+                alphas,newAlphas,thetas,newThetas,angleDependence)
+        % calculates the change in energy after a particle has moved
+        
                 % calculate the old energy for the relevant particle pairs
                 
                 if movedParticle > 1
+                    
+                    if ~isempty(angleDependence)
+                        relAng = [];
+                        relAng(1,:) = alphas(movedParticle,1:(movedParticle - 1));
+                        relAng(2,:) = thetas(movedParticle,1:(movedParticle - 1));
+                    else
+                        relAng = [];
+                    end
+                    distrow = dist(movedParticle,1:(movedParticle - 1));
                     oldUrow = ...
-                        pairU(dist(movedParticle,1:(movedParticle - 1)),rCutoff,m);
+                        pairU(distrow,rCutoff,m,...
+                        'angleDependence',angleDependence,...
+                        'relativeCellAngles',relAng);
                 else 
                     oldUrow = 0;
                 end
                 
                 if movedParticle < N
+                    if ~isempty(angleDependence)
+                        relAng = [];
+                        relAng(1,:) =...
+                            alphas((movedParticle + 1):N,movedParticle);
+                        relAng(2,:) =...
+                            thetas((movedParticle + 1):N,movedParticle);
+                    else
+                        relAng = [];
+                    end
+                    distcol = dist((movedParticle + 1):N,movedParticle);
                     oldUcol = ...
-                        pairU(dist((movedParticle + 1):N,movedParticle),rCutoff,m);
+                        pairU(distcol,rCutoff,m,...
+                        'angleDependence',angleDependence,...
+                        'relativeCellAngles',relAng);
                 else 
                     oldUcol = 0;
                 end
@@ -321,15 +427,37 @@ finalDistances = dist;
                 % calculate the new energy for the relevant particle pairs
                 
                 if movedParticle > 1
-                    newUrow = pairU(newDist...
-                            (movedParticle,1:(movedParticle - 1)),rCutoff,m);
+                    if ~isempty(angleDependence)
+                        relAng = [];
+                        relAng(1,:) =...
+                            newAlphas(movedParticle,1:(movedParticle - 1));
+                        relAng(2,:) =...
+                            newThetas(movedParticle,1:(movedParticle - 1));
+                    else
+                        relAng = [];
+                    end
+                    distrow = newDist(movedParticle,1:(movedParticle - 1));
+                    newUrow = pairU(distrow,rCutoff,m,...
+                        'angleDependence',angleDependence,...
+                        'relativeCellAngles',relAng);
                 else 
                     newUrow = 0;
                 end
                 
                 if movedParticle < N
-                    newUcol = pairU(newDist...
-                        ((movedParticle + 1):N,movedParticle),rCutoff,m);
+                    if ~isempty(angleDependence)
+                        relAng = [];
+                        relAng(1,:) =...
+                            newAlphas((movedParticle + 1):N,movedParticle);
+                        relAng(2,:) =...
+                            newThetas((movedParticle + 1):N,movedParticle);
+                    else
+                        relAng = [];
+                    end
+                    distcol = newDist((movedParticle + 1):N,movedParticle);
+                    newUcol = pairU(distcol,rCutoff,m,...
+                        'angleDependence',angleDependence,...
+                        'relativeCellAngles',relAng);
                 else 
                     newUcol = 0;
                 end

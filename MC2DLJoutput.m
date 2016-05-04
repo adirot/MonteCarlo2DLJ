@@ -21,6 +21,8 @@ classdef MC2DLJoutput
 %               particles have an angle that defines them)
 %       simulationParam.angleDependence - an anonymous function of two angles,
 %               describing the angle dependence of the potantial. 
+%       simulationParam.maxdAng - maximum change in angle in an MC step 
+
 
 % currentU - the energy in the last step calculated
 % Ulrc - the energy in the last step calculated, with long range
@@ -154,12 +156,13 @@ classdef MC2DLJoutput
                     obj.currentDists = obj.data.allDists(:,:,obj.indIndata);
                     obj.currentU = obj.data.allU(1,obj.indIndata);
                     
-                    if obj.simulationParam.angleDependence
+                    if obj.simulationParam.angleDependent
                    
                         obj.currentAngs = obj.data.allAngs(:,:,obj.indIndata);
                         obj.currentAlphas = obj.data.allAlphas(:,:,obj.indIndata);
                         obj.currentThetas = obj.data.allThetas(:,:,obj.indIndata);
                     end
+                    
                     if ~isempty(obj.data.allV)
                         obj.currentVir = obj.data.allV(1,obj.indIndata);
                         obj.currentPressure = obj.data.allP(1,obj.indIndata);
@@ -189,6 +192,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'runNum', []);
                     addOptional(p, 'angleDependent', false);
                     addOptional(p, 'angleDependence', []);
+                    addOptional(p, 'maxdAng', []);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -198,6 +202,7 @@ classdef MC2DLJoutput
                     runNum = Results.runNum;
                     angleDependent = Results.angleDependent;
                     angleDependence = Results.angleDependence;
+                    maxdAng = Results.maxdAng;
                     
                     % create a simulation output object for a new
                     % simulation
@@ -222,6 +227,7 @@ classdef MC2DLJoutput
                     obj.simulationParam.m = m;
                     obj.simulationParam.angleDependent = angleDependent;
                     obj.simulationParam.angleDependence = angleDependence;
+                    obj.simulationParam.maxdAng = maxdAng;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
@@ -246,9 +252,15 @@ classdef MC2DLJoutput
                         angleDependencestr = '';
                     end
                     
+                    if angleDependent
+                        maxdAngstr = ['maxdAng' my_num2str(maxdAng) '_'];
+                    else
+                        maxdAngstr = '';
+                    end
+                    
                     % make sure that L/2 is larger than rCutoff:
                     if obj.simulationParam.L/2 < rCutoff
-                        error(['choose a larger number of particles, so that'
+                        error(['choose a larger number of particles, so that'...
                              'L/2 will be larger than rCutoff']);
                     end
                     
@@ -260,6 +272,7 @@ classdef MC2DLJoutput
                          my_num2str(rCutoff) vereletstr '_' pressurestr...
                           '_m' num2str(m) ...
                           angleDependencestr ...
+                          maxdAngstr ...
                           'runNum' num2str(runNum) ...
                           'date'...
                         nowdatetimestr()];
@@ -270,26 +283,31 @@ classdef MC2DLJoutput
                     [allDists(:,:,1),allCoords(:,:,1)] = ...
                             createInitialConfig(obj.simulationParam.L,N,r...
                             ,initialConfig);
-                    allAngles = [];
-                    allCosAlpha = [];
-                    allCosTheta = [];
-                    if angleDependent
-                        allAngles = rand(1,N,2)*pi;
-                        allCosAlpha =...
-                            tril(cos(bsxfun(@minus,allAngles,allAngles')),-1);
                         
+                    if angleDependent
+                        allAngs = zeros(1,N,2);
+                        allAlphas = zeros(N,N,2);
+                        allThetas = zeros(N,N,2);
+                        allAngs(:,:,1) = rand(1,N,1)*pi;
+                        allAlphas(:,:,1) =...
+                            tril(bsxfun(@minus,allAngs(:,:,1),allAngs(:,:,1)'),-1);
+
                          xdist = bsxfun(@minus,allCoords(1,:,1),allCoords(1,:,1)');
                          ydist = bsxfun(@minus,allCoords(2,:,1),allCoords(2,:,1)');
-                        allCosTheta = ...
-                            (ydist*sqrt(1-allCosAlpha.^2)+xdist*allCosAlpha)./allDists(:,:,1);
+                        allThetas(:,:,1) = ...
+                            tril(allAlphas(:,:,1)-atan(ydist./xdist),-1);
+                    else
+                        allAngs = [];
+                        allAlphas = [];
+                        allThetas = [];
                         
                     end
-                   
+
                         
                     % calculate initial energy
                     d = reshapeDist(allDists);
-                    ang = [reshapeDist(allCosAlpha);...
-                            reshapeDist(allCosTheta)];
+                    ang = [reshapeDist(allAlphas);...
+                            reshapeDist(allThetas)];
                     allU = pairU(d,rCutoff,m,...
                         'angleDependence',angleDependence,...
                         'relativeCellAngles',ang);
@@ -321,17 +339,16 @@ classdef MC2DLJoutput
                             'allU','allUlrc','allV','allP','allPlrc','stepInd',...
                             'moveCount','indIndata'...
                             ,'currentmaxdr','simulationParam','runNum',...
-                            'allrelativeCellAnglescosalpha',...
-                            'allrelativeCellAnglescosbeta',...
-                            'allAngles','-v7.3');
+                            'allAlphas','allThetas',...
+                            'allAngs','-v7.3');
                     obj.data = matfile(obj.fileName);
                     obj.data = matfile(obj.fileName,'Writable',true);
                         
                     obj.currentCoords = allCoords;
                     obj.currentDists = allDists;
-                    obj.currentAng = allAngles;
-                    obj.currentCosAlpha = allCosAlpha;
-                    obj.currentCosBeta = allCosTheta;
+                    obj.currentAngs = allAngs;
+                    obj.currentAlphas = allAlphas;
+                    obj.currentThetas = allThetas;
                     obj.currentU = allU;
                     obj.Ulrc = allUlrc;
                     obj.currentVir = allV;
@@ -349,12 +366,15 @@ classdef MC2DLJoutput
             rCutoff = obj.simulationParam.rCutoff;        
             m = obj.simulationParam.m;        
             angleDependent = obj.simulationParam.angleDependent;
+            angleDependence = obj.simulationParam.angleDependence;
+            maxdAng = obj.simulationParam.maxdAng;
             
             stepCount = 0;
             while(stepCount < Nsteps)
                 [finalU,finalV,finalPressure,...
                     finalConfiguration,finalDistances,...
-                    currentmoveCount] = ...
+                    currentmoveCount,...
+                    finalAngs,finalAlphas,finalThetas] = ...
                     MonteCarlo2DLJHeart(...
                     N,...
                     obj.simulationParam.T,...
@@ -367,7 +387,13 @@ classdef MC2DLJoutput
                     obj.currentU,...
                     'verelet',obj.simulationParam.rl,...
                     'virial',obj.currentVir,...
-                    'm',m);
+                    'm',m,...
+                    'angleDependent',angleDependent,...
+                    'angleDependence',angleDependence,...
+                    'initialAng',obj.currentAngs,...
+                    'initialAlphas',obj.currentAlphas,...
+                    'initialThetas',obj.currentThetas,...
+                    'maxdAng',maxdAng);
                 
                 stepCount = stepCount + obj.simulationParam.N*saveEvery;
                 obj.currentStep = obj.currentStep...
@@ -378,7 +404,9 @@ classdef MC2DLJoutput
                 obj.currentPressure = finalPressure;
                 obj.currentCoords = finalConfiguration;
                 obj.currentDists = finalDistances;
-                
+                obj.currentAngs = finalAngs;
+                obj.currentAlphas = finalAlphas;
+                obj.currentThetas = finalThetas;
             
                 % long range correction
                 obj.Ulrc = obj.currentU + 4*pi*N*rho/((2-m)*rCutoff^(m-2));
@@ -389,19 +417,19 @@ classdef MC2DLJoutput
             
                 obj = obj.addStep2data(obj.currentStep,finalConfiguration,...
                     finalDistances,finalU,finalV,finalPressure,...
-                    obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc);
+                    obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
+                    angleDependent,obj.currentAngs,...
+                    obj.currentAlphas,obj.currentThetas);
                 
                 clear finalU finalV finalConfiguration finalDistances...
-                    currentmoveCount
+                    currentmoveCount finalAngs finalAlphas finalThetas
             end
-            
-            
-            
             
         end
         
        function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
-                ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc)
+                ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc,...
+                angleDependent,newAngs,newAlphas,newThetas)
             
             obj.data.stepInd(1,obj.indIndata+1) = newInd;
             s = zeros(2,obj.simulationParam.N,2);
@@ -413,6 +441,20 @@ classdef MC2DLJoutput
             clear s;
             obj.data.allU(1,obj.indIndata+1) = newU;
             obj.data.allUlrc(1,obj.indIndata+1) = newUlrc;
+            
+            if angleDependent
+                s = zeros(1,obj.simulationParam.N,2);
+                s(:,:,1) = newAngs(:,:,1);
+                obj.data.allAngs(:,:,obj.indIndata+1) = s(:,:,1);
+                s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
+                s(:,:,1) = newAlphas(:,:,1);
+                obj.data.allAlphas(:,:,obj.indIndata+1) = s(:,:,1);
+                s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
+                s(:,:,1) = newThetas(:,:,1);
+                obj.data.allThetas(:,:,obj.indIndata+1) = s(:,:,1);
+                clear s;
+            end
+            
             if obj.simulationParam.pressure
                 obj.data.allV(1,obj.indIndata+1) = newV;
                 obj.data.allP(1,obj.indIndata+1) = newP;
@@ -788,7 +830,7 @@ classdef MC2DLJoutput
           end 
           
           plotParticles(obj.data.allCoords(:,:,ind),obj.simulationParam.L...
-              ,obj.simulationParam.r);
+              ,obj.simulationParam.r,obj.currentAngs);
           title(['snapshot of step: ' num2str(step)]);
        end
        
