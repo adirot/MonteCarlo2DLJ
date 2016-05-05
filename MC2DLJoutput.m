@@ -450,27 +450,44 @@ classdef MC2DLJoutput
                 angleDependent,newAngs,newAlphas,newThetas)
             
             obj.data.stepInd(1,obj.indIndata+1) = newInd;
-            s = zeros(2,obj.simulationParam.N,2);
-            s(:,:,1) = newCoords(:,:,1);
-            obj.data.allCoords(:,:,obj.indIndata+1) = s(:,:,1);
-            s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
-            s(:,:,1) = newDists(:,:,1);
-            obj.data.allDists(:,:,obj.indIndata+1) = s(:,:,1);
-            clear s;
+            if obj.indIndata == 1
+                s = zeros(2,obj.simulationParam.N,2);
+                s(:,:,2) = newCoords(:,:,1);
+                s(:,:,1) = obj.data.allCoords(:,:);
+                obj.data.allCoords = s;
+                s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
+                s(:,:,2) = newDists(:,:,1);
+                s(:,:,1) = obj.data.allDists(:,:);
+                obj.data.allDists = s;
+                clear s;
+            else
+                obj.data.allCoords(:,:,obj.indIndata+1) = newCoords(:,:,1);
+                obj.data.allDists(:,:,obj.indIndata+1) = newDists(:,:,1);
+            end
+            
             obj.data.allU(1,obj.indIndata+1) = newU;
             obj.data.allUlrc(1,obj.indIndata+1) = newUlrc;
             
             if angleDependent
-                s = zeros(1,obj.simulationParam.N,2);
-                s(:,:,1) = newAngs(:,:,1);
-                obj.data.allAngs(:,:,obj.indIndata+1) = s(:,:,1);
-                s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
-                s(:,:,1) = newAlphas(:,:,1);
-                obj.data.allAlphas(:,:,obj.indIndata+1) = s(:,:,1);
-                s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
-                s(:,:,1) = newThetas(:,:,1);
-                obj.data.allThetas(:,:,obj.indIndata+1) = s(:,:,1);
-                clear s;
+                if obj.indIndata == 1
+                    s = zeros(1,obj.simulationParam.N,2);
+                    s(:,:,2) = newAngs(:,:,1);
+                    s(:,:,1) = obj.data.allAngs(:,:);
+                    obj.data.allAngs = s;
+                    s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
+                    s(:,:,2) = newAlphas(:,:,1);
+                    s(:,:,1) = obj.data.allAlphas(:,:);
+                    obj.data.allAlphas = s;
+                    s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
+                    s(:,:,2) = newThetas(:,:,1);
+                    s(:,:,1) = obj.data.allThetas(:,:);
+                    obj.data.allThetas = s;
+                    clear s;
+                else
+                    obj.data.allAngs(:,:,obj.indIndata+1) = newAngs(:,:,1);
+                    obj.data.allAlphas(:,:,obj.indIndata+1) = newAlphas(:,:,1);
+                    obj.data.allThetas(:,:,obj.indIndata+1) = newThetas(:,:,1);
+                end
             end
             
             if obj.simulationParam.pressure

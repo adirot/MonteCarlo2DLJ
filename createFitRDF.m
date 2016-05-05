@@ -16,11 +16,13 @@ p = inputParser();
 addOptional(p, 'plotFig', true);
 addOptional(p, 'freen', false);
 addOptional(p, 'freeTandn', false);
+addOptional(p, 'freeTnbound', false);
 parse(p, varargin{:});
 Results = p.Results;
 plotFig = Results.plotFig;
 freen = Results.freen;
 freeTandn = Results.freeTandn;
+freeTnbound = Results.freeTnbound;
 
 if freeTandn
     freen = false;
@@ -43,10 +45,18 @@ if plotFig
             message = sprintf('4*(1/T)*((1/x)^n - (1/x)^m)');
         
         else
-            title(['RDF with fit for T = ' num2str(T) ' \rho = '...
-                num2str(rho) ' m = ' num2str(m) ' n set to 12']);
+            if freeTnbound
+                title(['RDF with fit for T = ' num2str(T) ' \rho = '...
+                    num2str(rho) ' m = ' num2str(m) ' n set bound, T free']);
 
-            message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
+                message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
+            
+            else
+                title(['RDF with fit for T = ' num2str(T) ' \rho = '...
+                    num2str(rho) ' m = ' num2str(m) ' n set to 12']);
+
+                message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
+            end
         end
     end
     
@@ -63,8 +73,19 @@ else
                 'independent', 'x', 'dependent', 'y' );
     
     else
-        ft = fittype( ['4*(1/' num2str(T) ')*((1/x)^12 - (1/x)^m)'],...
-                'independent', 'x', 'dependent', 'y' );
+        if freeTnbound
+            ft = fittype( '4*(1/T)*((1/x)^n - (1/x)^m)',...
+                    'independent', 'x', 'dependent', 'y' );
+            opts = fitoptions( ft );
+            opts.Display = 'Off';
+            
+            % set the bounds of n to 10-20
+            opts.Lower = [-Inf -Inf 10]; 
+            opts.Upper = [Inf Inf 20];
+        else
+            ft = fittype( ['4*(1/' num2str(T) ')*((1/x)^12 - (1/x)^m)'],...
+                    'independent', 'x', 'dependent', 'y' );
+        end
     end
 end
 % opts = fitoptions( ft );
@@ -93,19 +114,25 @@ for i = 1:Nplots
     mfit(i) = coeff(1);
     mError(i,1) = conf(1,1);
     mError(i,2) = conf(2,1);
-    if or(freen,freeTandn) 
+    nfit = []; nError = [];
+    Tfit = []; TError = [];
+    
+    if freen 
         nfit(i) = coeff(2);
         nError(i,1) = conf(1,2);
         nError(i,2) = conf(2,2);
-        if freeTandn
-            Tfit(i) = coeff(3);
-            TError(i,1) = conf(1,3);
-            TError(i,2) = conf(2,3);
-        else 
-            Tfit = []; TError = [];
+    else
+        if or(freeTandn,freeTnbound)
+            Tfit(i) = coeff(1);
+            TError(i,1) = conf(1,1);
+            TError(i,2) = conf(2,1);
+            mfit(i) = coeff(2);
+            mError(i,1) = conf(1,2);
+            mError(i,2) = conf(2,2);
+            nfit(i) = coeff(3);
+            nError(i,1) = conf(1,3);
+            nError(i,2) = conf(2,3);
         end
-    else 
-        nfit = []; nError = []; Tfit = []; TError = [];
     end
         
     if plotFig
@@ -124,12 +151,12 @@ for i = 1:Nplots
                 num2str(coeff(2))...
                 ' (' num2str(conf(1,2)) ',' num2str(conf(2,2)) ')']);
         else
-            if freeTandn
-                message = sprintf(['steps: ' steps{i} '\n' 'm = '...
+            if or(freeTandn,freeTnbound)
+                message = sprintf(['steps: ' steps{i} '\n' 'T = '...
                 num2str(coeff(1))...
                 ' (' num2str(conf(1,1)) ',' num2str(conf(2,1)) ')\nn = '...
                 num2str(coeff(2))...
-                ' (' num2str(conf(1,2)) ',' num2str(conf(2,2)) ')\nT = '...
+                ' (' num2str(conf(1,2)) ',' num2str(conf(2,2)) ')\nm = '...
                 num2str(coeff(3))...
                 ' (' num2str(conf(1,3)) ',' num2str(conf(2,3)) ')']);
             else

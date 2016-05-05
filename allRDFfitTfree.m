@@ -56,9 +56,12 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             %[fitresult,mfit,merror, gof] = createFitRDF(xs, ys, t, r,m,steps);
         
             % with free n
-            [fitresult,mfit,merror,nfit,nerror,Tfit,Terror, gof] =...
-                createFitRDF(xs, ys, t, r,m,steps,'freeTandn',true);
-        
+%             [fitresult,mfit,merror,nfit,nerror,Tfit,Terror, gof] =...
+%                 createFitRDF(xs, ys, t, r,m,steps,'freeTandn',true);
+ 
+            % with free T, bound n
+             [fitresult,mfit,merror,nfit,nerror,Tfit,Terror, gof] =...
+                 createFitRDF(xs, ys, t, r,m,steps,'freeTnbound',true);
 
             allfittedm10{tind,rind,mind} = mfit(1);
             allfittedm50{tind,rind,mind} = mfit(2);
@@ -109,9 +112,9 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             allTerror12k{tind,rind,mind} = Terror(7);
 
             saveas(gcf,['fitRDFT' my_num2str(t)...
-                'rho' my_num2str(r) 'm' num2str(m) 'freenT_steps.fig']);
+                'rho' my_num2str(r) 'm' num2str(m) 'freeTnbound_steps.fig']);
             saveas(gcf,['fitRDFT' my_num2str(t)...
-                'rho' my_num2str(r) 'm' num2str(m) 'freenT_steps.jpg']);
+                'rho' my_num2str(r) 'm' num2str(m) 'freenTnbound_steps.jpg']);
             close all;
        
         toc
@@ -119,4 +122,4 @@ for t = [0.45,0.6,0.8,1,1.5,2]
     end
 end
 
-save('all_fittedm_freenT.mat');
+save('all_fittedm_freeTnbound.mat');

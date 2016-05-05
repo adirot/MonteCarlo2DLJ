@@ -157,9 +157,8 @@ for step = 1:Nsteps
         newDist = reCalcDist(dist,movedParticle,...
             newParticlesPosition,N,L,nlist);
         
-        hardCoreCheck = isempty(find(newDist < hardCoreRepRad*2, 1));
-        
-        if hardCoreCheck % no particles are inside each other 
+          
+        if ~check_if_cores_touch(newDist,hardCoreRepRad)% no particles are inside each other 
         
             % calculate new relative angles
             if angleDependent
@@ -529,6 +528,8 @@ end
                 dV = newV - oldV;
         end
         
-    
+    function hardCoretouchs = check_if_cores_touch(dists,r)
+        hardCoretouchs = ~isempty(find(tril(dists < 2*r,-1),1));
+    end
             
 end
