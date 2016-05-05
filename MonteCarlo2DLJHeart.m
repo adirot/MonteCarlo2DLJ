@@ -157,82 +157,83 @@ for step = 1:Nsteps
         newDist = reCalcDist(dist,movedParticle,...
             newParticlesPosition,N,L,nlist);
         
-        hardCoreCheck = isempty(find(newDist < hardCoreRepRad, 1));
+        hardCoreCheck = isempty(find(newDist < hardCoreRepRad*2, 1));
         
-        if hardCoreCheck 
+        if hardCoreCheck % no particles are inside each other 
         
-        % calculate new relative angles
-        if angleDependent
-            newAlphas = reCalcAlphas(particlesAlphas,movedParticle,N,dAng);
-            newThetas = reCalcThetas(movedParticle,...
-                newParticlesPosition,N,particlesThetas,newAlphas);
-        else
-            newAlphas = [];
-            newThetas = [];
-        end
-        
-        % calculate the change in energy
-        dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m,...
-            particlesAlphas,newAlphas,particlesThetas,newThetas,...
-            angleDependence,ufunc);
-        
-        % calculate the change in the virial 
-        if ~isempty(virial)
-            dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho,m);
-        end
-        
-        % if dU < 0 eccept move
-        %(if (1/T)*dU > 75, we are sure the move
-        % will not be excepted, so we don't calculate exp(1/T)*dU to 
-        % save calculation time)
-            
-        if (1/T)*dU < 75
-            if dU < 0  
-                U = U + dU;
-                if ~isempty(virial)
-                    V = V + dV;
-                end
-                dist = newDist;
-                particlesPosition = newParticlesPosition;
-                moveCount = moveCount + 1; 
-                
-                if angleDependent
-                    particlesAngs = newParticlesAngs;
-                    particlesAlphas = newAlphas;
-                    particlesThetas = newThetas;
-                end
-                    
-                % update verelet displacement count
-                if ~isempty(nlist)
-                    nlist = nlist.updateDisplace(movedParticle,displace);
-                end
-                
+            % calculate new relative angles
+            if angleDependent
+                newAlphas = reCalcAlphas(particlesAlphas,movedParticle,N,dAng);
+                newThetas = reCalcThetas(movedParticle,...
+                    newParticlesPosition,N,particlesThetas,newAlphas);
             else
-                %% otherwise,
-                % keep the new state with a probability corresponding to the
-                % Boltzmann factor. if the new state is rejected, recount the
-                % old configuration. 
+                newAlphas = [];
+                newThetas = [];
+            end
 
-                if rand < exp(-(1/T)*dU)
+            % calculate the change in energy
+            dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m,...
+                particlesAlphas,newAlphas,particlesThetas,newThetas,...
+                angleDependence,ufunc);
+
+            % calculate the change in the virial 
+            if ~isempty(virial)
+                dV = Vchange(movedParticle,dist,newDist,N,rCutoff,rho,m);
+            end
+
+            % if dU < 0 eccept move
+            %(if (1/T)*dU > 75, we are sure the move
+            % will not be excepted, so we don't calculate exp(1/T)*dU to 
+            % save calculation time)
+
+            if (1/T)*dU < 75
+                if dU < 0  
                     U = U + dU;
                     if ~isempty(virial)
                         V = V + dV;
                     end
                     dist = newDist;
                     particlesPosition = newParticlesPosition;
-                    moveCount = moveCount + 1;
-                    
+                    moveCount = moveCount + 1; 
+
                     if angleDependent
                         particlesAngs = newParticlesAngs;
                         particlesAlphas = newAlphas;
                         particlesThetas = newThetas;
                     end
-                    
+
                     % update verelet displacement count
                     if ~isempty(nlist)
                         nlist = nlist.updateDisplace(movedParticle,displace);
                     end
-                    
+
+                else
+                    %% otherwise,
+                    % keep the new state with a probability corresponding to the
+                    % Boltzmann factor. if the new state is rejected, recount the
+                    % old configuration. 
+
+                    if rand < exp(-(1/T)*dU)
+                        U = U + dU;
+                        if ~isempty(virial)
+                            V = V + dV;
+                        end
+                        dist = newDist;
+                        particlesPosition = newParticlesPosition;
+                        moveCount = moveCount + 1;
+
+                        if angleDependent
+                            particlesAngs = newParticlesAngs;
+                            particlesAlphas = newAlphas;
+                            particlesThetas = newThetas;
+                        end
+
+                        % update verelet displacement count
+                        if ~isempty(nlist)
+                            nlist = nlist.updateDisplace(movedParticle,displace);
+                        end
+
+                    end
                 end
             end
         end

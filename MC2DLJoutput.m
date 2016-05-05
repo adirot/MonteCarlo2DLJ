@@ -194,7 +194,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'angleDependence', []);
                     addOptional(p, 'maxdAng', []);
                     addOptional(p, 'ufunc', []);
-                    addOptional(p, 'hardCoreRep', 0);
+                    addOptional(p, 'hardCoreRepRad', 0);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -292,16 +292,16 @@ classdef MC2DLJoutput
                         nowdatetimestr()];
                         
                     % create initial configuration
-                    allCoords = zeros(2,N,2);
-                    allDists = zeros(N,N,2);
+                    allCoords = zeros(2,N,1);
+                    allDists = zeros(N,N,1);
                     [allDists(:,:,1),allCoords(:,:,1)] = ...
                             createInitialConfig(obj.simulationParam.L,N,r...
                             ,initialConfig);
                         
                     if angleDependent
-                        allAngs = zeros(1,N,2);
-                        allAlphas = zeros(N,N,2);
-                        allThetas = zeros(N,N,2);
+                        allAngs = zeros(1,N,1);
+                        allAlphas = zeros(N,N,1);
+                        allThetas = zeros(N,N,1);
                         allAngs(:,:,1) = rand(1,N,1)*pi;
                         allAlphas(:,:,1) =...
                             tril(bsxfun(@minus,allAngs(:,:,1),allAngs(:,:,1)'),-1);
@@ -411,7 +411,7 @@ classdef MC2DLJoutput
                     'initialThetas',obj.currentThetas,...
                     'maxdAng',maxdAng,...
                     'ufunc',ufunc,...
-                    'hardCoreRep',hardCoreRepRad);
+                    'hardCoreRepRad',hardCoreRepRad);
                 
                 stepCount = stepCount + obj.simulationParam.N*saveEvery;
                 obj.currentStep = obj.currentStep...
