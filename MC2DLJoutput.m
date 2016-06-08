@@ -1224,6 +1224,59 @@ classdef MC2DLJoutput
            obj.data.sigU = sigU;
            obj.data.cv = N + (sigU/T^2);
        end
+       
+       function obj = deleteFirstRuns(obj,firstRuns2Delete)
+           % delete from data some of the first runs
+           if obj.simulationParam.angleDependent
+               a = obj.data.allAlphas(:,:,(firstRuns2Delete+1):obj.data.indIndata);
+               obj.data.allAlphas = a;
+               clear a;
+               a = obj.data.allAngs(:,:,(firstRuns2Delete+1):obj.data.indIndata);
+               obj.data.allAngs = a;
+               clear a;
+               a = obj.data.allThetas(:,:,(firstRuns2Delete+1):obj.data.indIndata);
+               obj.data.allThetas = a;
+               clear a;
+           end
+           
+           a = obj.data.allCoords(:,:,(firstRuns2Delete+1):obj.data.indIndata);
+           obj.data.allCoords = a;
+           clear a;
+           a = obj.data.allDists(:,:,(firstRuns2Delete+1):obj.data.indIndata);
+           obj.data.allDists = a;
+           clear a;
+           a = obj.data.allU(:,(firstRuns2Delete+1):obj.data.indIndata);
+           obj.data.allU = a;
+           clear a;
+           a = obj.data.stepInd(:,(firstRuns2Delete+1):obj.data.indIndata);
+           obj.data.stepInd = a;
+           clear a;
+           
+           
+           if ~isempty(obj.data.allP)
+                a = obj.data.allP(:,(firstRuns2Delete+1):obj.data.indIndata);
+                obj.data.allP = a;
+                clear a;
+           end
+           
+           if ~isempty(obj.data.allUlrc)
+                a = obj.data.allUlrc(:,(firstRuns2Delete+1):obj.data.indIndata);
+                obj.data.allUlrc = a;
+                clear a;
+           end
+           
+           
+           if ~isempty(obj.data.allPlrc)
+                a = obj.data.allPlrc(:,(firstRuns2Delete+1):obj.data.indIndata);
+                obj.data.allPlrc = a;
+                clear a;
+           end
+           
+           obj.data.indIndata = obj.data.indIndata - firstRuns2Delete;
+           obj.indIndata = obj.data.indIndata;
+           obj.data.firstRuns2Delete = firstRuns2Delete;
+           
+       end
         
     end    
 
