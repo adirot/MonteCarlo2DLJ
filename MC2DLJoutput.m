@@ -154,7 +154,8 @@ classdef MC2DLJoutput
                     obj.indIndata = obj.data.indIndata;
                     
                     obj.currentCoords = obj.data.allCoords(:,:,obj.indIndata);
-                    obj.currentDists = obj.data.allDists(:,:,obj.indIndata);
+                    obj.currentDists =...
+                        calcDists(obj.currentCoords,obj.simulationParam.L);
                     obj.currentU = obj.data.allU(1,obj.indIndata);
                     
                     if ~isfield(obj.simulationParam,'angleDependent')
@@ -1228,23 +1229,40 @@ classdef MC2DLJoutput
        function obj = deleteFirstRuns(obj,firstRuns2Delete)
            % delete from data some of the first runs
            if obj.simulationParam.angleDependent
-               a = obj.data.allAlphas(:,:,(firstRuns2Delete+1):obj.data.indIndata);
-               obj.data.allAlphas = a;
-               clear a;
+%                part1 = floor(obj.data.indIndata/2);
+%                obj.data.a1 = obj.data.allAlphas(:,:,(firstRuns2Delete+1):part1);
+%                obj.data.a2 = obj.data.allAlphas(:,:,(part1+1):obj.data.indIndata);
+%                obj.data.allAlphas = obj.data.a1;
+%                obj.data.allAlpha(:,:,(part1+1):(obj.data.indIndata - firstRuns2Delete));
+%                obj.data.a1 = [];
+%                obj.data.a2 = [];
+               
                a = obj.data.allAngs(:,:,(firstRuns2Delete+1):obj.data.indIndata);
                obj.data.allAngs = a;
                clear a;
-               a = obj.data.allThetas(:,:,(firstRuns2Delete+1):obj.data.indIndata);
-               obj.data.allThetas = a;
-               clear a;
+               
+%                part1 = floor(obj.data.indIndata/2);
+%                obj.data.a1 = obj.data.allThetas(:,:,(firstRuns2Delete+1):part1);
+%                obj.data.a2 = obj.data.allThetas(:,:,(part1+1):obj.data.indIndata);
+%                obj.data.allThetas = obj.data.a1;
+%                obj.data.allThetas(:,:,(part1+1):(obj.data.indIndata - firstRuns2Delete));
+%                obj.data.a1 = [];
+%                obj.data.a2 = [];
+               
            end
            
            a = obj.data.allCoords(:,:,(firstRuns2Delete+1):obj.data.indIndata);
            obj.data.allCoords = a;
            clear a;
-           a = obj.data.allDists(:,:,(firstRuns2Delete+1):obj.data.indIndata);
-           obj.data.allDists = a;
-           clear a;
+           
+%            part1 = floor(obj.data.indIndata/2);
+%            obj.data.a1 = obj.data.allDists(:,:,(firstRuns2Delete+1):part1);
+%            obj.data.a2 = obj.data.allDists(:,:,(part1+1):obj.data.indIndata);
+%            obj.data.allDists = obj.data.a1;
+%            obj.data.allDists(:,:,(part1+1):(obj.data.indIndata - firstRuns2Delete));
+%            obj.data.a1 = [];
+%            obj.data.a2 = [];
+           
            a = obj.data.allU(:,(firstRuns2Delete+1):obj.data.indIndata);
            obj.data.allU = a;
            clear a;
@@ -1432,5 +1450,22 @@ end
                 end
                 one2len = 1:lenProp;
                 meanProp = meanProp./one2len;
-        end        
+        end  
+        
+        function dist = calcDists(particlesPosition,L)
+            % calculate distance matrix from coordinates
+                [~,N] = size(particlesPosition);
+                dist = zeros(N);
+
+                for j = 2:N
+                    
+                      % calculate PBC distances
+                      xj = particlesPosition(1,j);
+                      yj = particlesPosition(2,j);
+                      dist(j,1:(j-1)) =...
+                          distPBC(xj,yj,particlesPosition(:,1:(j-1)),L);
+
+                end
+
+        end
         
