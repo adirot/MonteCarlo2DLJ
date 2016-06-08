@@ -201,6 +201,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'maxdAng', []);
                     addOptional(p, 'ufunc', []);
                     addOptional(p, 'hcr', false);
+                    addOptional(p, 'dontSaveDists', false);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -213,6 +214,7 @@ classdef MC2DLJoutput
                     maxdAng = Results.maxdAng;
                     ufunc = Results.ufunc;
                     hcr = Results.hcr;
+                    dontSaveDists = Results.dontSaveDists;
                     
                     if isempty(ufunc)
                         if hcr
@@ -252,6 +254,7 @@ classdef MC2DLJoutput
                     obj.simulationParam.maxdAng = maxdAng;
                     obj.simulationParam.ufunc = ufunc;
                     obj.simulationParam.hcr = hcr;
+                    obj.simulationParam.dontSaveDists = dontSaveDists;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
@@ -453,7 +456,8 @@ classdef MC2DLJoutput
                     finalDistances,finalU,finalV,finalPressure,...
                     obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
                     angleDependent,obj.currentAngs,...
-                    obj.currentAlphas,obj.currentThetas);
+                    obj.currentAlphas,obj.currentThetas,...
+                    obj.simulationParam.dontSaveDists);
                 
                 clear finalU finalV finalConfiguration finalDistances...
                     currentmoveCount finalAngs finalAlphas finalThetas
@@ -463,7 +467,7 @@ classdef MC2DLJoutput
         
        function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
                 ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc,...
-                angleDependent,newAngs,newAlphas,newThetas)
+                angleDependent,newAngs,newAlphas,newThetas,dontSaveDists)
             
             obj.data.stepInd(1,obj.indIndata+1) = newInd;
             if obj.indIndata == 1
@@ -476,9 +480,25 @@ classdef MC2DLJoutput
                 s(:,:,1) = obj.data.allDists(:,:);
                 obj.data.allDists = s;
                 clear s;
+                
+                if dontSaveDists
+                    [bins, histo] =...
+                        calculateRDF(newDists,obj.simulationParam.N,...
+                        obj.simulationParam.rho,300,10);
+                    obj.data.RDFbins = bins;
+                    obj.data.RDFhisto = zeros(1,300,2);
+                    obj.data.RDFhisto(1,1:300,1) = histo;
+                end
             else
                 obj.data.allCoords(:,:,obj.indIndata+1) = newCoords(:,:,1);
-                obj.data.allDists(:,:,obj.indIndata+1) = newDists(:,:,1);
+                if dontSaveDists
+                    [~, histo] =...
+                        calculateRDF(newDists,obj.simulationParam.N,...
+                        obj.simulationParam.rho,300,10);
+                    obj.data.RDFhisto(1,1:300,obj.indIndata+1) = histo;
+                else
+                    obj.data.allDists(:,:,obj.indIndata+1) = newDists(:,:,1);
+                end
             end
             
             obj.data.allU(1,obj.indIndata+1) = newU;
@@ -577,42 +597,13 @@ classdef MC2DLJoutput
                         disp(['calcRDF step: ' num2str(step)]);
                     end
                     dist = obj.data.allDists(:,:,step);
-                    d = reshape(dist,1,[]);
-                    d = nonzeros(d);
-                    d = d(d < maxDist);
-                    
-                    histo = hist(d,bins);
-                    increment = bins(2) - bins(1);
-                   
-
-                    % each bin should be normalized according to its volume
-                    for bin = 1:numOfBins
-
-                            % rVal is the number of particles in some layer of area 
-                            % da(r)=2pi*r*dr, a distance r from the central cell
-                            rVal = bins(bin);
-                            next_rVal = increment + rVal;
-
-                            % Calculate the area of the bin (a ring of radii r,
-                            % r+dr)
-                            ereaBin = pi*next_rVal^2 - pi*rVal^2;
-
-                            % Calculate the number of particles expected in this bin in
-                            % the ideal case
-                            nIdeal = ereaBin*rho;
-
-                            % Normalize the bin
-                            histo(bin) =...
-                                histo(bin) / nIdeal;
-
+                    [~, histo] = calculateRDF(dist,N,rho,numOfBins,maxDist);
+                    if save2data
+                            obj.data.RDFhisto(step,:) = histo;
+                            obj.RDFhisto = obj.RDFhisto + histo;
+                    else
+                            RDFhisto(step,:) = histo;
                     end
-                        histo = 2*histo/(N-1);
-                        if save2data
-                                obj.data.RDFhisto(step,:) = histo;
-                                obj.RDFhisto = obj.RDFhisto + histo;
-                        else
-                                RDFhisto(step,:) = histo;
-                        end
                             
               end
               
@@ -1468,4 +1459,73 @@ end
                 end
 
         end
+        
+        function [bins, histo] =...
+            calculateRDF(dists,N,rho,numOfBins,maxDist)
+        %% calculate 2D radial distribution function, with pediodic boundary
+        %% conditions.
+
+        %         input:
+        %         ~~~~~~
+
+        %         NumOfBins - number of bins in the histogram
+        %
+        %         output:
+        %         ~~~~~~~
+        %         obj.data.bins - x axis of the RDF histogram
+        %         obj.data.histo - each colmun is the RDF axis of a diffrent step in the
+        %         monte carlo simulation. (so to plot the RDF for the 10'th step we
+        %         need to write: plot(bins,histo(:,10));
+
+        %       method:
+        %       ~~~~~~~
+        %       the RDF is calculated by binnig all pair partical distances into 
+        %       a histogram, and normalizing each bin with it's Ideal gas number of
+        %       particals. 
+        %       when binning the pair distances, we take into acount Periodic
+        %       Boudary Conditions (PBC)
+        %       finaly, to ansure that when r->infinity : RDF ->1 , we
+        %       normalize by multiplying RDF*2/(N-1) where N is the number of
+        %       particals. 
+        %       for more information
+        %   http://www2.msm.ctw.utwente.nl/sluding/TEACHING/APiE_Script_v2011.pdf
+        %       page 48 - "Radial distribution function"
+
+     
+        bins = linspace(0,maxDist,numOfBins);  
+      
+        d = reshape(dists,1,[]);
+        d = nonzeros(d);
+        d = d(d < maxDist);
+
+        histo = hist(d,bins);
+        increment = bins(2) - bins(1);
+
+        % each bin should be normalized according to its volume
+        for bin = 1:numOfBins
+
+                % rVal is the number of particles in some layer of area 
+                % da(r)=2pi*r*dr, a distance r from the central cell
+                rVal = bins(bin);
+                next_rVal = increment + rVal;
+
+                % Calculate the area of the bin (a ring of radii r,
+                % r+dr)
+                ereaBin = pi*next_rVal^2 - pi*rVal^2;
+
+                % Calculate the number of particles expected in this bin in
+                % the ideal case
+                nIdeal = ereaBin*rho;
+
+                % Normalize the bin
+                histo(bin) =...
+                    histo(bin) / nIdeal;
+
+        end
+        histo = 2*histo/(N-1);
+                
+
+    end
+
+     
         
