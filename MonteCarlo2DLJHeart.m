@@ -68,6 +68,7 @@ addOptional(p, 'initialThetas', []);
 addOptional(p, 'maxdAng', []);
 addOptional(p, 'ufunc', []);
 addOptional(p, 'hardCoreRepRad', 0);
+addOptional(p, 'TalkEvery', []);
 parse(p, varargin{:});
 Results = p.Results;
 rl = Results.verelet;
@@ -81,6 +82,7 @@ initialThetas = Results.initialThetas;
 maxdAng = Results.maxdAng;
 ufunc = Results.ufunc;
 hardCoreRepRad = Results.hardCoreRepRad;
+TalkEvery = Results.TalkEvery;
 
 if isempty(ufunc)
     ufunc = @(r) 4*(((1./r).^12)-((1./r).^m));
@@ -93,6 +95,9 @@ if angleDependent
     particlesAngs = initialAngs;
     particlesAlphas = initialAlphas;
     particlesThetas = initialThetas;
+else 
+    particlesAlphas = [];
+    particlesThetas = [];
 end
 U = initialU;
 if ~isempty(virial)
@@ -113,6 +118,13 @@ else
 end
 
 for step = 1:Nsteps
+        
+        % talk
+        if ~isempty(TalkEvery)
+            if mod(step,TalkEvery) == 0
+                disp([num2str(step) 'steps of MC done']);
+            end
+        end
     
         % choose particle to move 
         movedParticle = movedParticle + 1;

@@ -25,8 +25,10 @@ mind = 0;
 
 for t = [0.45,0.6,0.8,1,1.5,2]
     tind = tind + 1;
+    rind = 0;
     for r = [0.005,0.01,0.05,0.1]
         rind = rind + 1;
+        mind = 0;
         for m = [3,4,5,6]
             mind = mind + 1; 
             

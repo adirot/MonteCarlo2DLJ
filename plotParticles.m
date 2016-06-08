@@ -16,27 +16,46 @@ function plotParticles(coords,L,r,varargin)
 
         x = coords(1,j);
         y = coords(2,j);
-        plotCircle(x,y,r,angles(1,j));
+        if ~isempty(angles)
+            plotCircle(x,y,r,angles(1,j));
+        else
+            plotCircle(x,y,r);
+        end
 
         %PBC
         if  x > (L/2 - r)
-
-            plotCircle(x-L,y,r,angles(1,j));
+            if ~isempty(angles)
+                plotCircle(x-L,y,r,angles(1,j));
+            else
+                plotCircle(x-L,y,r);
+            end
 
         else if x < (-L/2 + r)
-
+            if ~isempty(angles)
                 plotCircle(x+L,y,r,angles(1,j));
+            else
+                plotCircle(x+L,y,r);
+            end
 
             end
         end
 
         if  y > (L/2 - r)
 
-            plotCircle(x,y-L,r,angles(1,j));
+            
+            if ~isempty(angles)
+                plotCircle(x,y-L,r,angles(1,j));
+            else
+                plotCircle(x,y-L,r);
+            end
 
         else if y < (-L/2 + r)
 
-            plotCircle(x,y+L,r,angles(1,j));
+            if ~isempty(angles)
+                plotCircle(x,y+L,r,angles(1,j));
+            else
+                plotCircle(x,y+L,r);
+            end
 
             end
         end
@@ -44,26 +63,38 @@ function plotParticles(coords,L,r,varargin)
         % plot corner particles
 
         if  x > (L/2 - r) && y > (L/2 - r)
-
-            plotCircle(x-L,y-L,r,angles(1,j));
+            if ~isempty(angles)
+                plotCircle(x-L,y-L,r,angles(1,j));
+            else
+                plotCircle(x-L,y-L,r);
+            end
 
         end
 
         if  x > (L/2 - r) && y < (-L/2 + r)
-
-            plotCircle(x-L,y+L,r,angles(1,j));
+            if ~isempty(angles)
+                plotCircle(x-L,y+L,r,angles(1,j));
+            else
+                plotCircle(x-L,y+L,r);
+            end
 
         end
 
         if  x < (-L/2 + r) && y > (L/2 - r)
-
-            plotCircle(x+L,y-L,r,angles(1,j));
+            if ~isempty(angles)
+                plotCircle(x+L,y-L,r,angles(1,j));
+            else
+                plotCircle(x+L,y-L,r);
+            end
 
         end
 
         if  x < (-L/2 + r) && y < (-L/2 + r)
-
-            plotCircle(x+L,y+L,r,angles(1,j));
+            if ~isempty(angles)
+                plotCircle(x+L,y+L,r,angles(1,j));
+            else
+                plotCircle(x+L,y+L,r);
+            end
 
         end
 

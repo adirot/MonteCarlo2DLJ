@@ -17,15 +17,23 @@ addOptional(p, 'plotFig', true);
 addOptional(p, 'freen', false);
 addOptional(p, 'freeTandn', false);
 addOptional(p, 'freeTnbound', false);
+addOptional(p, 'freeTnset', false);
+addOptional(p, 'nset', []);
 parse(p, varargin{:});
 Results = p.Results;
 plotFig = Results.plotFig;
 freen = Results.freen;
 freeTandn = Results.freeTandn;
 freeTnbound = Results.freeTnbound;
+freeTnset = Results.freeTnset;
+nset = Results.nset; 
 
 if freeTandn
     freen = false;
+end
+
+if and(freeTnset,isempty(nset))
+    error('choose n with nset input parameter');
 end
 
 [Nplots, ~] = size(ys);
@@ -52,10 +60,18 @@ if plotFig
                 message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
             
             else
-                title(['RDF with fit for T = ' num2str(T) ' \rho = '...
-                    num2str(rho) ' m = ' num2str(m) ' n set to 12']);
+		if freeTnset
 
-                message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
+                    title(['RDF with fit for T = ' num2str(T) ' \rho = '...
+                        num2str(rho) ' m = ' num2str(m) ' n set to ' num2str(nset)]);
+
+                    message = sprintf(['4*(1/T)*((1/x)^{' num2str(nset) '} - (1/x)^m)']); 
+                else
+                    title(['RDF with fit for T = ' num2str(T) ' \rho = '...
+                        num2str(rho) ' m = ' num2str(m) ' n set to 12']);
+
+                    message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
+                end
             end
         end
     end
@@ -83,8 +99,13 @@ else
             opts.Lower = [-Inf -Inf 10]; 
             opts.Upper = [Inf Inf 20];
         else
-            ft = fittype( ['4*(1/' num2str(T) ')*((1/x)^12 - (1/x)^m)'],...
-                    'independent', 'x', 'dependent', 'y' );
+            if freeTnset
+                ft = fittype( ['4*(1/T)*((1/x)^' num2str(nset) ' - (1/x)^m)'],...
+                        'independent', 'x', 'dependent', 'y' );
+            else
+                ft = fittype( ['4*(1/' num2str(T) ')*((1/x)^12 - (1/x)^m)'],...
+                        'independent', 'x', 'dependent', 'y' );
+            end
         end
     end
 end
@@ -133,6 +154,16 @@ for i = 1:Nplots
             nError(i,1) = conf(1,3);
             nError(i,2) = conf(2,3);
         end
+	
+        if freeTnset
+            Tfit(i) = coeff(1);
+            TError(i,1) = conf(1,1);
+            TError(i,2) = conf(2,1);
+            mfit(i) = coeff(2);
+            mError(i,1) = conf(1,2);
+            mError(i,2) = conf(2,2);
+        end
+            
     end
         
     if plotFig
@@ -153,16 +184,24 @@ for i = 1:Nplots
         else
             if or(freeTandn,freeTnbound)
                 message = sprintf(['steps: ' steps{i} '\n' 'T = '...
-                num2str(coeff(1))...
-                ' (' num2str(conf(1,1)) ',' num2str(conf(2,1)) ')\nn = '...
-                num2str(coeff(2))...
-                ' (' num2str(conf(1,2)) ',' num2str(conf(2,2)) ')\nm = '...
-                num2str(coeff(3))...
-                ' (' num2str(conf(1,3)) ',' num2str(conf(2,3)) ')']);
-            else
-                message = sprintf(['steps: ' steps{i} '\n' 'm = '...
                     num2str(coeff(1))...
-                    ' (' num2str(conf(1,1)) ',' num2str(conf(2,1)) ')']);
+                    ' (' num2str(conf(1,1)) ',' num2str(conf(2,1)) ')\nn = '...
+                    num2str(coeff(2))...
+                    ' (' num2str(conf(1,2)) ',' num2str(conf(2,2)) ')\nm = '...
+                    num2str(coeff(3))...
+                    ' (' num2str(conf(1,3)) ',' num2str(conf(2,3)) ')']);
+            else
+                if freeTnset
+                    message = sprintf(['steps: ' steps{i} '\n' 'T = '...
+                        num2str(coeff(1))...
+                        ' (' num2str(conf(1,1)) ',' num2str(conf(2,1)) ')\nm = '...
+                        num2str(coeff(2))]);
+                else
+                    
+                    message = sprintf(['steps: ' steps{i} '\n' 'm = '...
+                        num2str(coeff(1))...
+                        ' (' num2str(conf(1,1)) ',' num2str(conf(2,1)) ')']);
+                end
             end
         end
         text(2,7-i,message,'EdgeColor','k');

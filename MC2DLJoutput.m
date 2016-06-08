@@ -12,6 +12,7 @@ classdef MC2DLJoutput
 %       simulationParam.initialmaxdr - initial maximum particle displacement
 %       simulationParam.initialConfig - initial configuration of particles: 'random' or
 %       'hcp' (6 nieghbors for each patrticle)
+%       simulationParam.hcr - hard core repulsion: true or false 
 %       simulationParam.rCutoff - the cutoff distance for the energy
 %       simulationParam.rl - rl for verelet algorithm. if empty - verelet
 %                               algorithm will not be used.
@@ -156,6 +157,10 @@ classdef MC2DLJoutput
                     obj.currentDists = obj.data.allDists(:,:,obj.indIndata);
                     obj.currentU = obj.data.allU(1,obj.indIndata);
                     
+                    if ~isfield(obj.simulationParam,'angleDependent')
+                        obj.simulationParam.angleDependent = false;
+                    end
+                    
                     if obj.simulationParam.angleDependent
                    
                         obj.currentAngs = obj.data.allAngs(:,:,obj.indIndata);
@@ -194,7 +199,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'angleDependence', []);
                     addOptional(p, 'maxdAng', []);
                     addOptional(p, 'ufunc', []);
-                    addOptional(p, 'hardCoreRepRad', 0);
+                    addOptional(p, 'hcr', false);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -206,11 +211,16 @@ classdef MC2DLJoutput
                     angleDependence = Results.angleDependence;
                     maxdAng = Results.maxdAng;
                     ufunc = Results.ufunc;
-                    hardCoreRepRad = Results.hardCoreRepRad;
+                    hcr = Results.hcr;
                     
                     if isempty(ufunc)
-                        ufunc = @(r) 4*(((1./r).^12)-((1./r).^m));
-                        ufuncstr = '';
+                        if hcr
+                            ufunc = @(r) (-((1./r).^m));
+                            ufuncstr = '_hcr_';
+                        else
+                            ufunc = @(r) (((1./r).^12)-((1./r).^m));
+                            ufuncstr = '';
+                        end
                     else
                         ufuncstr ='_ufunccustum_';
                     end
@@ -240,7 +250,7 @@ classdef MC2DLJoutput
                     obj.simulationParam.angleDependence = angleDependence;
                     obj.simulationParam.maxdAng = maxdAng;
                     obj.simulationParam.ufunc = ufunc;
-                    obj.simulationParam.hardCoreRepRad = hardCoreRepRad;
+                    obj.simulationParam.hcr = hcr;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
@@ -383,7 +393,12 @@ classdef MC2DLJoutput
             angleDependence = obj.simulationParam.angleDependence;
             maxdAng = obj.simulationParam.maxdAng;
             ufunc = obj.simulationParam.ufunc;
-            hardCoreRepRad = obj.simulationParam.hardCoreRepRad;
+            hcr = obj.simulationParam.hcr;
+            if hcr
+                hardCoreRepRad = 1;
+            else 
+                hardCoreRepRad = 0;
+            end
             
             stepCount = 0;
             while(stepCount < Nsteps)
