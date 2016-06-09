@@ -9,6 +9,7 @@
 % 
 
 load('all_RDF_with_std.mat');
+load('all_rdf_minmax.mat');
 
 tind = 0;
 rind = 0;
@@ -62,16 +63,7 @@ for t = [0.45,0.6,0.8,1,1.5,2]
 %             RDF6kstd{tind,rind,mind} = std(M.data.RDFhisto(start:(start+6000),1:300));
 %             RDF12kstd{tind,rind,mind} = std(M.data.RDFhisto(start:(start+12000),1:300));
 
-            plot(x,RDF12k{tind,rind,mind});            
-            hold on;
-            plot(x,RDF12k{tind,rind,mind}+RDF12kstd{tind,rind,mind},'k');
-            plot(x,RDF12k{tind,rind,mind}-RDF12kstd{tind,rind,mind},'k');
             
-            saveas(gcf,['RDFstdT' my_num2str(t)...
-                'rho' my_num2str(r) 'm' num2str(m) '.fig']);
-            saveas(gcf,['RDFstdT' my_num2str(t)...
-                'rho' my_num2str(r) 'm' num2str(m) '.jpg']);
-            close all;
 
             
             plot(x,RDF10{tind,rind,mind});            
@@ -79,6 +71,12 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             plot(x,RDF10{tind,rind,mind}+RDF10std{tind,rind,mind},'k');
             plot(x,RDF10{tind,rind,mind}-RDF10std{tind,rind,mind},'k');
             
+            
+            plot(x,RDF10max{tind,rind,mind},'r');
+            plot(x,RDF10min{tind,rind,mind},'r');
+            
+                        legend('mean RDF', 'rdf + std', 'rdf - std', 'max rdf', 'min rdf'); 
+
             saveas(gcf,['RDFstd10T' my_num2str(t)...
                 'rho' my_num2str(r) 'm' num2str(m) '.fig']);
             saveas(gcf,['RDFstd10T' my_num2str(t)...
@@ -91,6 +89,10 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             plot(x,RDF50{tind,rind,mind}+RDF50std{tind,rind,mind},'k');
             plot(x,RDF50{tind,rind,mind}-RDF50std{tind,rind,mind},'k');
             
+            
+            plot(x,RDF50max{tind,rind,mind},'r');
+            plot(x,RDF50min{tind,rind,mind},'r');
+            legend('mean RDF', 'rdf + std', 'rdf - std', 'max rdf', 'min rdf'); 
             
             saveas(gcf,['RDFstd50T' my_num2str(t)...
                 'rho' my_num2str(r) 'm' num2str(m) '.fig']);
@@ -105,6 +107,10 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             plot(x,RDF100{tind,rind,mind}-RDF100std{tind,rind,mind},'k');
             
             
+            plot(x,RDF100max{tind,rind,mind},'r');
+            plot(x,RDF100min{tind,rind,mind},'r');
+            legend('mean RDF', 'rdf + std', 'rdf - std', 'max rdf', 'min rdf'); 
+            
             saveas(gcf,['RDFstd100T' my_num2str(t)...
                 'rho' my_num2str(r) 'm' num2str(m) '.fig']);
             saveas(gcf,['RDFstd100T' my_num2str(t)...
@@ -118,6 +124,10 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             plot(x,RDF1k{tind,rind,mind}-RDF1kstd{tind,rind,mind},'k');
             
             
+            plot(x,RDF1kmax{tind,rind,mind},'r');
+            plot(x,RDF1kmin{tind,rind,mind},'r');
+             legend('mean RDF', 'rdf + std', 'rdf - std', 'max rdf', 'min rdf'); 
+           
             saveas(gcf,['RDFstd1kT' my_num2str(t)...
                 'rho' my_num2str(r) 'm' num2str(m) '.fig']);
             saveas(gcf,['RDFstd1kT' my_num2str(t)...
@@ -131,6 +141,10 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             plot(x,RDF2k{tind,rind,mind}+RDF2kstd{tind,rind,mind},'k');
             plot(x,RDF2k{tind,rind,mind}-RDF2kstd{tind,rind,mind},'k');
             
+            plot(x,RDF2kmax{tind,rind,mind},'r');
+            plot(x,RDF2kmin{tind,rind,mind},'r');
+             legend('mean RDF', 'rdf + std', 'rdf - std', 'max rdf', 'min rdf'); 
+           
             saveas(gcf,['RDFstd2kT' my_num2str(t)...
                 'rho' my_num2str(r) 'm' num2str(m) '.fig']);
             saveas(gcf,['RDFstd2kT' my_num2str(t)...
@@ -143,6 +157,10 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             
             plot(x,RDF6k{tind,rind,mind}+RDF6kstd{tind,rind,mind},'k');
             plot(x,RDF6k{tind,rind,mind}-RDF6kstd{tind,rind,mind},'k');
+            
+            plot(x,RDF6kmax{tind,rind,mind},'r');
+            plot(x,RDF6kmin{tind,rind,mind},'r');
+            legend('mean RDF', 'rdf + std', 'rdf - std', 'max rdf', 'min rdf'); 
             
             saveas(gcf,['RDFstd6kT' my_num2str(t)...
                 'rho' my_num2str(r) 'm' num2str(m) '.fig']);
@@ -157,6 +175,11 @@ for t = [0.45,0.6,0.8,1,1.5,2]
             plot(x,RDF12k{tind,rind,mind}+RDF12kstd{tind,rind,mind},'k');
             plot(x,RDF12k{tind,rind,mind}-RDF12kstd{tind,rind,mind},'k');
             
+            
+            plot(x,RDF12kmax{tind,rind,mind},'r');
+            plot(x,RDF12kmin{tind,rind,mind},'r');
+            
+            legend('mean RDF', 'rdf + std', 'rdf - std', 'max rdf', 'min rdf'); 
             saveas(gcf,['RDFstd12kT' my_num2str(t)...
                 'rho' my_num2str(r) 'm' num2str(m) '.fig']);
             saveas(gcf,['RDFstd12kT' my_num2str(t)...

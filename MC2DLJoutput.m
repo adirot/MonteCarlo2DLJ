@@ -216,6 +216,10 @@ classdef MC2DLJoutput
                     hcr = Results.hcr;
                     dontSaveDists = Results.dontSaveDists;
                     
+                    if dontSaveDists
+                        pressure = true;
+                    end
+                    
                     if isempty(ufunc)
                         if hcr
                             ufunc = @(r) (-((1./r).^m));
@@ -1504,8 +1508,8 @@ end
         % each bin should be normalized according to its volume
         for bin = 1:numOfBins
 
-                % rVal is the number of particles in some layer of area 
-                % da(r)=2pi*r*dr, a distance r from the central cell
+                % histo(bin) is the number of particles in some layer of area 
+                % 2pi*rVal*dr, a distance rVal from the central cell
                 rVal = bins(bin);
                 next_rVal = increment + rVal;
 
