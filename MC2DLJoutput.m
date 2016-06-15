@@ -392,7 +392,13 @@ classdef MC2DLJoutput
             
         end
         
-       function obj = MonteCarlo(obj,Nsweeps,saveEvery)
+       function obj = MonteCarlo(obj,Nsweeps,saveEvery,varargin)
+           p = inputparser();
+           addOptional(p, 'TalkEvery', []);
+           parse(p, varargin{:});
+           R = p.Results;
+           TalkEvery = R.TalkEvery;
+           
             N = obj.simulationParam.N; 
             rho = obj.simulationParam.rho;
             rCutoff = obj.simulationParam.rCutoff;        
@@ -444,7 +450,8 @@ classdef MC2DLJoutput
                     'initialThetas',obj.currentThetas,...
                     'maxdAng',maxdAng,...
                     'ufunc',ufunc,...
-                    'hardCoreRepRad',hardCoreRepRad);
+                    'hardCoreRepRad',hardCoreRepRad,...
+                    'TalkEvery',TalkEvery);
                 
                 sweepCount = sweepCount + numOfruns2save/N;
                 obj.currentSweep = obj.currentSweep + numOfruns2save/N;
@@ -465,12 +472,18 @@ classdef MC2DLJoutput
                         2*m*pi*rho^2/((2-m)*rCutoff^(m-2));
                 end
             
+                if ~isempty(TalkEvery)
+                    talk = true;
+                else
+                    talk = false;
+                end
+                
                 obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
                     finalDistances,finalU,finalV,finalPressure,...
                     obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
                     angleDependent,obj.currentAngs,...
                     obj.currentAlphas,obj.currentThetas,...
-                    obj.simulationParam.dontSaveDists);
+                    obj.simulationParam.dontSaveDists,talk);
                 
                 clear finalU finalV finalConfiguration finalDistances...
                     currentmoveCount finalAngs finalAlphas finalThetas
@@ -480,7 +493,19 @@ classdef MC2DLJoutput
         
        function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
                 ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc,...
-                angleDependent,newAngs,newAlphas,newThetas,dontSaveDists)
+                angleDependent,newAngs,newAlphas,newThetas,dontSaveDists,...
+                varargin)
+            
+            p = inputparser();
+            addOptional(p, 'talk', false);
+            parse(p, varargin{:});
+            R = p.Results;
+            talk = R.talk;
+            
+            if talk
+                disp(['adding to data. size of allU: '...
+                    num2str(size(obj.data.allU))]);
+            end
             
             obj.data.sweepInd(1,obj.indIndata+1) = newInd;
             if obj.indIndata == 1
@@ -548,6 +573,12 @@ classdef MC2DLJoutput
             obj.data.indIndata = obj.indIndata;
             obj.data.moveCount = moveCount;
             obj.data.currentmaxdr = currentmaxdr;
+            
+            
+            if talk
+                disp(['dane adding to data. size of allU: '...
+                    num2str(size(obj.data.allU))]);
+            end
             
        end
        
