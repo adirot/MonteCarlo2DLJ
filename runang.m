@@ -1,6 +1,6 @@
-function [] = runang(t,r,m)
+function M = runang(t,r,m)
 
-M = MC2DLJoutput(625,t,r,1,'auto',10,(m/12)^(1/(m-12))/2,...
+M = MC2DLJoutput(10,t,r,1,'auto',10,(m/12)^(1/(m-12))/2,...
             'pressure',false,'m',m,'ufunc',@(r) 0.75*r.^-m,...
             'angleDependent',true,...
             'angleDependence',@(a,t) 3*(cos(t).^2+cos(t-a).^2-5*cos(t).^2.*cos(t-a).^2-1/3) - (1-1)*cos(a).^2-3*(1-3)*cos(a).*cos(t).*cos(a-t),...
@@ -9,10 +9,10 @@ M = MC2DLJoutput(625,t,r,1,'auto',10,(m/12)^(1/(m-12))/2,...
         
 % equilibration
 tic;
-M = M.MonteCarlo(1,0);
+M = M.MonteCarlo(10,0);
 toc
-disp('1');
-M = M.addStep2data(M.currentStep,...
+disp(['done equilibrating ' num2str(t) ' ' num2str(r) ' ' num2str(m)]);
+M = M.addStep2data(M.currentSweep,...
                         M.currentCoords,...
                         M.currentDists,M.currentU,...
                         M.currentVir,M.currentPressure,...
@@ -24,8 +24,39 @@ M = M.addStep2data(M.currentStep,...
                         M.simulationParam.dontSaveDists);
       
 % run
-disp('1');
-M = M.MonteCarlo(1,10);
-disp('1');
+disp(['starting run - ' num2str(t) ' ' num2str(r) ' ' num2str(m)]);
+tic;
+
+%% run on 10 differet workers:
+for i = 1:10
+    Mcopies(i) = M.copyOutputFile(num2str(i));
+end
+
+% separate MC output file to 10 different ones:
+
+c = parcluster();
+for i = 1:10
+        temp = Mcopies(i);
+        jobs{i} = batch(c,@temp.MonteCarlo,1,{16000/10,10});
+end
+
+for i = 1:10
+    wait(jobs{i});
+    diary(jobs{i});
+    re = fetchOutputs(jobs{i}); 
+    Mcopies(i) = re{1};
+end
+
+% unify runs
+M = unifyMCobj(Mcopies);
+
+% delete Mcopies
+for i = 1:10
+    delete(Mcopies(i).fileName);
+end
+
+
+toc
+disp(['160000 sweeps done - ' num2str(t) ' ' num2str(r) ' ' num2str(m)]);
                     
 end
