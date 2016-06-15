@@ -404,6 +404,9 @@ classdef MC2DLJoutput
             hcr = obj.simulationParam.hcr;
             if hcr
                 hardCoreRepRad = 1;
+                if obj.simulationParam.angleDependent
+                    hardCoreRepRad = (m/12)^(1/(m-12))/2;
+                end
             else 
                 hardCoreRepRad = 0;
             end
