@@ -44,9 +44,9 @@ classdef MC2DLJoutput
 % moveCount - counts accepted moves
 % currentPressure - the pressure in the last step calculated
 % currentmaxdr - the current maximum displacement of the Monte Carlo step.
-% currentStep - how many steps calculated so far
+% currentSweep - how many steps calculated so far
 % indIndata - the number of steps saved so far (not every step is saved,
-%               so this may be lower than currentStep)
+%               so this may be lower than currentSweep)
 % fileName - the name of the matfile where all the data is stored. the file
 %           name tells you the simulation parameters like N,T, etc. the last 
 %           numbers in the file name are creation date and time
@@ -65,7 +65,7 @@ classdef MC2DLJoutput
 %       data.allUlrc - the energy in each step saved, with long range correction (size: 1 by indIndata)
 %       data.allV - the virial in each step saved (size: 1 by indIndata)
 %       data.allPlrc - pressure in each step saved, with long range correction (size: 1 by indIndata)
-%       data.stepInd - the number of step clulated up to each saved point
+%       data.sweepInd - the number of step clulated up to each saved point
 %       data.moveCount - counts accepted moves
 %       data.currentmaxdr - the current maximum displacement of the Monte
 %               Carlo step.
@@ -119,7 +119,7 @@ classdef MC2DLJoutput
       simulationParam = struct;
       currentmaxdr,...
           moveCount,currentCoords,currentDists,currentU,currentPressure,...
-          currentVir,Ulrc,Plrc,currentStep,...
+          currentVir,Ulrc,Plrc,currentSweep,...
           currentThetas,currentAlphas,currentAngs;
       fileName,data,indIndata;
       RDFhisto, RDFbins;
@@ -183,7 +183,7 @@ classdef MC2DLJoutput
                         obj.RDFbins = mean(obj.data.RDFbins);
                     end
                     
-                    obj.currentStep = obj.data.stepInd(1,obj.indIndata);
+                    obj.currentSweep = obj.data.sweepInd(1,obj.indIndata);
 
                 end
                     
@@ -362,13 +362,13 @@ classdef MC2DLJoutput
                     clear d; clear ang;
                     
                     % save to data file
-                    stepInd = 0;
+                    sweepInd = 0;
                     moveCount = 0;
                     indIndata = 1;
                     currentmaxdr = initialmaxdr;
                     simulationParam = obj.simulationParam;
                     save(obj.fileName, 'allDists','allCoords',...
-                            'allU','allUlrc','allV','allP','allPlrc','stepInd',...
+                            'allU','allUlrc','allV','allP','allPlrc','sweepInd',...
                             'moveCount','indIndata'...
                             ,'currentmaxdr','simulationParam','runNum',...
                             'allAlphas','allThetas',...
@@ -386,20 +386,13 @@ classdef MC2DLJoutput
                     obj.currentVir = allV;
                     obj.currentPressure = allP;
                     obj.Plrc = allPlrc;
-                    obj.currentStep = stepInd;
+                    obj.currentSweep = sweepInd;
                     obj.indIndata = 1;
                 end
             
         end
         
-       function obj = MonteCarlo(obj,Nsteps,saveEvery,varargin)
-           p = inputparser();
-           addOptional(p, 'TalkEvery', []);
-           parse(p, varargin{:});
-           Results = p.Results;
-           TalkEvery = Results.TalkEvery;
-           
-           
+       function obj = MonteCarlo(obj,Nsweeps,saveEvery)
             N = obj.simulationParam.N; 
             rho = obj.simulationParam.rho;
             rCutoff = obj.simulationParam.rCutoff;        
@@ -418,8 +411,15 @@ classdef MC2DLJoutput
                 hardCoreRepRad = 0;
             end
             
-            stepCount = 0;
-            while(stepCount < Nsteps)
+            if saveEvery == 0
+                % don't save
+                numOfruns2save = N*Nsweeps;
+            else
+                numOfruns2save = N*Nsweeps*saveEvery;
+            end
+            
+            sweepCount = 0;
+            while(sweepCount < Nsweeps)
                 [finalU,finalV,finalPressure,...
                     finalConfiguration,finalDistances,...
                     currentmoveCount,...
@@ -428,7 +428,7 @@ classdef MC2DLJoutput
                     N,...
                     obj.simulationParam.T,...
                     rho,...
-                    obj.simulationParam.N*saveEvery,...
+                    numOfruns2save,...
                     obj.currentmaxdr,...
                     obj.currentCoords,...
                     rCutoff,...
@@ -444,12 +444,10 @@ classdef MC2DLJoutput
                     'initialThetas',obj.currentThetas,...
                     'maxdAng',maxdAng,...
                     'ufunc',ufunc,...
-                    'hardCoreRepRad',hardCoreRepRad,...
-                    'TalkEvery',TalkEvery);
+                    'hardCoreRepRad',hardCoreRepRad);
                 
-                stepCount = stepCount + obj.simulationParam.N*saveEvery;
-                obj.currentStep = obj.currentStep...
-                    + obj.simulationParam.N*saveEvery;
+                sweepCount = sweepCount + numOfruns2save/N;
+                obj.currentSweep = obj.currentSweep + numOfruns2save/N;
                 obj.moveCount = obj.moveCount + currentmoveCount;
                 obj.currentU = finalU;
                 obj.currentVir = finalV;
@@ -466,21 +464,13 @@ classdef MC2DLJoutput
                     obj.Plrc = obj.currentPressure -...
                         2*m*pi*rho^2/((2-m)*rCutoff^(m-2));
                 end
-                
-                if ~isempty(TalkEvery)
-                    talk = true;
-                else
-                    talk = false;
-                end
-                
-                obj = obj.addStep2data(obj.currentStep,finalConfiguration,...
+            
+                obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
                     finalDistances,finalU,finalV,finalPressure,...
                     obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
                     angleDependent,obj.currentAngs,...
                     obj.currentAlphas,obj.currentThetas,...
-                    obj.simulationParam.dontSaveDists,'talk',talk);
-                
-                
+                    obj.simulationParam.dontSaveDists);
                 
                 clear finalU finalV finalConfiguration finalDistances...
                     currentmoveCount finalAngs finalAlphas finalThetas
@@ -490,22 +480,9 @@ classdef MC2DLJoutput
         
        function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
                 ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc,...
-                angleDependent,newAngs,newAlphas,newThetas,dontSaveDists,...
-                varargin)
+                angleDependent,newAngs,newAlphas,newThetas,dontSaveDists)
             
-            p = inputparser();
-            addOptional(p, 'talk', false);
-            parse(p, varargin{:});
-            Results = p.Results;
-            talk = Results.talk;
-            
-            if talk
-                disp(['adding data to data file. size of allU:'...
-                    num2str(size(M.data.allU))]);
-            end
-            
-            
-            obj.data.stepInd(1,obj.indIndata+1) = newInd;
+            obj.data.sweepInd(1,obj.indIndata+1) = newInd;
             if obj.indIndata == 1
                 s = zeros(2,obj.simulationParam.N,2);
                 s(:,:,2) = newCoords(:,:,1);
@@ -571,12 +548,7 @@ classdef MC2DLJoutput
             obj.data.indIndata = obj.indIndata;
             obj.data.moveCount = moveCount;
             obj.data.currentmaxdr = currentmaxdr;
-
-            if talk
-                disp(['done adding data to data file. size of allU:'...
-                    num2str(size(M.data.allU))]);
-            end
-
+            
        end
        
        function [obj, bins, RDFhisto] =...
@@ -705,7 +677,7 @@ classdef MC2DLJoutput
                minInd = 1;
            else
                % find the relevent initial index
-               [~, minInd] = min(abs(firstSteps2ignore - obj.data.stepInd));
+               [~, minInd] = min(abs(firstSteps2ignore - obj.data.sweepInd));
            end
            
            % find peaks
@@ -730,7 +702,7 @@ classdef MC2DLJoutput
            end
            
            for j = 1:length(locs)
-               steps(j,:) = obj.data.stepInd(1,minInd:Nsteps);
+               steps(j,:) = obj.data.sweepInd(1,minInd:Nsteps);
            end
            
            if plotFig
@@ -889,11 +861,11 @@ classdef MC2DLJoutput
        function showStep(obj,step)
            
           if isnumeric(step)
-                  ind = find(obj.data.stepInd == step);
+                  ind = find(obj.data.sweepInd == step);
           
                   if isempty(ind) %find the closest index saved
-                      [~,ind] = min(abs(obj.data.stepInd - step));
-                      step = obj.data.stepInd(1,ind);
+                      [~,ind] = min(abs(obj.data.sweepInd - step));
+                      step = obj.data.sweepInd(1,ind);
                   end
           else
               
@@ -904,10 +876,10 @@ classdef MC2DLJoutput
                   case 'mid'
                      
                       ind = ceil(obj.indIndata/2);
-                      step = obj.data.stepInd(1,ind);
+                      step = obj.data.sweepInd(1,ind);
                   case 'last'
                       ind  = obj.indIndata;
-                      step = obj.data.stepInd(1,ind);
+                      step = obj.data.sweepInd(1,ind);
               end
               
           end 
@@ -1152,7 +1124,7 @@ classdef MC2DLJoutput
                minInd = 1;
            else
                % find the relevent initial index
-               [~, minInd] = min(abs(startFromStep - obj.data.stepInd));
+               [~, minInd] = min(abs(startFromStep - obj.data.sweepInd));
            end
            
            
@@ -1169,7 +1141,7 @@ classdef MC2DLJoutput
            obj.data.varVarU = varVarU;
            obj.data.varVarP = varVarP;
            
-           steps = obj.data.stepInd(1,minInd:obj.indIndata);
+           steps = obj.data.sweepInd(1,minInd:obj.indIndata);
            
            if plotVarVsStep
                figure;
@@ -1298,8 +1270,8 @@ classdef MC2DLJoutput
            a = obj.data.allU(:,(firstRuns2Delete+1):obj.data.indIndata);
            obj.data.allU = a;
            clear a;
-           a = obj.data.stepInd(:,(firstRuns2Delete+1):obj.data.indIndata);
-           obj.data.stepInd = a;
+           a = obj.data.sweepInd(:,(firstRuns2Delete+1):obj.data.indIndata);
+           obj.data.sweepInd = a;
            clear a;
            
            
@@ -1327,6 +1299,26 @@ classdef MC2DLJoutput
            obj.data.firstRuns2Delete = firstRuns2Delete;
            
        end
+       
+       function objCopy = copyOutputFile(obj, copyNum)
+           % copy MC output flie. adds the string 'copy' and the number
+           % copyNum to the file name of the copied object.
+           
+           % make a copy of the data file
+           dataCopyStr = [obj.fileName 'copy' copyNum '.mat'];
+           
+           try 
+               copyfile([obj.fileName '.mat'], dataCopyStr);
+           catch 
+               copyfile(obj.fileName, dataCopyStr);
+           end
+           
+           % make a copy of the object
+           objCopy = MC2DLJoutput(dataCopyStr);
+               
+       end
+       
+       
         
     end    
 
@@ -1566,7 +1558,7 @@ end
         histo = 2*histo/(N-1);
                 
 
-    end
-
+        end
+    
      
         
