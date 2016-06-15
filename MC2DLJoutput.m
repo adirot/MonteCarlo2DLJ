@@ -393,7 +393,7 @@ classdef MC2DLJoutput
         end
         
        function obj = MonteCarlo(obj,Nsweeps,saveEvery,varargin)
-           p = inputparser();
+           p = inputParser();
            addOptional(p, 'TalkEvery', []);
            parse(p, varargin{:});
            R = p.Results;
@@ -421,7 +421,7 @@ classdef MC2DLJoutput
                 % don't save
                 numOfruns2save = N*Nsweeps;
             else
-                numOfruns2save = N*Nsweeps*saveEvery;
+                numOfruns2save = N*saveEvery;
             end
             
             sweepCount = 0;
@@ -496,7 +496,7 @@ classdef MC2DLJoutput
                 angleDependent,newAngs,newAlphas,newThetas,dontSaveDists,...
                 varargin)
             
-            p = inputparser();
+            p = inputParser();
             addOptional(p, 'talk', false);
             parse(p, varargin{:});
             R = p.Results;
@@ -576,7 +576,7 @@ classdef MC2DLJoutput
             
             
             if talk
-                disp(['dane adding to data. size of allU: '...
+                disp(['done adding to data. size of allU: '...
                     num2str(size(obj.data.allU))]);
             end
             
