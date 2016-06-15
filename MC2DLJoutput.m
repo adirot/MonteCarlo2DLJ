@@ -392,7 +392,14 @@ classdef MC2DLJoutput
             
         end
         
-       function obj = MonteCarlo(obj,Nsteps,saveEvery)
+       function obj = MonteCarlo(obj,Nsteps,saveEvery,varargin)
+           p = inputparser();
+           addOptional(p, 'TalkEvery', []);
+           parse(p, varargin{:});
+           Results = p.Results;
+           TalkEvery = Results.TalkEvery;
+           
+           
             N = obj.simulationParam.N; 
             rho = obj.simulationParam.rho;
             rCutoff = obj.simulationParam.rCutoff;        
@@ -437,7 +444,8 @@ classdef MC2DLJoutput
                     'initialThetas',obj.currentThetas,...
                     'maxdAng',maxdAng,...
                     'ufunc',ufunc,...
-                    'hardCoreRepRad',hardCoreRepRad);
+                    'hardCoreRepRad',hardCoreRepRad,...
+                    'TalkEvery',TalkEvery);
                 
                 stepCount = stepCount + obj.simulationParam.N*saveEvery;
                 obj.currentStep = obj.currentStep...
@@ -458,13 +466,21 @@ classdef MC2DLJoutput
                     obj.Plrc = obj.currentPressure -...
                         2*m*pi*rho^2/((2-m)*rCutoff^(m-2));
                 end
-            
+                
+                if ~isempty(TalkEvery)
+                    talk = true;
+                else
+                    talk = false;
+                end
+                
                 obj = obj.addStep2data(obj.currentStep,finalConfiguration,...
                     finalDistances,finalU,finalV,finalPressure,...
                     obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
                     angleDependent,obj.currentAngs,...
                     obj.currentAlphas,obj.currentThetas,...
-                    obj.simulationParam.dontSaveDists);
+                    obj.simulationParam.dontSaveDists,'talk',talk);
+                
+                
                 
                 clear finalU finalV finalConfiguration finalDistances...
                     currentmoveCount finalAngs finalAlphas finalThetas
@@ -474,7 +490,20 @@ classdef MC2DLJoutput
         
        function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
                 ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc,...
-                angleDependent,newAngs,newAlphas,newThetas,dontSaveDists)
+                angleDependent,newAngs,newAlphas,newThetas,dontSaveDists,...
+                varargin)
+            
+            p = inputparser();
+            addOptional(p, 'talk', false);
+            parse(p, varargin{:});
+            Results = p.Results;
+            talk = Results.talk;
+            
+            if talk
+                disp(['adding data to data file. size of allU:'...
+                    num2str(size(M.data.allU))]);
+            end
+            
             
             obj.data.stepInd(1,obj.indIndata+1) = newInd;
             if obj.indIndata == 1
@@ -542,7 +571,12 @@ classdef MC2DLJoutput
             obj.data.indIndata = obj.indIndata;
             obj.data.moveCount = moveCount;
             obj.data.currentmaxdr = currentmaxdr;
-            
+
+            if talk
+                disp(['done adding data to data file. size of allU:'...
+                    num2str(size(M.data.allU))]);
+            end
+
        end
        
        function [obj, bins, RDFhisto] =...
