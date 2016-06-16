@@ -119,7 +119,7 @@ classdef MC2DLJoutput
       simulationParam = struct;
       currentmaxdr,...
           moveCount,currentCoords,currentDists,currentU,currentPressure,...
-          currentVir,Ulrc,Plrc,currentSweep,...
+          currentVir,Ulrc,Plrc,currentSweep,currentStep,...
           currentThetas,currentAlphas,currentAngs;
       fileName,data,indIndata;
       RDFhisto, RDFbins;
@@ -183,7 +183,11 @@ classdef MC2DLJoutput
                         obj.RDFbins = mean(obj.data.RDFbins);
                     end
                     
-                    obj.currentSweep = obj.data.sweepInd(1,obj.indIndata);
+                    if existInMatfile(obj.fileName,'stepInd')
+                        obj.currentStep = obj.data.stepInd(1,obj.indIndata);
+                    else
+                        obj.currentSweep = obj.data.sweepInd(1,obj.indIndata);
+                    end
 
                 end
                     
@@ -776,24 +780,25 @@ classdef MC2DLJoutput
                
        end
 
-       function [obj, rhoNorm, PL, densities] =...
-               calcRhoDistrib(obj,numOfSquares,numOfBins)
+       function [obj, rho, PL, numOfCellsInSquare] =...
+               calcRhoDistrib(obj,numOfSquares)
        % PL is the prob to get a distribution in one squre, considering
        % all steps. we avg on all subsystems
        
        indIndata = obj.indIndata;
        N = obj.simulationParam.N;
        L = obj.simulationParam.L;
-       densities = zeros(1,numOfSquares*indIndata);
+       numOfCellsInSquare = zeros(1,numOfSquares*indIndata);
        
        for i = 1:indIndata
-           densities(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
-                rhoDistribution(obj.data.allCoords(1:2,1:N,i),...
+           numOfCellsInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
+                numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i),...
                 L,numOfSquares);
        end
        
-       [PL, rho] = hist(densities,numOfBins);
-       rhoNorm = rho / (N/L^2);
+       rho = min(numOfCellsInSquare):max(numOfCellsInSquare);
+       [PL, rho] = hist(numOfCellsInSquare,length(numOfCellsInSquare));
+       %rhoNorm = rho / (N/L^2);
            
        end
 
@@ -1501,7 +1506,7 @@ histo = 2*histo/(N-1);
 end
 
 
-function densities = rhoDistribution(coords,L,numOfSquares)
+function numOfCellsInSquare = numOfCellsDistribution(coords,L,numOfSquares)
 %% Find densities in a montecarlo step
 
 % Given coordinates of N particles in 2D box, we devide the box to numOfSquares
@@ -1544,8 +1549,10 @@ for i = (-L/2):squareSide:(L/2 - squareSide)
     end
 end
 
-densities = densities/squareArea;
+%densities = densities/squareArea;
 densities = reshape(densities,[1,m^2]);
+
+numOfCellsInSquare = densities;
 
 % Bin the results to a histogram
 %rho = linspace(min(densities),max(densities),numOfBins);
