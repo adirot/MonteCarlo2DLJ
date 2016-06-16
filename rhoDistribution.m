@@ -26,56 +26,67 @@ function [rho, PL] = rhoDistribution(coords,L,numOfSquares,numOfBins)
 % boxSide = 1;
 % coords(1,:) = boxSide*rand(1,N) - boxSide/2;
 % coords(2,:) = boxSide*rand(1,N) - boxSide/2;
-
+% 
 % % get the density distribution:
 % numOfSquares = 100;
 % [rho, PL] = rhoDistribution(coords,boxSide,numOfSquares,10)
-
+% 
 % % plot results
-
+% 
 % % plot particles and squares 
 % plot(coords(1,:),coords(2,:),'+');
 % xlim([-boxSide/2 boxSide/2]);
 % ylim([-boxSide/2 boxSide/2]);
 % hold on;
-% squareSide = sqrt(squareArea);
+% squareSide = (boxSide/sqrt(numOfSquares));
 % m = sqrt(numOfSquares);
 % for i = (-boxSide/2):squareSide:(boxSide/2 - squareSide)
 %     plot([i i],[-boxSide/2 boxSide/2],'r');
 %     plot([-boxSide/2 boxSide/2],[i i],'r');
 % end
-
+% 
 % % plot histogram
 % figure; plot(rho,PL);
+% 
 
-% Get the density in each square 
-
+% Parse input:
+[~, N] = size(coords); 
 m = sqrt(numOfSquares);
 if isinteger(m)
     error('The square root of numOfSquares must be an intiger');
 end
 
+
+% Get the density in each square  
 squareArea = L^2/numOfSquares;
 squareSide = sqrt(squareArea);
-densities = zeros(m-1,m-1);
+densities = zeros(m,m);
+indi = 0;
 
-for i = (-boxSide/2):squareSide:(boxSide/2 - squareSide)
-    for j = (-boxSide/2):squareSide:(boxSide/2 - squareSide)
-        densities(i,j) = countParticlesInSquare(i,j,coords(1,:),coords(2,:));
+for i = (-L/2):squareSide:(L/2 - squareSide)
+    indi = indi + 1;
+    indj = 0;
+    for j = (-L/2):squareSide:(L/2 - squareSide)
+        indj = indj + 1;
+        densities(indi,indj) =...
+            countParticlesInSquare(i,j,coords(1,:),coords(2,:),squareSide);
     end
 end
 
-densities = densities/squareArea;
+%densities = densities/squareArea;
+densities = reshape(densities,[1,m^2]);
 
 % Bin the results to a histogram
-hist(densities,numOfBins);
+%rho = linspace(min(densities),max(densities),numOfBins);
+[PL, rho] = hist(densities,numOfBins);
 
-
+% Normalize with the hompgeneus density
+%rho = rho / (N/L^2);
 
 %% Functions used in this code:
 
-    function N = countParticlesInSquare(i,j,x,y)
+    function N = countParticlesInSquare(i,j,x,y,squareSide)
     % Count the number of particles in square i,j
-        N = sum(and(and(y > j,y < j+1), and(x > i,x < i+1)));
+        N = sum(and(and(y > j,y < j+squareSide), and(x > i,x < i+squareSide)));
     end
 end
