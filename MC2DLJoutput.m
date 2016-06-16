@@ -776,116 +776,25 @@ classdef MC2DLJoutput
                
        end
 
-       function [obj, rhoNorm, PL] =...
-               calcRhoDistrib(obj,squares,numOfbins,varargin)
-       % try:PL is the prob to get a distribution in one squre, considering
-       % all steps. we avg on all subsys
-
-
-       % breaks the board to "squares" pieces, and finds the density in each piece.
-
-        % input:
-        % allCoords is a matrix of all coordinates in each step of a monte carlo
-        % simulation (a '2' x 'nuber of particles' x 'number of steps' matrix).
-        % N must have a natural root.
-        % L is the size of the board
-
-        % output:
-        % the results is a histogram of densities. rho is a 1 x bins matrix.
-        % rhoNorm in the x axis (the bins) of the histogram. Its the densities,
-        % normalized with the total desity on the board.
-        % PL is the probability of finding a block with some density (the y axis of
-        % the histogram.
-        % hist(j,i) is the number of particles in block i, in step j of the
-        % simulation (the histogram for the coordinates: allCoords(:,:,j)
-
-        % this function uses the function 'my_hist'. get it in this repository: 
-        % https://github.com/adirot/general-matlab-functions.git
-
-        p = inputParser();
-        addOptional(p, 'calcPL', true);
-        addOptional(p, 'startFrom', 1);
-        addOptional(p, 'save2data', false);
-        parse(p, varargin{:});
-        Results = p.Results;
-        calcPL = Results.calcPL;
-        startFrom = Results.startFrom;
-        save2data = Results.save2data;
-
-        if save2data
-            rhoDistribParam.squares = squares;
-            rhoDistribParam.startFrom = startFrom;
-            obj.data.rhoDistribParam = rhoDistribParam;  
-            obj.simulationParam.rhoDistribParam = rhoDistribParam;
-        end
-
-        [~,N,numberOfSteps] = size(obj.data.allCoords);
-        row = sqrt(squares);
-        L = obj.simulationParam.L;
-        inc = L/row;
-        boxSize = inc^2;
-        %hist = zeros(numberOfSteps,bins);
-        hist = zeros(squares,numOfbins);
-        allRho = zeros(numberOfSteps,squares);
-
-        for step = 1:numberOfSteps
-            n = 1;
-            for x = 1:row
-                for y = 1:row
-        %                 plot(allCoords(1,:,step),allCoords(2,:,step),'+');
-        %              hold on; xlim([-25 25]);ylim([-25 25]);
-                    % find the number of particles in the box
-                    inBoxX = and((obj.data.allCoords(1,:,step) < -L/2 ...
-                    + inc*x), ...
-                        (obj.data.allCoords(1,:,step) > -L/2 ...
-                    + inc*(x-1)));
-        %             plot([-L/2 + inc*x ,-L/2 + inc*x] ,[-25 25],'r');
-        %             plot([-L/2 + inc*(x-1), -L/2 + inc*(x-1)] ,[-25 25],'r');
-                    inBoxY = and((obj.data.allCoords(2,:,step) < -L/2 ...
-                    + inc*y) ,...
-                        (obj.data.allCoords(2,:,step) > -L/2 ...
-                        + inc*(y-1)));
-        %             plot( [-25 25], [-L/2 + inc*y ,-L/2 + inc*y],'r');
-        %             plot( [-25 25],[-L/2 + inc*(y-1), -L/2 + inc*(y-1)],'r');
-                    particlesInBox = sum(inBoxX.*inBoxY);
-
-                    allRho(step,n) = particlesInBox/boxSize;
-                    n = n + 1;
-                    %hold off;
-                end
-            end
-        end
-
-            % create a histogram from all distributions.
-            rho = linspace(0,max(max(allRho)),numOfbins);
-
-        %     for step = 1:numberOfSteps
-        %         hist(step,:) = my_hist(allRho(step,:),rho);
-        %     end
-
-            for n = 1:squares
-                hist(n,:)...
-                 = my_hist(allRho(startFrom:numberOfSteps,n)',rho);
-            end
-
-            rhoNorm = rho/(N/L^2);
-            if save2data
-                obj.data.rhoNorm = rhoNorm;
-            end
-
-            if calcPL
-                %PL = mean(hist)/sq^2;
-                PL = mean(hist/(numberOfSteps-startFrom+1));
-                if save2data
-                    obj.data.PL = PL;
-                end
-            else
-                PL = [];
-                if save2data
-                    obj.data.PL = [];
-                end
-            end
-
+       function [obj, rhoNorm, PL, densities] =...
+               calcRhoDistrib(obj,numOfSquares,numOfBins)
+       % PL is the prob to get a distribution in one squre, considering
+       % all steps. we avg on all subsystems
+       
+       indIndata = obj.indIndata;
+       N = obj.simulationParam.N;
+       L = obj.simulationParam.L;
+       densities = zeros(1,numOfSquares*indIndata);
+       
+       for i = 1:indIndata
+           densities(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
+                rhoDistribution(obj.data.allCoords(1:2,1:N,i),...
+                L,numOfSquares);
+       end
+       
+       [PL, rho] = hist(densities,numOfBins);
+       rhoNorm = rho / (N/L^2);
+           
        end
 
        
@@ -1356,41 +1265,54 @@ classdef MC2DLJoutput
 end
 
 
-        function [dist,particlesPosition] = ...
-            createInitialConfig(L,N,r,initialConfig)
+function [dist,particlesPosition] = ...
+    createInitialConfig(L,N,r,initialConfig)
 
-            possibleInitialConfigs = {'random','hex','auto'};
-            initialConfigInd = strcmp(initialConfig,possibleInitialConfigs);
-            % check if input is valid:
-            if sum(initialConfigInd) ~= 1
-                error(['choose one of the initial configurations: '...
-                    my_cell2str(possibleInitialConfigs)]);
-            else
-                switch find(initialConfigInd)
-                    case 1 % random initial configuration
-                        [dist,particlesPosition] = randomStart(L,N,r);
-                    case 2 % hexagonal initial configuration
-                        [dist,particlesPosition] = hcp(L,N,r);
-                    case 3 % choose automatically
-                        if N/L^2 > 0.4
-                            [dist,particlesPosition] = hcp(L,N,r);
-                        else
-                            [dist,particlesPosition] = randomStart(L,N,r);
-                        end
+    possibleInitialConfigs = {'random','hex','auto'};
+    initialConfigInd = strcmp(initialConfig,possibleInitialConfigs);
+    % check if input is valid:
+    if sum(initialConfigInd) ~= 1
+        error(['choose one of the initial configurations: '...
+            my_cell2str(possibleInitialConfigs)]);
+    else
+        switch find(initialConfigInd)
+            case 1 % random initial configuration
+                [dist,particlesPosition] = randomStart(L,N,r);
+            case 2 % hexagonal initial configuration
+                [dist,particlesPosition] = hcp(L,N,r);
+            case 3 % choose automatically
+                if N/L^2 > 0.4
+                    [dist,particlesPosition] = hcp(L,N,r);
+                else
+                    [dist,particlesPosition] = randomStart(L,N,r);
                 end
-            end
         end
+    end
+end
 
-        function [dist,particlesPosition] = randomStart(L,N,r)
-                % randomize first particle possition in the box 
-                % [-L/2,L/2] x [-L/2,L/2]
-                particlesPosition(1,1) = L*rand - (L/2);
-                particlesPosition(2,1) = L*rand - (L/2);
-                dist = zeros(N);
+function [dist,particlesPosition] = randomStart(L,N,r)
+        % randomize first particle possition in the box 
+        % [-L/2,L/2] x [-L/2,L/2]
+        particlesPosition(1,1) = L*rand - (L/2);
+        particlesPosition(2,1) = L*rand - (L/2);
+        dist = zeros(N);
 
-                for j = 2:N
-                    
-                      % choose random possition
+        for j = 2:N
+
+              % choose random possition
+              particlesPosition(1,j) = L*rand - (L/2);
+              particlesPosition(2,j) = L*rand - (L/2);
+
+              % calculate PBC distances
+              xj = particlesPosition(1,j);
+              yj = particlesPosition(2,j);
+              dist(j,1:j) = distPBC(xj,yj,particlesPosition,L);
+
+              % check for piriodic boundary condition overlaps,
+              % randomize new possition if overlaps are found.
+              overlapPBC = sum(dist(j,1:(j-1)) < 2*r) > 0;
+              countTry = 0;
+              while overlapPBC
                       particlesPosition(1,j) = L*rand - (L/2);
                       particlesPosition(2,j) = L*rand - (L/2);
 
@@ -1399,197 +1321,243 @@ end
                       yj = particlesPosition(2,j);
                       dist(j,1:j) = distPBC(xj,yj,particlesPosition,L);
 
-                      % check for piriodic boundary condition overlaps,
-                      % randomize new possition if overlaps are found.
                       overlapPBC = sum(dist(j,1:(j-1)) < 2*r) > 0;
-                      countTry = 0;
-                      while overlapPBC
-                              particlesPosition(1,j) = L*rand - (L/2);
-                              particlesPosition(2,j) = L*rand - (L/2);
-
-                              % calculate PBC distances
-                              xj = particlesPosition(1,j);
-                              yj = particlesPosition(2,j);
-                              dist(j,1:j) = distPBC(xj,yj,particlesPosition,L);
-
-                              overlapPBC = sum(dist(j,1:(j-1)) < 2*r) > 0;
-                              countTry = countTry + 1;
-                              if countTry > 1000
-                                  error(['it is difficult to generate a'...
-                                      'random distribution with a density '...
-                                      'of ' num2str(N/L^2) '. try a lower '...
-                                      'density, or a hexagonal initial'...
-                                      ' configuration.']);
-                              end
+                      countTry = countTry + 1;
+                      if countTry > 1000
+                          error(['it is difficult to generate a'...
+                              'random distribution with a density '...
+                              'of ' num2str(N/L^2) '. try a lower '...
+                              'density, or a hexagonal initial'...
+                              ' configuration.']);
                       end
-
-                end
-
-        end
-   
-        function [dist,particlesPosition] = hcp(L,N,r)
-    
-                % Make sure N is a perfect square
-                intRoot = floor(sqrt(N));
-                if (sqrt(N) - intRoot) > 1e-7
-                    % Display an error message
-                    disp('Number of particles should be a perfect square');
-                    particlesPosition = [];
-                    return
-                end
-
-                % Calculate the seperation length between particles centers
-                sepDist = L/sqrt(N);
-                
-                % Make sure the density is not too high
-                if sepDist < 2*r
-                    % Display an error message
-                    disp('density is too high');
-                    particlesPosition = [];
-                    return
-                end
-
-                % Find the box size
-                Lx = sepDist * sqrt(N);
-
-                % Create a vector of linearly spaced points along the
-                % x-direction
-                xPos = linspace(sepDist/2, Lx-sepDist/2, sqrt(N));
-                % And find the corresponsing y-direction increments
-                yPos = xPos;
-
-                % Create a matrix with all combinations of x and y
-                [X,Y] = meshgrid(xPos,yPos);
-                % Shift coordinates to the be at the center of each
-                % particle
-                X(1:2:end,:) = X(1:2:end,:) + sepDist/2;
-
-                % Reshape the matrix to be 1D in X and 1D in Y
-                % (numel returns the number of elements in a given array)
-                particlesPosition =...
-                    [reshape(X,1,numel(X));reshape(Y,1,numel(Y))];
-                
-                % make the board in: [-L/2 L/2]x[-L/2 L/2]
-                particlesPosition = particlesPosition - L/2;
-                
-                        % calculate all pair distances
-                dist = zeros(N);
-                for par = 1:N
-
-                    x = particlesPosition(1,par);
-                    y = particlesPosition(2,par);
-                    dist((par+1):N,par) = ...
-                        distPBC(x,y,particlesPosition(:,(par+1):N),L);
-                end
-                
-            
-        end
-        
-        function d = reshapeDist(allDists)
-                    % make d a row vector
-                    d = reshape(allDists,1,[]);
-                    % ignore zeros
-                    d = nonzeros(d); 
-        end
-
-        function meanProp = my_mean(prop)
-            % input: some property of the simulation in all steps.
-            % output: meanProp(i) is the mean of all the values of property on
-            % steps 1 to i.
-
-                lenProp = length(prop);
-                meanProp = zeros(1,lenProp); 
-                meanProp(1) = prop(1);
-                for i = 2:lenProp
-                    meanProp(i) = meanProp(i-1) + prop(i);
-                end
-                one2len = 1:lenProp;
-                meanProp = meanProp./one2len;
-        end  
-        
-        function dist = calcDists(particlesPosition,L)
-            % calculate distance matrix from coordinates
-                [~,N] = size(particlesPosition);
-                dist = zeros(N);
-
-                for j = 2:N
-                    
-                      % calculate PBC distances
-                      xj = particlesPosition(1,j);
-                      yj = particlesPosition(2,j);
-                      dist(j,1:(j-1)) =...
-                          distPBC(xj,yj,particlesPosition(:,1:(j-1)),L);
-
-                end
+              end
 
         end
-        
-        function [bins, histo] =...
-            calculateRDF(dists,N,rho,numOfBins,maxDist)
-        %% calculate 2D radial distribution function, with pediodic boundary
-        %% conditions.
 
-        %         input:
-        %         ~~~~~~
+end
 
-        %         NumOfBins - number of bins in the histogram
-        %
-        %         output:
-        %         ~~~~~~~
-        %         obj.data.bins - x axis of the RDF histogram
-        %         obj.data.histo - each colmun is the RDF axis of a diffrent step in the
-        %         monte carlo simulation. (so to plot the RDF for the 10'th step we
-        %         need to write: plot(bins,histo(:,10));
+function [dist,particlesPosition] = hcp(L,N,r)
 
-        %       method:
-        %       ~~~~~~~
-        %       the RDF is calculated by binnig all pair partical distances into 
-        %       a histogram, and normalizing each bin with it's Ideal gas number of
-        %       particals. 
-        %       when binning the pair distances, we take into acount Periodic
-        %       Boudary Conditions (PBC)
-        %       finaly, to ansure that when r->infinity : RDF ->1 , we
-        %       normalize by multiplying RDF*2/(N-1) where N is the number of
-        %       particals. 
-        %       for more information
-        %   http://www2.msm.ctw.utwente.nl/sluding/TEACHING/APiE_Script_v2011.pdf
-        %       page 48 - "Radial distribution function"
+        % Make sure N is a perfect square
+        intRoot = floor(sqrt(N));
+        if (sqrt(N) - intRoot) > 1e-7
+            % Display an error message
+            disp('Number of particles should be a perfect square');
+            particlesPosition = [];
+            return
+        end
 
-     
-        bins = linspace(0,maxDist,numOfBins);  
-      
-        d = reshape(dists,1,[]);
-        d = nonzeros(d);
-        d = d(d < maxDist);
+        % Calculate the seperation length between particles centers
+        sepDist = L/sqrt(N);
 
-        histo = hist(d,bins);
-        increment = bins(2) - bins(1);
+        % Make sure the density is not too high
+        if sepDist < 2*r
+            % Display an error message
+            disp('density is too high');
+            particlesPosition = [];
+            return
+        end
 
-        % each bin should be normalized according to its volume
-        for bin = 1:numOfBins
+        % Find the box size
+        Lx = sepDist * sqrt(N);
 
-                % histo(bin) is the number of particles in some layer of area 
-                % 2pi*rVal*dr, a distance rVal from the central cell
-                rVal = bins(bin);
-                next_rVal = increment + rVal;
+        % Create a vector of linearly spaced points along the
+        % x-direction
+        xPos = linspace(sepDist/2, Lx-sepDist/2, sqrt(N));
+        % And find the corresponsing y-direction increments
+        yPos = xPos;
 
-                % Calculate the area of the bin (a ring of radii r,
-                % r+dr)
-                ereaBin = pi*next_rVal^2 - pi*rVal^2;
+        % Create a matrix with all combinations of x and y
+        [X,Y] = meshgrid(xPos,yPos);
+        % Shift coordinates to the be at the center of each
+        % particle
+        X(1:2:end,:) = X(1:2:end,:) + sepDist/2;
 
-                % Calculate the number of particles expected in this bin in
-                % the ideal case
-                nIdeal = ereaBin*rho;
+        % Reshape the matrix to be 1D in X and 1D in Y
+        % (numel returns the number of elements in a given array)
+        particlesPosition =...
+            [reshape(X,1,numel(X));reshape(Y,1,numel(Y))];
 
-                % Normalize the bin
-                histo(bin) =...
-                    histo(bin) / nIdeal;
+        % make the board in: [-L/2 L/2]x[-L/2 L/2]
+        particlesPosition = particlesPosition - L/2;
+
+                % calculate all pair distances
+        dist = zeros(N);
+        for par = 1:N
+
+            x = particlesPosition(1,par);
+            y = particlesPosition(2,par);
+            dist((par+1):N,par) = ...
+                distPBC(x,y,particlesPosition(:,(par+1):N),L);
+        end
+
+
+end
+
+function d = reshapeDist(allDists)
+            % make d a row vector
+            d = reshape(allDists,1,[]);
+            % ignore zeros
+            d = nonzeros(d); 
+end
+
+function meanProp = my_mean(prop)
+    % input: some property of the simulation in all steps.
+    % output: meanProp(i) is the mean of all the values of property on
+    % steps 1 to i.
+
+        lenProp = length(prop);
+        meanProp = zeros(1,lenProp); 
+        meanProp(1) = prop(1);
+        for i = 2:lenProp
+            meanProp(i) = meanProp(i-1) + prop(i);
+        end
+        one2len = 1:lenProp;
+        meanProp = meanProp./one2len;
+end  
+
+function dist = calcDists(particlesPosition,L)
+    % calculate distance matrix from coordinates
+        [~,N] = size(particlesPosition);
+        dist = zeros(N);
+
+        for j = 2:N
+
+              % calculate PBC distances
+              xj = particlesPosition(1,j);
+              yj = particlesPosition(2,j);
+              dist(j,1:(j-1)) =...
+                  distPBC(xj,yj,particlesPosition(:,1:(j-1)),L);
 
         end
-        histo = 2*histo/(N-1);
-                
 
-        end
-    
-     
+end
+
+function [bins, histo] =...
+    calculateRDF(dists,N,rho,numOfBins,maxDist)
+%% calculate 2D radial distribution function, with pediodic boundary
+%% conditions.
+
+%         input:
+%         ~~~~~~
+
+%         NumOfBins - number of bins in the histogram
+%
+%         output:
+%         ~~~~~~~
+%         obj.data.bins - x axis of the RDF histogram
+%         obj.data.histo - each colmun is the RDF axis of a diffrent step in the
+%         monte carlo simulation. (so to plot the RDF for the 10'th step we
+%         need to write: plot(bins,histo(:,10));
+
+%       method:
+%       ~~~~~~~
+%       the RDF is calculated by binnig all pair partical distances into 
+%       a histogram, and normalizing each bin with it's Ideal gas number of
+%       particals. 
+%       when binning the pair distances, we take into acount Periodic
+%       Boudary Conditions (PBC)
+%       finaly, to ansure that when r->infinity : RDF ->1 , we
+%       normalize by multiplying RDF*2/(N-1) where N is the number of
+%       particals. 
+%       for more information
+%   http://www2.msm.ctw.utwente.nl/sluding/TEACHING/APiE_Script_v2011.pdf
+%       page 48 - "Radial distribution function"
+
+
+bins = linspace(0,maxDist,numOfBins);  
+
+d = reshape(dists,1,[]);
+d = nonzeros(d);
+d = d(d < maxDist);
+
+histo = hist(d,bins);
+increment = bins(2) - bins(1);
+
+% each bin should be normalized according to its volume
+for bin = 1:numOfBins
+
+        % histo(bin) is the number of particles in some layer of area 
+        % 2pi*rVal*dr, a distance rVal from the central cell
+        rVal = bins(bin);
+        next_rVal = increment + rVal;
+
+        % Calculate the area of the bin (a ring of radii r,
+        % r+dr)
+        ereaBin = pi*next_rVal^2 - pi*rVal^2;
+
+        % Calculate the number of particles expected in this bin in
+        % the ideal case
+        nIdeal = ereaBin*rho;
+
+        % Normalize the bin
+        histo(bin) =...
+            histo(bin) / nIdeal;
+
+end
+histo = 2*histo/(N-1);
+
+
+end
+
+
+function densities = rhoDistribution(coords,L,numOfSquares)
+%% Find densities in a montecarlo step
+
+% Given coordinates of N particles in 2D box, we devide the box to numOfSquares
+% squares and build a histogram from the densities in each square.
+
+% Input:
+% ~~~~~
+% coords       : Coordinates in 2D, 2 by N matrix. the center of the box
+%                must be at (0,0);
+% L            : Size of box side.
+% numOfSquares : Number of squares we devide the board into. the root of
+%                this number must be real
+% numOfBins    : Number of bins in the histogram
+
+% Output:
+% ~~~~~
+% densities    : all densities of the squares 
+
+% Parse input:
+[~, N] = size(coords); 
+m = sqrt(numOfSquares);
+if isinteger(m)
+    error('The square root of numOfSquares must be an intiger');
+end
+
+
+% Get the density in each square  
+squareArea = L^2/numOfSquares;
+squareSide = sqrt(squareArea);
+densities = zeros(m,m);
+indi = 0;
+
+for i = (-L/2):squareSide:(L/2 - squareSide)
+    indi = indi + 1;
+    indj = 0;
+    for j = (-L/2):squareSide:(L/2 - squareSide)
+        indj = indj + 1;
+        densities(indi,indj) =...
+            countParticlesInSquare(i,j,coords(1,:),coords(2,:),squareSide);
+    end
+end
+
+densities = densities/squareArea;
+densities = reshape(densities,[1,m^2]);
+
+% Bin the results to a histogram
+%rho = linspace(min(densities),max(densities),numOfBins);
+%[PL, rho] = hist(densities,numOfBins);
+
+% Normalize with the hompgeneus density
+%rho = rho / (N/L^2);
+
+
+function N = countParticlesInSquare(i,j,x,y,squareSide)
+% Count the number of particles in square i,j
+    N = sum(and(and(y > j,y < j+squareSide), and(x > i,x < i+squareSide)));
+end
+end  
         
