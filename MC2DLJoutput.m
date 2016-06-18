@@ -806,11 +806,20 @@ classdef MC2DLJoutput
        function showStep(obj,step)
            
           if isnumeric(step)
-                  ind = find(obj.data.sweepInd == step);
-          
+                  try
+                      ind = find(obj.data.sweepInd == step);
+                  catch
+                      ind = find(obj.data.stepInd == step);
+                  end
+            
                   if isempty(ind) %find the closest index saved
-                      [~,ind] = min(abs(obj.data.sweepInd - step));
-                      step = obj.data.sweepInd(1,ind);
+                      try
+                          [~,ind] = min(abs(obj.data.sweepInd - step));
+                          step = obj.data.sweepInd(1,ind);
+                      catch
+                          [~,ind] = min(abs(obj.data.stepInd - step));
+                          step = obj.data.stepInd(1,ind);
+                      end
                   end
           else
               
@@ -821,10 +830,18 @@ classdef MC2DLJoutput
                   case 'mid'
                      
                       ind = ceil(obj.indIndata/2);
-                      step = obj.data.sweepInd(1,ind);
+                      try
+                          step = obj.data.sweepInd(1,ind);
+                      catch
+                          step = obj.data.stepInd(1,ind);
+                      end
                   case 'last'
                       ind  = obj.indIndata;
-                      step = obj.data.sweepInd(1,ind);
+                      try
+                          step = obj.data.sweepInd(1,ind);
+                      catch
+                          step = obj.data.stepInd(1,ind);
+                      end
               end
               
           end 
@@ -1263,6 +1280,216 @@ classdef MC2DLJoutput
                
        end
        
+       function [obj, varUfromRDF] =...
+               getVarUfromRDF(obj, varargin)
+       % Integrate over the RDF to get the energy in each step, than get
+       % the std of the energy
+       
+            p = inputParser();
+            addOptional(p, 'plotFig', false);
+            addOptional(p, 'freen', false);
+            addOptional(p, 'freeTandn', false);
+            addOptional(p, 'freeTnbound', false);
+            addOptional(p, 'freeTnset', false);
+            addOptional(p, 'nset', []);
+            parse(p, varargin{:});
+            Results = p.Results;
+            plotFig = Results.plotFig;
+            freen = Results.freen;
+            freeTandn = Results.freeTandn;
+            freeTnbound = Results.freeTnbound;
+            freeTnset = Results.freeTnset;
+            nset = Results.nset; 
+            
+            [obj, UfromRDF] = getUfromRDF(obj, 'plotFig'...
+                ,plotFig,'freen',freen,'freeTandn',freeTandn,...
+                'freeTnbound',freeTnbound,'freeTnset',freeTnset,...
+                'nset',nset);
+            
+            % Get U for every step
+            [~ , numOfRDFbins] = size(obj.data.RDFhisto);
+            inc = obj.data.RDFbins(1,2) - obj.data.RDFbins(1,1); 
+            obj.data.UfromRDFinStep = zeros(1,obj.indIndata);
+            x = obj.data.RDFbins;
+            rho = obj.simulationParam.rho;
+            for ii = 1:obj.indIndata
+                obj.data.UfromRDFinStep(1,ii) =...
+                    rho*pi*sum(UfromRDF.*obj.data.RDFhisto(ii,1:numOfRDFbins).*x*inc);
+            end
+            
+            varUfromRDF = var(obj.data.UfromRDFinStep);
+       end
+       
+       function [obj, UfromRDF] = getUfromRDF(obj, varargin)
+       % Get the pair potantial fron the RDF
+       
+        p = inputParser();
+        addOptional(p, 'plotFig', false);
+        addOptional(p, 'freen', false);
+        addOptional(p, 'freeTandn', false);
+        addOptional(p, 'freeTnbound', false);
+        addOptional(p, 'freeTnset', false);
+        addOptional(p, 'nset', []);
+        parse(p, varargin{:});
+        Results = p.Results;
+        plotFig = Results.plotFig;
+        freen = Results.freen;
+        freeTandn = Results.freeTandn;
+        freeTnbound = Results.freeTnbound;
+        freeTnset = Results.freeTnset;
+        nset = Results.nset; 
+        
+        % Check if we need to calculate a fit for the RDF
+        fitDone = false;
+        if freen
+            if existInMatfile(obj.fileName,'fitObjlogRDFfreen')
+                fitDone = true;
+            end
+        else
+            if freeTandn
+                if existInMatfile(obj.fileName,'fitObjlogRDFfreeTandn')
+                    fitDone = true;
+                end
+            else
+                if freeTnbound
+                    if existInMatfile(obj.fileName,...
+                            'fitObjlogRDFfreeTnbound')
+                        fitDone = true;
+                    end
+                else
+                    if freeTnset
+                        if existInMatfile(obj.fileName,...
+                                'fitObjlogRDFfreeTnset')
+                            fitDone = true;
+                        end
+                    end
+                end
+            end
+        end
+        
+        
+        if ~fitDone
+            [obj, fitresult, mfit, mError, nfit, nError,...
+                Tfit, TError, gof] = pairUfromRDF(obj, 'plotFig'...
+                ,plotFig,'freen',freen,'freeTandn',freeTandn,...
+                'freeTnbound',freeTnbound,'freeTnset',freeTnset,...
+                'nset',nset);
+        end
+        
+        % Find U from the fit results
+        UfromRDF = zeros(1, obj.indIndata);
+        x = obj.data.RDFbins;
+        T = obj.simulationParam.T;
+        if freen
+            fitObjlogRDFfreen = obj.data.fitObjlogRDFfreen;
+            nfit = fitObjlogRDFfreen.nfit;
+            mfit = fitObjlogRDFfreen.mfit;
+            UfromRDF = 4*T*((x.^-nfit) - (x.^-mfit));
+            obj.data.UfromRDFnfree = UfromRDF;
+        else
+            if freeTandn
+                fitObjlogRDFfreeTandn = obj.data.fitObjlogRDFfreeTandn;
+                nfit = fitObjlogRDFfreeTandn.nfit;
+                mfit = fitObjlogRDFfreeTandn.mfit;
+                Tfit = fitObjlogRDFfreeTandn.Tfit;
+                UfromRDF = 4*Tfit*((x.^-nfit) - (x.^-mfit));
+                obj.data.UfromRDFfreeTandn = UfromRDF;
+            else
+                if freeTnbound
+                    fitObjlogRDFfreeTnbound =...
+                        obj.data.fitObjlogRDFfreeTnbound;
+                    nfit = fitObjlogRDFfreeTnbound.nfit;
+                    mfit = fitObjlogRDFfreeTnbound.mfit;
+                    Tfit = fitObjlogRDFfreeTnbound.Tfit;
+                    UfromRDF = 4*Tfit*((x.^-nfit) - (x.^-mfit));
+                    obj.data.UfromRDFfreeTnbound = UfromRDF;
+                else
+                    if freeTnset
+                        fitObjlogRDFfreeTnset =...
+                            obj.data.fitObjlogRDFfreeTnset;
+                    
+                        mfit = fitObjlogRDFfreeTnset.mfit;
+                        Tfit = fitObjlogRDFfreeTnset.Tfit;
+                        UfromRDF = 4*Tfit*((x.^-nset) - (x.^-mfit));
+                        obj.data.UfromRDFfreeTnset = UfromRDF;
+                    end
+                end
+            end
+        end
+        
+        
+           
+       end
+       
+       function [obj, fitresult, mfit, mError, nfit, nError,...
+               Tfit, TError, gof] = pairUfromRDF(obj, varargin)
+       % Fit -log(RDF) to the function funForFit
+       
+        p = inputParser();
+        addOptional(p, 'plotFig', false);
+        addOptional(p, 'freen', false);
+        addOptional(p, 'freeTandn', false);
+        addOptional(p, 'freeTnbound', false);
+        addOptional(p, 'freeTnset', false);
+        addOptional(p, 'nset', []);
+        addOptional(p, 'numOfBinsRDF', 300);
+        addOptional(p, 'rCutoffRDF', 10);
+        parse(p, varargin{:});
+        Results = p.Results;
+        plotFig = Results.plotFig;
+        freen = Results.freen;
+        freeTandn = Results.freeTandn;
+        freeTnbound = Results.freeTnbound;
+        freeTnset = Results.freeTnset;
+        nset = Results.nset; 
+        numOfBinsRDF = Results.numOfBinsRDF;
+        rCutoffRDF = Results.rCutoffRDF;
+        
+        
+        try
+            x = obj.data.RDFbins;
+        catch
+            obj = obj.calcRDF(rCutoffRDF, numOfBinsRDF);
+            x = obj.data.RDFbins;
+        end
+        
+        steps{1,1} = ['steps: ' num2str(obj.indIndata)]; 
+        
+       [fitresult, mfit, mError, nfit, nError, Tfit, TError, gof] =...
+            createFitRDF(x, -log(mean(obj.data.RDFhisto)),...
+            obj.simulationParam.T, obj.simulationParam.rho,...
+            obj.simulationParam.m , steps, 'plotFig',plotFig,...
+            'freen',freen,'freeTandn',freeTandn,...
+            'freeTnbound',freeTnbound,'freeTnset',freeTnset,'nset',nset);
+        
+        fitObj.fitresult = fitresult;
+        fitObj.mfit = mfit;
+        fitObj.mError = mError;
+        fitObj.nfit = nfit;
+        fitObj.nError = nError;
+        fitObj.Tfit = Tfit;
+        fitObj.TError = TError;
+        fitObj.gof = gof;
+        
+        % Save fit to data
+        if freen
+            obj.data.fitObjlogRDFfreen = fitObj;
+        else
+            if freeTandn
+                obj.data.fitObjlogRDFfreeTandn = fitObj;
+            else
+                if freeTnbound
+                    obj.data.fitObjlogRDFfreeTnbound = fitObj;
+                else
+                    if freeTnset
+                        obj.data.fitObjlogRDFfreeTnset = fitObj;
+                    end
+                end
+            end
+        end
+        
+        
+       end
        
         
     end    
