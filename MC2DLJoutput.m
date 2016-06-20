@@ -695,6 +695,7 @@ classdef MC2DLJoutput
            addOptional(p, 'add2savedFigName', '');
            addOptional(p, 'keepFigOpen', false);
            addOptional(p, 'firstSteps2ignore', 0);
+           addOptional(p, 'peackLoc', 39);
            parse(p, varargin{:});
            Results = p.Results;
            plotFig = Results.plotFig;
@@ -702,6 +703,7 @@ classdef MC2DLJoutput
            add2savedFigName = Results.add2savedFigName;
            keepFigOpen = Results.keepFigOpen;
            firstSteps2ignore = Results.firstSteps2ignore;
+           peackLoc = Results.peackLoc;
            
            % check if RDF was calculated allready
            if ~existInMatfile(obj.data,'RDFhisto')
@@ -719,7 +721,7 @@ classdef MC2DLJoutput
            
            % find peaks
 %            [obj, locs] = obj.findRDFpeaks();
-            locs = 30;
+            locs = peackLoc;
             peaks = zeros(length(locs),Nsteps-minInd+1);
             steps = zeros(length(locs),Nsteps-minInd+1);
             
