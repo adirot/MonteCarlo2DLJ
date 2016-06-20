@@ -748,7 +748,7 @@ classdef MC2DLJoutput
                
                for j = 1:length(locs)
                    leg{1,j} = ['peak distance '...
-                       num2str(obj.RDFbins(locs(j)))]; 
+                       num2str(obj.RDFbins(1,locs(j)))]; 
                end
                
                colorPlot(steps,varPeaks,'addLegend',leg);
@@ -1076,13 +1076,15 @@ classdef MC2DLJoutput
            addOptional(p,'startFromStep',0);
            addOptional(p, 'plotVarVsStep', true);
            addOptional(p, 'plotVarVarVsStep', true);
-           addOptional(p, 'saveFig', true);           
+           addOptional(p, 'saveFig', true);
+           addOptional(p, 'add2savedFigName', '');
            addOptional(p, 'keepFigOpen', false);
            parse(p, varargin{:});
            Results = p.Results;
            plotVarVsStep = Results.plotVarVsStep;
            plotVarVarVsStep = Results.plotVarVarVsStep;
            saveFig = Results.saveFig;
+           add2savedFigName = Rsults.add2savedFigName;
            keepFigOpen = Results.keepFigOpen;
            startFromStep = Results.startFromStep;
            
@@ -1127,8 +1129,8 @@ classdef MC2DLJoutput
                name = ['varUPvsSteps_T' my_num2str(obj.simulationParam.T)...
                    'N' my_num2str(obj.simulationParam.N) 'rho'...
                    my_num2str(obj.simulationParam.rho)];
-               saveas(gcf,[name '.fig']);
-               saveas(gcf,[name '.jpg']);
+               saveas(gcf,[name add2savedFigName '.fig']);
+               saveas(gcf,[name add2savedFigName '.jpg']);
            end
            
            if plotVarVarVsStep
@@ -1151,8 +1153,8 @@ classdef MC2DLJoutput
                name = ['varVarUPvsSteps_T' my_num2str(obj.simulationParam.T)...
                    'N' my_num2str(obj.simulationParam.N) 'rho'...
                    my_num2str(obj.simulationParam.rho)];
-               saveas(gcf,[name '.fig']);
-               saveas(gcf,[name '.jpg']);
+               saveas(gcf,[name add2savedFigName '.fig']);
+               saveas(gcf,[name add2savedFigName '.jpg']);
            end
            
            if ~keepFigOpen
