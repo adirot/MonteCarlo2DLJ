@@ -1380,7 +1380,7 @@ classdef MC2DLJoutput
        end
        
        function [obj, UfromRDF] = getUfromRDF(obj, varargin)
-       % Get the pair potantial fron the RDF
+       % Get the pair potantial from the RDF
        
         p = inputParser();
         addOptional(p, 'plotFig', false);
@@ -1389,6 +1389,7 @@ classdef MC2DLJoutput
         addOptional(p, 'freeTnbound', false);
         addOptional(p, 'freeTnset', false);
         addOptional(p, 'nset', []);
+        addOptional(p, 'use_m_n_T', []);
         parse(p, varargin{:});
         Results = p.Results;
         plotFig = Results.plotFig;
@@ -1397,35 +1398,41 @@ classdef MC2DLJoutput
         freeTnbound = Results.freeTnbound;
         freeTnset = Results.freeTnset;
         nset = Results.nset; 
+        use_m_n_T = Results.use_m_n_T;
         
         % Check if we need to calculate a fit for the RDF
         fitDone = false;
-        if freen
-            if existInMatfile(obj.fileName,'fitObjlogRDFfreen')
-                fitDone = true;
-            end
+        if use_m_n_T
+            minput = use_m_n_T(1);
+            ninput = use_m_n_T(2);
+            Tinput = use_m_n_T(3);
         else
-            if freeTandn
-                if existInMatfile(obj.fileName,'fitObjlogRDFfreeTandn')
+            if freen
+                if existInMatfile(obj.fileName,'fitObjlogRDFfreen')
                     fitDone = true;
                 end
             else
-                if freeTnbound
-                    if existInMatfile(obj.fileName,...
-                            'fitObjlogRDFfreeTnbound')
+                if freeTandn
+                    if existInMatfile(obj.fileName,'fitObjlogRDFfreeTandn')
                         fitDone = true;
                     end
                 else
-                    if freeTnset
+                    if freeTnbound
                         if existInMatfile(obj.fileName,...
-                                'fitObjlogRDFfreeTnset')
+                                'fitObjlogRDFfreeTnbound')
                             fitDone = true;
+                        end
+                    else
+                        if freeTnset
+                            if existInMatfile(obj.fileName,...
+                                    'fitObjlogRDFfreeTnset')
+                                fitDone = true;
+                            end
                         end
                     end
                 end
             end
         end
-        
         
         if ~fitDone
             [obj, fitresult, mfit, mError, nfit, nError,...
@@ -1439,43 +1446,47 @@ classdef MC2DLJoutput
         UfromRDF = zeros(1, obj.indIndata);
         x = obj.data.RDFbins;
         T = obj.simulationParam.T;
-        if freen
-            fitObjlogRDFfreen = obj.data.fitObjlogRDFfreen;
-            nfit = fitObjlogRDFfreen.nfit;
-            mfit = fitObjlogRDFfreen.mfit;
-            UfromRDF = 4*T*((x.^-nfit) - (x.^-mfit));
-            obj.data.UfromRDFnfree = UfromRDF;
+        if use_m_n_T
+            UfromRDF = 4*Tinput*((x.^-ninput) - (x.^-minput));
+            obj.data.UfromRDFnfree = UfromRDF;            
         else
-            if freeTandn
-                fitObjlogRDFfreeTandn = obj.data.fitObjlogRDFfreeTandn;
-                nfit = fitObjlogRDFfreeTandn.nfit;
-                mfit = fitObjlogRDFfreeTandn.mfit;
-                Tfit = fitObjlogRDFfreeTandn.Tfit;
-                UfromRDF = 4*Tfit*((x.^-nfit) - (x.^-mfit));
-                obj.data.UfromRDFfreeTandn = UfromRDF;
+            if freen
+                fitObjlogRDFfreen = obj.data.fitObjlogRDFfreen;
+                nfit = fitObjlogRDFfreen.nfit;
+                mfit = fitObjlogRDFfreen.mfit;
+                UfromRDF = 4*T*((x.^-nfit) - (x.^-mfit));
+                obj.data.UfromRDFnfree = UfromRDF;
             else
-                if freeTnbound
-                    fitObjlogRDFfreeTnbound =...
-                        obj.data.fitObjlogRDFfreeTnbound;
-                    nfit = fitObjlogRDFfreeTnbound.nfit;
-                    mfit = fitObjlogRDFfreeTnbound.mfit;
-                    Tfit = fitObjlogRDFfreeTnbound.Tfit;
+                if freeTandn
+                    fitObjlogRDFfreeTandn = obj.data.fitObjlogRDFfreeTandn;
+                    nfit = fitObjlogRDFfreeTandn.nfit;
+                    mfit = fitObjlogRDFfreeTandn.mfit;
+                    Tfit = fitObjlogRDFfreeTandn.Tfit;
                     UfromRDF = 4*Tfit*((x.^-nfit) - (x.^-mfit));
-                    obj.data.UfromRDFfreeTnbound = UfromRDF;
+                    obj.data.UfromRDFfreeTandn = UfromRDF;
                 else
-                    if freeTnset
-                        fitObjlogRDFfreeTnset =...
-                            obj.data.fitObjlogRDFfreeTnset;
-                    
-                        mfit = fitObjlogRDFfreeTnset.mfit;
-                        Tfit = fitObjlogRDFfreeTnset.Tfit;
-                        UfromRDF = 4*Tfit*((x.^-nset) - (x.^-mfit));
-                        obj.data.UfromRDFfreeTnset = UfromRDF;
+                    if freeTnbound
+                        fitObjlogRDFfreeTnbound =...
+                            obj.data.fitObjlogRDFfreeTnbound;
+                        nfit = fitObjlogRDFfreeTnbound.nfit;
+                        mfit = fitObjlogRDFfreeTnbound.mfit;
+                        Tfit = fitObjlogRDFfreeTnbound.Tfit;
+                        UfromRDF = 4*Tfit*((x.^-nfit) - (x.^-mfit));
+                        obj.data.UfromRDFfreeTnbound = UfromRDF;
+                    else
+                        if freeTnset
+                            fitObjlogRDFfreeTnset =...
+                                obj.data.fitObjlogRDFfreeTnset;
+
+                            mfit = fitObjlogRDFfreeTnset.mfit;
+                            Tfit = fitObjlogRDFfreeTnset.Tfit;
+                            UfromRDF = 4*Tfit*((x.^-nset) - (x.^-mfit));
+                            obj.data.UfromRDFfreeTnset = UfromRDF;
+                        end
                     end
                 end
             end
         end
-        
         
            
        end
