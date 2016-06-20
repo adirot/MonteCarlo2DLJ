@@ -1373,7 +1373,7 @@ classdef MC2DLJoutput
             rho = obj.simulationParam.rho;
             for ii = 1:obj.indIndata
                 obj.data.UfromRDFinStep(1,ii) =...
-                    rho*pi*sum(UfromRDF.*obj.data.RDFhisto(ii,1:numOfRDFbins).*x*inc);
+                    rho*pi*sum(UfromRDF(2:numOfRDFbins).*obj.data.RDFhisto(ii,2:numOfRDFbins).*x(2:numOfRDFbins)*inc);
             end
             
             varUfromRDF = var(obj.data.UfromRDFinStep);
