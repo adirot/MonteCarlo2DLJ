@@ -748,7 +748,7 @@ classdef MC2DLJoutput
                
                for j = 1:length(locs)
                    leg{1,j} = ['peak distance '...
-                       num2str(obj.RDFbins(1,locs(j)))]; 
+                       num2str(obj.data.RDFbins(1, locs(j)))]; 
                end
                
                colorPlot(steps,varPeaks,'addLegend',leg);
@@ -1084,7 +1084,7 @@ classdef MC2DLJoutput
            plotVarVsStep = Results.plotVarVsStep;
            plotVarVarVsStep = Results.plotVarVarVsStep;
            saveFig = Results.saveFig;
-           add2savedFigName = Rsults.add2savedFigName;
+           add2savedFigName = Results.add2savedFigName;
            keepFigOpen = Results.keepFigOpen;
            startFromStep = Results.startFromStep;
            
@@ -1271,18 +1271,71 @@ classdef MC2DLJoutput
        function objCopy = copyOutputFile(obj, copyNum)
            % copy MC output flie. adds the string 'copy' and the number
            % copyNum to the file name of the copied object.
+                      
+           N = obj.simulationParam.N;
+           indIndata = obj.indIndata;
            
-           % make a copy of the data file
+           % create a new data file
+           simulationParam = obj.simulationParam;
            dataCopyStr = [obj.fileName 'copy' copyNum '.mat'];
+           save(dataCopyStr, 'simulationParam','-v7.3');
+           newdata = matfile(dataCopyStr,'Writable',true);
            
-           try 
-               copyfile([obj.fileName '.mat'], dataCopyStr);
-           catch 
-               copyfile(obj.fileName, dataCopyStr);
+           %add the last step of obj to the new data file
+           newdata.allCoords = zeros(2,N,2);
+           newdata.allCoords(1:2,1:N,1) = obj.data.allCoords(1:2,1:N,indIndata);
+           [~, ~, s] = size(obj.data.allDists);
+           newdata.allDists = zeros(N,N,2);
+           newdata.allDists(1:N,1:N,1) = obj.data.allDists(1:N,1:N,s);
+           newdata.allU = zeros(1,2);
+           newdata.allU(1,1) = obj.data.allU(1,indIndata);
+           newdata.currentmaxdr = obj.data.currentmaxdr;
+           newdata.moveCount = 0;
+           newdata.sweepInd = zeros(1,2);
+           newdata.sweepInd(1,1) = obj.data.sweepInd(1,indIndata);
+           newdata.indIndata = 1;
+           
+           if existInMatfile(obj.data,'allP')
+               newdata.allP = zeros(1,2);
+               newdata.allP(1,1) = obj.data.allP(1,indIndata);
+           end
+           
+           if existInMatfile(obj.data,'allPlrc')
+               newdata.allPlrc = zeros(1,2);
+               newdata.allPlrc(1,1) = obj.data.allPlrc(1,indIndata);
+           end
+           
+           if existInMatfile(obj.data,'allUlrc')
+               newdata.allUlrc = zeros(1,2);
+               newdata.allUlrc(1,1) = obj.data.allUlrc(1,indIndata);
+           end
+           
+           if existInMatfile(obj.data,'allV')
+               newdata.allV = zeros(1,2);
+               newdata.allV(1,1) = obj.data.allV(1,indIndata);
+           end
+           
+           
+           if existInMatfile(obj.data,'RDFbins')
+               newdata.RDFbins = obj.data.RDFbins;
+               [~, s, ~] = size(obj.data.RDFhisto);
+               newdata.RDFhisto = zeros(1,s,2);
+               newdata.RDFhisto(1,1:s,1) = obj.data.RDFhisto(1,1:s,indIndata);
+           end
+           
+           if existInMatfile(obj.data,'allAlphas')
+               newdata.allAlphas = zeros(N,N,2);
+               newdata.allAlphas(1:N,1:N,1) = obj.data.allAlphas(1:N,1:N,indIndata);
+               newdata.allAngs = zeros(1,N,2);
+               newdata.allAngs(1,1:N,1) = obj.data.allAngs(1,1:N,indIndata);
+               newdata.allThetas = zeros(N,N,2);
+               newdata.allThetas(1:N,1:N,1) = obj.data.allThetas(1:N,1:N,indIndata);
            end
            
            % make a copy of the object
            objCopy = MC2DLJoutput(dataCopyStr);
+           
+           
                
        end
        
