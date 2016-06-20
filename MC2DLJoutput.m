@@ -691,13 +691,15 @@ classdef MC2DLJoutput
            
            p = inputParser();
            addOptional(p, 'plotFig', false);
-           addOptional(p, 'saveFig', false);           
+           addOptional(p, 'saveFig', false);
+           addOptional(p, 'add2savedFigName', '');
            addOptional(p, 'keepFigOpen', false);
            addOptional(p, 'firstSteps2ignore', 0);
            parse(p, varargin{:});
            Results = p.Results;
            plotFig = Results.plotFig;
            saveFig = Results.saveFig;
+           add2savedFigName = Results.add2savedFigName;
            keepFigOpen = Results.keepFigOpen;
            firstSteps2ignore = Results.firstSteps2ignore;
            
@@ -756,8 +758,8 @@ classdef MC2DLJoutput
                     my_num2str(obj.simulationParam.T)...
                     'N' my_num2str(obj.simulationParam.N) 'rho'...
                     my_num2str(obj.simulationParam.rho)];
-                    saveas(gcf,[name '.fig']);
-                    saveas(gcf,[name '.jpg']);
+                    saveas(gcf,[name add2savedFigName '.fig']);
+                    saveas(gcf,[name add2savedFigName '.jpg']);
                end
              
                colorPlot(steps,varVarPeaks,'addLegend',leg);
@@ -769,8 +771,8 @@ classdef MC2DLJoutput
                     my_num2str(obj.simulationParam.T)...
                     'N' my_num2str(obj.simulationParam.N) 'rho'...
                     my_num2str(obj.simulationParam.rho)];
-                    saveas(gcf,[name '.fig']);
-                    saveas(gcf,[name '.jpg']);
+                    saveas(gcf,[name add2savedFigName '.fig']);
+                    saveas(gcf,[name add2savedFigName '.jpg']);
                end
                
                if ~keepFigOpen
