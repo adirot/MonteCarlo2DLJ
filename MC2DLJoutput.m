@@ -1351,6 +1351,7 @@ classdef MC2DLJoutput
             addOptional(p, 'freeTnbound', false);
             addOptional(p, 'freeTnset', false);
             addOptional(p, 'nset', []);
+            addOptional(p, 'use_m_n_T', []);
             parse(p, varargin{:});
             Results = p.Results;
             plotFig = Results.plotFig;
@@ -1359,11 +1360,12 @@ classdef MC2DLJoutput
             freeTnbound = Results.freeTnbound;
             freeTnset = Results.freeTnset;
             nset = Results.nset; 
+            use_m_n_T = Results.use_m_n_T;
             
             [obj, UfromRDF] = getUfromRDF(obj, 'plotFig'...
                 ,plotFig,'freen',freen,'freeTandn',freeTandn,...
                 'freeTnbound',freeTnbound,'freeTnset',freeTnset,...
-                'nset',nset);
+                'nset',nset,'use_m_n_T',use_m_n_T);
             
             % Get U for every step
             [~ , numOfRDFbins] = size(obj.data.RDFhisto);
@@ -1447,14 +1449,14 @@ classdef MC2DLJoutput
         x = obj.data.RDFbins;
         T = obj.simulationParam.T;
         if use_m_n_T
-            UfromRDF = 4*Tinput*((x.^-ninput) - (x.^-minput));
-            obj.data.UfromRDFnfree = UfromRDF;            
+            UfromRDF = 4*(1/Tinput)*((x.^-ninput) - (x.^-minput));
+            obj.data.UfromRDFnmTset = UfromRDF;            
         else
             if freen
                 fitObjlogRDFfreen = obj.data.fitObjlogRDFfreen;
                 nfit = fitObjlogRDFfreen.nfit;
                 mfit = fitObjlogRDFfreen.mfit;
-                UfromRDF = 4*T*((x.^-nfit) - (x.^-mfit));
+                UfromRDF = 4*(1/T)*((x.^-nfit) - (x.^-mfit));
                 obj.data.UfromRDFnfree = UfromRDF;
             else
                 if freeTandn
@@ -1462,7 +1464,7 @@ classdef MC2DLJoutput
                     nfit = fitObjlogRDFfreeTandn.nfit;
                     mfit = fitObjlogRDFfreeTandn.mfit;
                     Tfit = fitObjlogRDFfreeTandn.Tfit;
-                    UfromRDF = 4*Tfit*((x.^-nfit) - (x.^-mfit));
+                    UfromRDF = 4*(1/Tfit)*((x.^-nfit) - (x.^-mfit));
                     obj.data.UfromRDFfreeTandn = UfromRDF;
                 else
                     if freeTnbound
@@ -1471,7 +1473,7 @@ classdef MC2DLJoutput
                         nfit = fitObjlogRDFfreeTnbound.nfit;
                         mfit = fitObjlogRDFfreeTnbound.mfit;
                         Tfit = fitObjlogRDFfreeTnbound.Tfit;
-                        UfromRDF = 4*Tfit*((x.^-nfit) - (x.^-mfit));
+                        UfromRDF = 4*(1/Tfit)*((x.^-nfit) - (x.^-mfit));
                         obj.data.UfromRDFfreeTnbound = UfromRDF;
                     else
                         if freeTnset
@@ -1480,7 +1482,7 @@ classdef MC2DLJoutput
 
                             mfit = fitObjlogRDFfreeTnset.mfit;
                             Tfit = fitObjlogRDFfreeTnset.Tfit;
-                            UfromRDF = 4*Tfit*((x.^-nset) - (x.^-mfit));
+                            UfromRDF = 4*(1/Tfit)*((x.^-nset) - (x.^-mfit));
                             obj.data.UfromRDFfreeTnset = UfromRDF;
                         end
                     end
