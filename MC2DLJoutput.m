@@ -710,7 +710,7 @@ classdef MC2DLJoutput
                error('calculate RDF first');
            end
            
-           [Nsteps, ~] = size(obj.data.RDFhisto);
+           [~, ~, Nsteps] = size(obj.data.RDFhisto);
            
            if firstSteps2ignore == 0
                minInd = 1;
@@ -729,7 +729,7 @@ classdef MC2DLJoutput
            for i = minInd:Nsteps
                for k = 1:length(locs)
                    peaks(k,i-minInd+1) =...
-                       obj.data.RDFhisto(i,locs(k));
+                       obj.data.RDFhisto(1,locs(k),i);
                end
                
                % find variance and variance of variance in the peaks
