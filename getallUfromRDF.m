@@ -36,12 +36,39 @@ for t = [0.45,0.6,0.8,1,1.5,2]
                         [M.simulationParam.m, 12, M.simulationParam.T]);
                     allUfromRDF{tind,rind,mind} = M.data.UfromRDFinStep;
                 end
-
-                plot(M.data.stepInd/M.simulationParam.N,...
-                    allUfromRDF{tind,rind,mind});            
+                
+                [~, lenStepInd] = size(M.data.stepInd);
+                [~, lenAllU] = size(M.data.allU);
+                [~, lenallUfromRDF] = size(allUfromRDF{tind,rind,mind});
+                
+                if lenStepInd > lenAllU
+                    plot(M.data.stepInd(1,(lenStepInd-lenAllU+1):lenStepInd)/M.simulationParam.N,...
+                        M.data.allU);
+                else
+                    if lenStepInd < lenAllU
+                        plot(M.data.stepInd/M.simulationParam.N,...
+                            M.data.allU(1,(lenAllU-lenStepInd+1):lenAllU));
+                    else
+                        plot(M.data.stepInd/M.simulationParam.N,...
+                            M.data.allU);
+                    end
+                end
+                
                 hold on;
-                plot(M.data.stepInd/M.simulationParam.N,...
-                    M.data.allU,'r');            
+                
+                if lenStepInd > lenallUfromRDF
+                    plot(M.data.stepInd(1,(lenStepInd-lenallUfromRDF+1):lenStepInd)/M.simulationParam.N,...
+                        allUfromRDF{tind,rind,mind},'r');
+                else
+                    if lenStepInd < lenallUfromRDF
+                        plot(M.data.stepInd/M.simulationParam.N,...
+                            allUfromRDF{tind,rind,mind}(1,(lenallUfromRDF-lenStepInd+1):lenallUfromRDF),'r');
+                    else
+                        plot(M.data.stepInd/M.simulationParam.N,...
+                            allUfromRDF{tind,rind,mind},'r');
+                    end
+                end
+                
                 xlabel('Sweeps');
                 ylabel('U');
                 title('U from simulation compared with U from integrating over RDF');
