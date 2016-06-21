@@ -1352,6 +1352,7 @@ classdef MC2DLJoutput
             addOptional(p, 'freeTnset', false);
             addOptional(p, 'nset', []);
             addOptional(p, 'use_m_n_T', []);
+            addOptional(p, 'talk', false);
             parse(p, varargin{:});
             Results = p.Results;
             plotFig = Results.plotFig;
@@ -1361,6 +1362,7 @@ classdef MC2DLJoutput
             freeTnset = Results.freeTnset;
             nset = Results.nset; 
             use_m_n_T = Results.use_m_n_T;
+            talk = Results.talk;
             
             [obj, UfromRDF] = getUfromRDF(obj, 'plotFig'...
                 ,plotFig,'freen',freen,'freeTandn',freeTandn,...
@@ -1374,8 +1376,15 @@ classdef MC2DLJoutput
             x = obj.data.RDFbins;
             rho = obj.simulationParam.rho;
             for ii = 1:obj.indIndata
+                if talk
+                    tic;
+                    disp(['calc' num2str(ii) ' of ' num2str(obj.indIndata)]);
+                end
                 obj.data.UfromRDFinStep(1,ii) =...
                     rho*pi*sum(UfromRDF(2:numOfRDFbins).*obj.data.RDFhisto(ii,2:numOfRDFbins).*x(2:numOfRDFbins)*inc);
+                if talk
+                    toc;
+                end
             end
             
             varUfromRDF = var(obj.data.UfromRDFinStep);
