@@ -784,24 +784,29 @@ classdef MC2DLJoutput
                
        end
 
-       function [obj, rho, PL, numOfCellsInSquare] =...
+       function [obj, rho, histnumOfCellsInSquare, numOfPartInSquare] =...
                calcRhoDistrib(obj,numOfSquares)
-       % PL is the prob to get a distribution in one squre, considering
-       % all steps. we avg on all subsystems
+       % We devide every step to numOfSquares subsystem. We count how many
+       % particles are in each subsystem, in every step.
+       % histnumOfCellsInSquare is the histogram of densities in 
+       % the system, considering all steps.
+       % To get the probability of a spesific density in a subsystem:
+       % PL(rho) = histnumOfPartInSquare/(indIndata*numOfSquares);
        
        indIndata = obj.indIndata;
        N = obj.simulationParam.N;
        L = obj.simulationParam.L;
-       numOfCellsInSquare = zeros(1,numOfSquares*indIndata);
+       numOfPartInSquare = zeros(1,numOfSquares*indIndata);
        
        for i = 1:indIndata
-           numOfCellsInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
+           numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
                 numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i),...
                 L,numOfSquares);
        end
        
-       rho = min(numOfCellsInSquare):max(numOfCellsInSquare);
-       [PL, rho] = hist(numOfCellsInSquare,length(numOfCellsInSquare));
+       rho = min(numOfPartInSquare):max(numOfPartInSquare);
+       [histnumOfCellsInSquare, rho] =...
+           hist(numOfPartInSquare,length(numOfPartInSquare));
        %rhoNorm = rho / (N/L^2);
            
        end
