@@ -791,7 +791,10 @@ classdef MC2DLJoutput
        % histnumOfCellsInSquare is the histogram of densities in 
        % the system, considering all steps.
        % To get the probability of a spesific density in a subsystem:
-       % PL(rho) = histnumOfPartInSquare/(indIndata*numOfSquares);
+       % PL(rho) = histnumOfPartInSquare(rho)/(indIndata*numOfSquares);
+       % To get the probability that a particle will be found in a
+       % subsystem with a spesific density:
+       % PLN(rho) = numOfPartInSquare(rho)*histnumOfPartInSquare(rho)/N
        
        indIndata = obj.indIndata;
        N = obj.simulationParam.N;
