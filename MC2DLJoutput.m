@@ -160,6 +160,16 @@ classdef MC2DLJoutput
                     
                     if ~isfield(obj.simulationParam,'angleDependent')
                         obj.simulationParam.angleDependent = false;
+                        obj.simulationParam.angleDependence = [];
+                        obj.simulationParam.maxdAng = [];
+                    end
+                    
+                    if ~isfield(obj.simulationParam,'ufunc')
+                        obj.simulationParam.ufunc = [];
+                    end
+                    
+                    if ~isfield(obj.simulationParam,'hcr')
+                        obj.simulationParam.hcr = false;
                     end
                     
                     if obj.simulationParam.angleDependent
@@ -408,7 +418,8 @@ classdef MC2DLJoutput
             N = obj.simulationParam.N; 
             rho = obj.simulationParam.rho;
             rCutoff = obj.simulationParam.rCutoff;        
-            m = obj.simulationParam.m;        
+            m = obj.simulationParam.m;
+            
             angleDependent = obj.simulationParam.angleDependent;
             angleDependence = obj.simulationParam.angleDependence;
             maxdAng = obj.simulationParam.maxdAng;
@@ -804,21 +815,31 @@ classdef MC2DLJoutput
        p = inputParser();
        addOptional(p, 'plotHist', false); 
        addOptional(p, 'plotHist_times_partNum', false);
-       addOptional(p, 'startFrom', 1); 
-       Results = parse(varargin{:});
+       addOptional(p, 'startFrom', 1);
+       addOptional(p, 'coordsFromObj', false);
+       parse(p, varargin{:});
+       Results = p.Results;
        plotHist = Results.plotHist;
        plotHist_times_partNum = Results.plotHist_times_partNum;
        startFrom = Results.startFrom;
+       coordsFromObj = Results.coordsFromObj;
        
-       indIndata = obj.indIndata;
-       N = obj.simulationParam.N;
        L = obj.simulationParam.L;
-       numOfPartInSquare = zeros(1,numOfSquares*indIndata);
-       
-       for i = startFrom:indIndata
-           numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
-                numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i),...
+       indIndata = obj.indIndata;
+       N = obj.simulationParam.N;    
+           
+       if coordsFromObj
+           numOfPartInSquare(1,1:numOfSquares) =...
+                numOfCellsDistribution(obj.currentCoords,...
                 L,numOfSquares);
+       else
+           numOfPartInSquare = zeros(1,numOfSquares*indIndata);
+
+           for i = startFrom:indIndata
+               numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
+                    numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i),...
+                    L,numOfSquares);
+           end
        end
        
        histxnumOfPartInSquare = 0:N;
