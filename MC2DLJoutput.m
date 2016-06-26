@@ -784,7 +784,8 @@ classdef MC2DLJoutput
                
        end
 
-       function [obj, rho, histnumOfCellsInSquare, numOfPartInSquare] =...
+       function [obj, histxnumOfPartInSquare, histnumOfCellsInSquare,...
+               numOfPartInSquare] =...
                calcRhoDistrib(obj,numOfSquares)
        % We devide every step to numOfSquares subsystem. We count how many
        % particles are in each subsystem, in every step.
@@ -807,9 +808,9 @@ classdef MC2DLJoutput
                 L,numOfSquares);
        end
        
-       rho = min(numOfPartInSquare):max(numOfPartInSquare);
-       [histnumOfCellsInSquare, rho] =...
-           hist(numOfPartInSquare,length(numOfPartInSquare));
+       histxnumOfPartInSquare = min(numOfPartInSquare):max(numOfPartInSquare);
+       histnumOfCellsInSquare =...
+           hist(numOfPartInSquare,histxnumOfPartInSquare);
        %rhoNorm = rho / (N/L^2);
            
        end
@@ -1822,7 +1823,7 @@ histo = 2*histo/(N-1);
 end
 
 
-function numOfCellsInSquare = numOfCellsDistribution(coords,L,numOfSquares)
+function Ni = numOfCellsDistribution(coords,L,numOfSquares)
 %% Find densities in a montecarlo step
 
 % Given coordinates of N particles in 2D box, we devide the box to numOfSquares
@@ -1839,7 +1840,7 @@ function numOfCellsInSquare = numOfCellsDistribution(coords,L,numOfSquares)
 
 % Output:
 % ~~~~~
-% densities    : all densities of the squares 
+% Ni    : all number of cells in subsystems 
 
 % Parse input:
 [~, N] = size(coords); 
@@ -1852,7 +1853,7 @@ end
 % Get the density in each square  
 squareArea = L^2/numOfSquares;
 squareSide = sqrt(squareArea);
-densities = zeros(m,m);
+Ni = zeros(m,m);
 indi = 0;
 
 for i = (-L/2):squareSide:(L/2 - squareSide)
@@ -1860,15 +1861,15 @@ for i = (-L/2):squareSide:(L/2 - squareSide)
     indj = 0;
     for j = (-L/2):squareSide:(L/2 - squareSide)
         indj = indj + 1;
-        densities(indi,indj) =...
+        Ni(indi,indj) =...
             countParticlesInSquare(i,j,coords(1,:),coords(2,:),squareSide);
     end
 end
 
 %densities = densities/squareArea;
-densities = reshape(densities,[1,m^2]);
+Ni = reshape(Ni,[1,m^2]);
 
-numOfCellsInSquare = densities;
+%numOfCellsInSquare = densities;
 
 % Bin the results to a histogram
 %rho = linspace(min(densities),max(densities),numOfBins);
