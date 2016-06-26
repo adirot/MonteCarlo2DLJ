@@ -399,9 +399,11 @@ classdef MC2DLJoutput
        function obj = MonteCarlo(obj,Nsweeps,saveEvery,varargin)
            p = inputParser();
            addOptional(p, 'TalkEvery', []);
+           addOptional(p, 'save2data', true);
            parse(p, varargin{:});
            R = p.Results;
            TalkEvery = R.TalkEvery;
+           save2data = R.save2data;
            
             N = obj.simulationParam.N; 
             rho = obj.simulationParam.rho;
@@ -422,7 +424,7 @@ classdef MC2DLJoutput
             end
             
             if saveEvery == 0
-                % don't save
+                % Only save last step
                 numOfruns2save = N*Nsweeps;
             else
                 numOfruns2save = N*saveEvery;
@@ -482,12 +484,14 @@ classdef MC2DLJoutput
                     talk = false;
                 end
                 
-                obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
-                    finalDistances,finalU,finalV,finalPressure,...
-                    obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
-                    angleDependent,obj.currentAngs,...
-                    obj.currentAlphas,obj.currentThetas,...
-                    obj.simulationParam.dontSaveDists,talk);
+                if save2data
+                    obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
+                        finalDistances,finalU,finalV,finalPressure,...
+                        obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
+                        angleDependent,obj.currentAngs,...
+                        obj.currentAlphas,obj.currentThetas,...
+                        obj.simulationParam.dontSaveDists,talk);
+                end
                 
                 clear finalU finalV finalConfiguration finalDistances...
                     currentmoveCount finalAngs finalAlphas finalThetas
@@ -800,16 +804,18 @@ classdef MC2DLJoutput
        p = inputParser();
        addOptional(p, 'plotHist', false); 
        addOptional(p, 'plotHist_times_partNum', false);
+       addOptional(p, 'startFrom', 1); 
        Results = parse(varargin{:});
        plotHist = Results.plotHist;
        plotHist_times_partNum = Results.plotHist_times_partNum;
+       startFrom = Results.startFrom;
        
        indIndata = obj.indIndata;
        N = obj.simulationParam.N;
        L = obj.simulationParam.L;
        numOfPartInSquare = zeros(1,numOfSquares*indIndata);
        
-       for i = 1:indIndata
+       for i = startFrom:indIndata
            numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
                 numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i),...
                 L,numOfSquares);
