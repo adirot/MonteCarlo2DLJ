@@ -784,9 +784,9 @@ classdef MC2DLJoutput
                
        end
 
-       function [obj, histxnumOfPartInSquare, histnumOfCellsInSquare,...
+       function [obj, histxnumOfPartInSquare, histnumOfPartInSquare,...
                numOfPartInSquare] =...
-               calcRhoDistrib(obj,numOfSquares)
+               calcRhoDistrib(obj, numOfSquares, varargin)
        % We devide every step to numOfSquares subsystem. We count how many
        % particles are in each subsystem, in every step.
        % histnumOfCellsInSquare is the histogram of densities in 
@@ -796,6 +796,13 @@ classdef MC2DLJoutput
        % To get the probability that a particle will be found in a
        % subsystem with a spesific density:
        % PLN(rho) = numOfPartInSquare(rho)*histnumOfPartInSquare(rho)/N
+       
+       p = inputParser();
+       addOptional(p, 'plotHist', false); 
+       addOptional(p, 'plotHist_times_partNum', false);
+       Results = parse(varargin{:});
+       plotHist = Results.plotHist;
+       plotHist_times_partNum = Results.plotHist_times_partNum;
        
        indIndata = obj.indIndata;
        N = obj.simulationParam.N;
@@ -808,11 +815,32 @@ classdef MC2DLJoutput
                 L,numOfSquares);
        end
        
-       histxnumOfPartInSquare = min(numOfPartInSquare):max(numOfPartInSquare);
-       histnumOfCellsInSquare =...
+       histxnumOfPartInSquare = 0:N;
+       histnumOfPartInSquare =...
            hist(numOfPartInSquare,histxnumOfPartInSquare);
-       %rhoNorm = rho / (N/L^2);
-           
+       % Normalize
+       histxnumOfPartInSquare = histxnumOfPartInSquare / ((L^2/numOfSquares)*(N/L^2));       
+       
+       if plotHist
+           figure;
+           bin = histxnumOfPartInSquare(2);
+           areaUnderPlot = sum(bin*histnumOfPartInSquare.*histxnumOfPartInSquare);
+           plot(histxnumOfPartInSquare,histnumOfPartInSquare.*histxnumOfPartInSquare/areaUnderPlot);
+           xlabel('Density');
+           ylabel('Probability of a particle to be in a square with a certain density');
+           title('Density histogram');
+       end
+       
+       if plotHist_times_partNum
+           figure;
+           bin = histxnumOfPartInSquare(2);
+           areaUnderPlot = sum(bin*histnumOfPartInSquare);
+           plot(histxnumOfPartInSquare,histnumOfPartInSquare/areaUnderPlot);
+           xlabel('Density');
+           ylabel('Probability of a subsystem to be in a square with a certain density');
+           title('Density histogram');
+       end
+       
        end
 
        
