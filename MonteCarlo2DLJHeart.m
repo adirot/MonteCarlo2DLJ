@@ -61,7 +61,7 @@ addOptional(p, 'verelet', []);
 addOptional(p, 'virial', []);
 addOptional(p, 'm', 6);
 addOptional(p, 'angleDependent',false);
-addOptional(p, 'angleDependence',false);
+addOptional(p, 'angleDependence',[]);
 addOptional(p, 'initialAng', []);
 addOptional(p, 'initialAlphas', []);
 addOptional(p, 'initialThetas', []);
