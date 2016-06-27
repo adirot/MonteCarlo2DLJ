@@ -30,7 +30,12 @@ for i = 1:100000
     if mod(i,500)
         save(['minimal_save_rhoDist' my_num2str(t) '.mat'],'meanhistnumOfPartInSquare_inStep','steps','-v7.3');
     end
+    
     % Create log file
+    if i > 1
+        delete(lastFileName);
+    end
+    
     totSec = totSec + toc;
     lastFileName = ['T' my_num2str(t) 'rho' my_num2str(r)...
         'm' num2str(m) 'stepsDone' num2str(i) 'secPassed'...
@@ -38,9 +43,7 @@ for i = 1:100000
     fileID = fopen(lastFileName, 'w');
     fclose(fileID);
     
-    if i > 1
-        delete(lastFileName);
-    end
+    
 end
 
 
