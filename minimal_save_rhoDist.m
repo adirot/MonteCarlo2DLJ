@@ -47,4 +47,4 @@ for i = 1:100000
 end
 
 
-save(['minimal_save_rhoDist' num2str(tind) '.mat'],'meanhistnumOfPartInSquare_inStep','steps','-v7.3');
+save(['minimal_save_rhoDist' my_num2str(t) '.mat'],'meanhistnumOfPartInSquare_inStep','steps','-v7.3');
