@@ -373,7 +373,7 @@ end
                                 newAlphas(movedP,1:(movedP-1)) -...
                                 2*pi*largerThan2pi;
                         end
-                    end
+                    
 
                     % recalculate the relevent column elements in alpha matrix
 
