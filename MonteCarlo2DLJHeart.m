@@ -163,6 +163,10 @@ for step = 1:Nsteps
             newParticlesAngs = particlesAngs;
             newParticlesAngs(movedParticle) =...
                 particlesAngs(movedParticle) + dAng; 
+            if newParticlesAngs(movedParticle) > 2*pi
+                newParticlesAngs(movedParticle) = ...
+                    newParticlesAngs(movedParticle) - 2*pi;
+            end
         end
 
         % calculate new distances
@@ -360,9 +364,15 @@ end
 
                     % recalculate the relevent row elements in alpha matrix
 
-                    if movedP > 1                        
-                        newAlphas(movedP,1:(movedP-1)) =...
-                            alphas(movedP,1:(movedP-1)) + dAng;
+                        if movedP > 1                        
+                            newAlphas(movedP,1:(movedP-1)) =...
+                                alphas(movedP,1:(movedP-1)) + dAng;
+                            largerThan2pi =...
+                                newAlphas(movedP,1:(movedP-1)) > 2*pi;
+                            newAlphas(movedP,1:(movedP-1)) = ...
+                                newAlphas(movedP,1:(movedP-1)) -...
+                                2*pi*largerThan2pi;
+                        end
                     end
 
                     % recalculate the relevent column elements in alpha matrix
@@ -370,6 +380,11 @@ end
                     if movedP < N
                         newAlphas((movedP + 1):N,movedP) =...
                             alphas((movedP + 1):N,movedP) + dAng;
+                        largerThan2pi =...
+                                newAlphas((movedP + 1):N,movedP) > 2*pi;
+                            newAlphas((movedP + 1):N,movedP) = ...
+                                newAlphas((movedP + 1):N,movedP) -...
+                                2*pi*largerThan2pi;
                     end
                 end   
         end
@@ -391,6 +406,11 @@ end
                     if movedP > 1
                         newThetas(movedP,1:(movedP-1)) =...
                             newAlphas(movedP,1:(movedP-1)) - atan(yi/xi);
+                        largerThan2pi =...
+                                newThetas(movedP,1:(movedP-1)) > 2*pi;
+                        newThetas(movedP,1:(movedP-1)) = ...
+                                newThetas(movedP,1:(movedP-1)) -...
+                                2*pi*largerThan2pi;
                     end
 
                     % recalculate the relevent column elements in theta matrix
@@ -398,6 +418,11 @@ end
                     if movedP < N
                         newThetas((movedP + 1):N,movedP) =...
                             newAlphas((movedP + 1):N,movedP) - atan(yi/xi);
+                        largerThan2pi =...
+                                newThetas((movedP + 1):N,movedP) > 2*pi;
+                        newThetas((movedP + 1):N,movedP) = ...
+                                newThetas((movedP + 1):N,movedP) -...
+                                2*pi*largerThan2pi;
                     end
                 end   
         end
