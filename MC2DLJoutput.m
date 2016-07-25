@@ -1645,7 +1645,7 @@ end
 function [dist,particlesPosition] = ...
     createInitialConfig(L,N,r,initialConfig)
 
-    possibleInitialConfigs = {'random','hex','auto'};
+    possibleInitialConfigs = {'random','hex','auto','2par_close'};
     initialConfigInd = strcmp(initialConfig,possibleInitialConfigs);
     % check if input is valid:
     if sum(initialConfigInd) ~= 1
@@ -1663,6 +1663,9 @@ function [dist,particlesPosition] = ...
                 else
                     [dist,particlesPosition] = randomStart(L,N,r);
                 end
+            case 4 % two particle close to each other
+                dist = [0,0;1,0];
+                particlesPosition = [0,0;1,0];
         end
     end
 end
