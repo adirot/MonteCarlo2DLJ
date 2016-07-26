@@ -120,7 +120,8 @@ classdef MC2DLJoutput
       currentmaxdr,...
           moveCount,currentCoords,currentDists,currentU,currentPressure,...
           currentVir,Ulrc,Plrc,currentSweep,currentStep,...
-          currentThetas,currentAlphas,currentAngs;
+          currentThetas,currentAlphas,currentAngs,...
+          currentBettas;
       fileName,data,indIndata;
       RDFhisto, RDFbins;
       runNum;
@@ -332,32 +333,47 @@ classdef MC2DLJoutput
                         
                     if angleDependent
                         allAngs = zeros(1,N,1);
-                        allAlphas = zeros(N,N,1);
-                        allThetas = zeros(N,N,1);
+%                         allAlphas = zeros(N,N,1);
+%                         allThetas = zeros(N,N,1);
                         allAngs(:,:,1) = rand(1,N,1)*pi;
-                        allAlphas(:,:,1) =...
-                            tril(bsxfun(@minus,allAngs(:,:,1),allAngs(:,:,1)'),-1);
+%                         allAlphas(:,:,1) =...
+%                             tril(bsxfun(@minus,allAngs(:,:,1),allAngs(:,:,1)'),-1);
 
                          xdist = bsxfun(@minus,allCoords(1,:,1),allCoords(1,:,1)');
                          ydist = bsxfun(@minus,allCoords(2,:,1),allCoords(2,:,1)');
-                        allThetas(:,:,1) = ...
-                            tril(allAlphas(:,:,1)-atan(ydist./xdist),-1);
+%                         allThetas(:,:,1) = ...
+%                             tril(allAlphas(:,:,1)-atan(ydist./xdist),-1);
+                         allBettas = zeros(N,N,1);
+                         allBettas(:,:,1) = tril(atan(ydist./xdist),-1);
+                         
+                        allAlphas = [];
+                        allThetas = [];
+                        
                     else
                         allAngs = [];
                         allAlphas = [];
                         allThetas = [];
+                        allBettas = [];
                         
                     end
 
                         
                     % calculate initial energy
                     d = reshapeDist(allDists);
-                    ang = [reshapeDist(allAlphas),...
-                            reshapeDist(allThetas)];
-                    allU = pairU(d,rCutoff,m,...
+%                     ang = [reshapeDist(allAlphas),...
+%                             reshapeDist(allThetas)];
+%                     allU = pairU(d,rCutoff,m,...
+%                         'angleDependence',angleDependence,...
+%                        'relativeCellAngles',ang,'ufunc',ufunc);
+                    [ang1, ang2] = reshapeAng(allAngs);
+                    ang{1,1} = reshapeDist(allBettas);
+                    ang{1,2} = ang1;
+                    ang{1,3} = ang2;
+
+                      allU = pairU(d,rCutoff,m,...
                         'angleDependence',angleDependence,...
-                        'relativeCellAngles',ang,'ufunc',ufunc);
-                    
+                        'relativeCellAngles',ang,...
+                        'numOfrelativeCellAngles',3,'ufunc',ufunc);
                     %%% this is the long range correction - should be fixed
                     %%% for the case of angle dependence
                     allUlrc = allU - pi*rho*N/rCutoff^4;
@@ -386,7 +402,7 @@ classdef MC2DLJoutput
                             'moveCount','indIndata'...
                             ,'currentmaxdr','simulationParam','runNum',...
                             'allAlphas','allThetas',...
-                            'allAngs','-v7.3');
+                            'allAngs','allBettas','-v7.3');
                     obj.data = matfile(obj.fileName);
                     obj.data = matfile(obj.fileName,'Writable',true);
                         
@@ -395,6 +411,7 @@ classdef MC2DLJoutput
                     obj.currentAngs = allAngs;
                     obj.currentAlphas = allAlphas;
                     obj.currentThetas = allThetas;
+                    obj.currentBettas = allBettas;
                     obj.currentU = allU;
                     obj.Ulrc = allUlrc;
                     obj.currentVir = allV;
@@ -446,7 +463,8 @@ classdef MC2DLJoutput
                 [finalU,finalV,finalPressure,...
                     finalConfiguration,finalDistances,...
                     currentmoveCount,...
-                    finalAngs,finalAlphas,finalThetas] = ...
+                    finalAngs,...
+                    finalBettas] = ... %finalAlphas,finalThetas] = ...
                     MonteCarlo2DLJHeart(...
                     N,...
                     obj.simulationParam.T,...
@@ -463,8 +481,9 @@ classdef MC2DLJoutput
                     'angleDependent',angleDependent,...
                     'angleDependence',angleDependence,...
                     'initialAng',obj.currentAngs,...
-                    'initialAlphas',obj.currentAlphas,...
-                    'initialThetas',obj.currentThetas,...
+                  'initialAlphas',obj.currentAlphas,...
+                  'initialThetas',obj.currentThetas,...
+                    'initialBettas', obj.currentBettas,...
                     'maxdAng',maxdAng,...
                     'ufunc',ufunc,...
                     'hardCoreRepRad',hardCoreRepRad,...
@@ -481,6 +500,7 @@ classdef MC2DLJoutput
                 obj.currentAngs = finalAngs;
                 obj.currentAlphas = finalAlphas;
                 obj.currentThetas = finalThetas;
+                obj.currentBettas = finalBettas;
             
                 % long range correction
                 obj.Ulrc = obj.currentU + 4*pi*N*rho/((2-m)*rCutoff^(m-2));
@@ -496,23 +516,35 @@ classdef MC2DLJoutput
                 end
                 
                 if save2data
+%                     obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
+%                         finalDistances,finalU,finalV,finalPressure,...
+%                         obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
+%                         angleDependent,obj.currentAngs,...
+%                         obj.currentAlphas,obj.currentThetas,...
+%                         obj.simulationParam.dontSaveDists,talk);
                     obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
                         finalDistances,finalU,finalV,finalPressure,...
                         obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
                         angleDependent,obj.currentAngs,...
-                        obj.currentAlphas,obj.currentThetas,...
+                        obj.currentBettas,...
                         obj.simulationParam.dontSaveDists,talk);
+
                 end
                 
                 clear finalU finalV finalConfiguration finalDistances...
-                    currentmoveCount finalAngs finalAlphas finalThetas
+                    currentmoveCount finalAngs finalAlphas finalThetas...
+                    finalBettas
             end
             
         end
         
+%        function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
+%                 ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc,...
+%                 angleDependent,newAngs,newAlphas,newThetas,dontSaveDists,...
+%                 varargin)
        function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
                 ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc,...
-                angleDependent,newAngs,newAlphas,newThetas,dontSaveDists,...
+                angleDependent,newAngs,newBettas,dontSaveDists,...
                 varargin)
             
             p = inputParser();
@@ -568,18 +600,24 @@ classdef MC2DLJoutput
                     s(:,:,1) = obj.data.allAngs(:,:);
                     obj.data.allAngs = s;
                     s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
-                    s(:,:,2) = newAlphas(:,:,1);
-                    s(:,:,1) = obj.data.allAlphas(:,:);
-                    obj.data.allAlphas = s;
-                    s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
-                    s(:,:,2) = newThetas(:,:,1);
-                    s(:,:,1) = obj.data.allThetas(:,:);
-                    obj.data.allThetas = s;
+ %                   s(:,:,2) = newAlphas(:,:,1);
+ %                   s(:,:,1) = obj.data.allAlphas(:,:);
+ %                   obj.data.allAlphas = s;
+ %                   s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
+ %                   s(:,:,2) = newThetas(:,:,1);
+ %                   s(:,:,1) = obj.data.allThetas(:,:);
+ %                   obj.data.allThetas = s;
+                   s(:,:,2) = newBettas(:,:,1);
+                   s(:,:,1) = obj.data.allBettas(:,:);
+                   obj.data.allBettas = s;
+ 
                     clear s;
                 else
                     obj.data.allAngs(:,:,obj.indIndata+1) = newAngs(:,:,1);
-                    obj.data.allAlphas(:,:,obj.indIndata+1) = newAlphas(:,:,1);
-                    obj.data.allThetas(:,:,obj.indIndata+1) = newThetas(:,:,1);
+%                    obj.data.allAlphas(:,:,obj.indIndata+1) = newAlphas(:,:,1);
+%                    obj.data.allThetas(:,:,obj.indIndata+1) = newThetas(:,:,1);
+                    obj.data.allBettas(:,:,obj.indIndata+1) = newBettas(:,:,1);
+
                 end
             end
             
@@ -1779,6 +1817,16 @@ function d = reshapeDist(allDists)
             d = reshape(allDists,1,[]);
             % ignore zeros
             d = nonzeros(d); 
+end
+
+function [ang1, ang2] = reshapeAng(allAngs)
+    N = length(allAngs);
+    ang1 = [];
+    ang2 = [];
+    for i = 1:(N-1)
+        ang1 = [ang1 ones(1,N-i)*allAngs(i)]; 
+        ang2 = [ang2 allAngs(1,(i+1):N)];
+    end
 end
 
 function meanProp = my_mean(prop)
