@@ -183,6 +183,8 @@ for step = 1:Nsteps
         newDist = reCalcDist(dist,movedParticle,...
             newParticlesPosition,N,L,nlist);
         
+        % plot particles (for debug)
+        % plotParticles(newParticlesPosition,L,hardCoreRepRad,'angles',newParticlesAngs)
           
         if ~check_if_cores_touch(newDist,hardCoreRepRad)% no particles are inside each other 
         
@@ -192,7 +194,7 @@ for step = 1:Nsteps
                 %newThetas = reCalcThetas(movedParticle,...
                 %    newParticlesPosition,N,particlesThetas,newAlphas);
                 newBettas =...
-                    reCalcBetta(movedParticles,particlesBettas,newParticlesPosition,N);
+                    reCalcBetta(movedParticle,particlesBettas,newParticlesPosition,N);
             else
 %                 newAlphas = [];
 %                 newThetas = [];
@@ -283,7 +285,7 @@ if angleDependent
     finalAngs = particlesAngs;
 %    finalAlphas = particlesAlphas;
 %    finalThetas = particlesThetas;
-    finalBettas = particleBettas;
+    finalBettas = particlesBettas;
 else 
     finalAngs = [];
 %    finalAlphas = [];
@@ -458,15 +460,15 @@ end
 
                     if movedP > 1
                         newBettas(movedP,1:(movedP-1)) =...
-                            atan(yi-newParticlesPosition(2,1:(movedP-1)))...
-                            /(xi-newParticlesPosition(1,1:(movedP-1)));
+                            atan((yi-newParticlesPosition(2,1:(movedP-1)))...
+                            /(xi-newParticlesPosition(1,1:(movedP-1))));
                     end
 
                     % recalculate the relevent column elements in dist matrix
 
                     if movedP < N
                         newBettas((movedP + 1):N,movedP) =...
-                            atan(yi-newParticlesPosition(2,(movedP + 1):N)...
+                            atan((yi-newParticlesPosition(2,(movedP + 1):N))...
                             /(xi-newParticlesPosition(1,(movedP + 1):N)));
                        
                     end
@@ -489,11 +491,10 @@ end
 %                         relAng = [];
 %                         relAng(:,1) = alphas(movedParticle,1:(movedParticle - 1));
 %                         relAng(:,2) = thetas(movedParticle,1:(movedParticle - 1));
-                          relAng(:,1) = bettas(movedParticle,1:(movedParticle - 1));
-                          relAng(:,2) = angs(1,1:(movedParticle - 1));
-                          relAng(:,3) = ...
+                          relAng{1,1} = bettas(movedParticle,1:(movedParticle - 1));
+                          relAng{1,2} = angs(1,1:(movedParticle - 1));
+                          relAng{1,3} = ...
                               angs(1,movedParticle)*ones(1,movedParticle - 1);
-
                     else
                         relAng = [];
                     end
@@ -521,9 +522,9 @@ end
 %                             alphas((movedParticle + 1):N,movedParticle);
 %                         relAng(:,2) =...
 %                             thetas((movedParticle + 1):N,movedParticle);
-                        relAng(:,1) = bettas((movedParticle + 1):N,movedParticle);
-                        relAng(:,2) = angs(1,(movedParticle + 1):N);
-                        relAng(:,3) = ...
+                        relAng{1,1} = bettas((movedParticle + 1):N,movedParticle);
+                        relAng{1,2} = angs(1,(movedParticle + 1):N);
+                        relAng{1,3} = ...
                               angs(1,movedParticle)*ones(1,N - movedParticle);
                     else
                         relAng = [];
@@ -553,9 +554,9 @@ end
 %                             newAlphas(movedParticle,1:(movedParticle - 1));
 %                         relAng(:,2) =...
 %                             newThetas(movedParticle,1:(movedParticle - 1));
-                        relAng(:,1) = newBettas(movedParticle,1:(movedParticle - 1));
-                        relAng(:,2) = newAngs(1,1:(movedParticle - 1));
-                        relAng(:,3) = ...
+                        relAng{1,1} = newBettas(movedParticle,1:(movedParticle - 1));
+                        relAng{1,2} = newAngs(1,1:(movedParticle - 1));
+                        relAng{1,3} = ...
                               newAngs(1,movedParticle)*ones(1,movedParticle - 1);
                     else
                         relAng = [];
@@ -580,9 +581,9 @@ end
 %                             newAlphas((movedParticle + 1):N,movedParticle);
 %                         relAng(:,2) =...
 %                             newThetas((movedParticle + 1):N,movedParticle);
-                        relAng(:,1) = newBettas((movedParticle + 1):N,movedParticle);
-                        relAng(:,2) = newAngs(1,(movedParticle + 1):N);
-                        relAng(:,3) = ...
+                        relAng{1,1} = newBettas((movedParticle + 1):N,movedParticle);
+                        relAng{1,2} = newAngs(1,(movedParticle + 1):N);
+                        relAng{1,3} = ...
                               newAngs(1,movedParticle)*ones(1,N - movedParticle);
                     else
                         relAng = [];

@@ -376,7 +376,7 @@ classdef MC2DLJoutput
                         'numOfrelativeCellAngles',3,'ufunc',ufunc);
                     %%% this is the long range correction - should be fixed
                     %%% for the case of angle dependence
-                    allUlrc = allU - pi*rho*N/rCutoff^4;
+                    %allUlrc = allU - pi*rho*N/rCutoff^4;
                     
                     % calculate initial virial and pressere
                     if pressure
@@ -397,8 +397,14 @@ classdef MC2DLJoutput
                     indIndata = 1;
                     currentmaxdr = initialmaxdr;
                     simulationParam = obj.simulationParam;
+%                     save(obj.fileName, 'allDists','allCoords',...
+%                             'allU','allUlrc','allV','allP','allPlrc','sweepInd',...
+%                             'moveCount','indIndata'...
+%                             ,'currentmaxdr','simulationParam','runNum',...
+%                             'allAlphas','allThetas',...
+%                             'allAngs','allBettas','-v7.3');
                     save(obj.fileName, 'allDists','allCoords',...
-                            'allU','allUlrc','allV','allP','allPlrc','sweepInd',...
+                            'allU','allV','allP','allPlrc','sweepInd',...
                             'moveCount','indIndata'...
                             ,'currentmaxdr','simulationParam','runNum',...
                             'allAlphas','allThetas',...
@@ -413,7 +419,7 @@ classdef MC2DLJoutput
                     obj.currentThetas = allThetas;
                     obj.currentBettas = allBettas;
                     obj.currentU = allU;
-                    obj.Ulrc = allUlrc;
+                    %obj.Ulrc = allUlrc;
                     obj.currentVir = allV;
                     obj.currentPressure = allP;
                     obj.Plrc = allPlrc;
@@ -498,8 +504,8 @@ classdef MC2DLJoutput
                 obj.currentCoords = finalConfiguration;
                 obj.currentDists = finalDistances;
                 obj.currentAngs = finalAngs;
-                obj.currentAlphas = finalAlphas;
-                obj.currentThetas = finalThetas;
+%                obj.currentAlphas = finalAlphas;
+%                obj.currentThetas = finalThetas;
                 obj.currentBettas = finalBettas;
             
                 % long range correction
@@ -1702,8 +1708,8 @@ function [dist,particlesPosition] = ...
                     [dist,particlesPosition] = randomStart(L,N,r);
                 end
             case 4 % two particle close to each other
-                dist = [0,0;1,0];
-                particlesPosition = [0,0;1,0];
+                dist = [0,0;2,0];
+                particlesPosition = [0,0;2,0];
         end
     end
 end
