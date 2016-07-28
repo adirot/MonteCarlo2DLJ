@@ -4,7 +4,7 @@ function U = pairU(dist,rCutoff,m,varargin)
 % potantial, only pair closer than rCutoff are regarded.
 
 % uses the potantial:
-% 4*(((1/r)^12)-((1/r).^m))
+% (((1/r)^12)-((1/r).^m))
 
 % input: dist is a row vector of all pair distances
 % output: U is the total energy 
@@ -26,11 +26,13 @@ function U = pairU(dist,rCutoff,m,varargin)
     p = inputParser();
     addOptional(p, 'angleDependence', []);
     addOptional(p, 'relativeCellAngles', []);
-    addOptional(p, 'ufunc', @(r) 4*(((1./r).^12)-((1./r).^m)));
+    addOptional(p, 'numOfrelativeCellAngles', 2);
+    addOptional(p, 'ufunc', @(r) (((1./r).^12)-((1./r).^m)));
     parse(p, varargin{:});
     Results = p.Results;
     angleDependence = Results.angleDependence;
     relativeCellAngles = Results.relativeCellAngles;
+    numOfrelativeCellAngles = Results.numOfrelativeCellAngles;
     ufunc = Results.ufunc;
     
     cutoffInd = dist < rCutoff;
@@ -41,8 +43,20 @@ function U = pairU(dist,rCutoff,m,varargin)
         u = 0;
     else
         if ~isempty(angleDependence)
-            angleFactor = angleDependence(...
-                relativeCellAngles(cutoffInd,1),relativeCellAngles(cutoffInd,2));
+            if numOfrelativeCellAngles == 2
+                angleFactor = angleDependence(...
+                    relativeCellAngles(cutoffInd,1),relativeCellAngles(cutoffInd,2));
+            else
+                if numOfrelativeCellAngles == 3
+                    angleFactor = angleDependence(...
+                    relativeCellAngles{1,1}(cutoffInd),...
+                    relativeCellAngles{1,2}(cutoffInd),...
+                    relativeCellAngles{1,3}(cutoffInd));
+                else
+                    error('numOfrelativeCellAngles must be 2 or 3');
+                end
+            end
+            
 
             u = u.*angleFactor;
         end

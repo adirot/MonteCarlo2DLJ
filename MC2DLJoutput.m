@@ -410,10 +410,12 @@ classdef MC2DLJoutput
            p = inputParser();
            addOptional(p, 'TalkEvery', []);
            addOptional(p, 'save2data', true);
+           addOptional(p, 'logFile', true);
            parse(p, varargin{:});
            R = p.Results;
            TalkEvery = R.TalkEvery;
            save2data = R.save2data;
+           logFile = R.logFile;
            
             N = obj.simulationParam.N; 
             rho = obj.simulationParam.rho;
@@ -442,11 +444,15 @@ classdef MC2DLJoutput
             end
             
             sweepCount = 0;
+            totSec = 0;
+            
             while(sweepCount < Nsweeps)
+                tic;
                 [finalU,finalV,finalPressure,...
                     finalConfiguration,finalDistances,...
                     currentmoveCount,...
-                    finalAngs,finalAlphas,finalThetas] = ...
+                    finalAngs,...
+                    finalAlphas,finalThetas] = ...
                     MonteCarlo2DLJHeart(...
                     N,...
                     obj.simulationParam.T,...
@@ -463,8 +469,8 @@ classdef MC2DLJoutput
                     'angleDependent',angleDependent,...
                     'angleDependence',angleDependence,...
                     'initialAng',obj.currentAngs,...
-                    'initialAlphas',obj.currentAlphas,...
-                    'initialThetas',obj.currentThetas,...
+                  'initialAlphas',obj.currentAlphas,...
+                  'initialThetas',obj.currentThetas,...
                     'maxdAng',maxdAng,...
                     'ufunc',ufunc,...
                     'hardCoreRepRad',hardCoreRepRad,...
@@ -481,7 +487,7 @@ classdef MC2DLJoutput
                 obj.currentAngs = finalAngs;
                 obj.currentAlphas = finalAlphas;
                 obj.currentThetas = finalThetas;
-            
+                
                 % long range correction
                 obj.Ulrc = obj.currentU + 4*pi*N*rho/((2-m)*rCutoff^(m-2));
                 if obj.simulationParam.pressure
@@ -495,6 +501,9 @@ classdef MC2DLJoutput
                     talk = false;
                 end
                 
+                
+                
+                
                 if save2data
                     obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
                         finalDistances,finalU,finalV,finalPressure,...
@@ -502,10 +511,30 @@ classdef MC2DLJoutput
                         angleDependent,obj.currentAngs,...
                         obj.currentAlphas,obj.currentThetas,...
                         obj.simulationParam.dontSaveDists,talk);
+
+
+                end
+                
+                % Create log file
+                if logFile
+                    
+                    if sweepCount > numOfruns2save/N
+                        delete(lastFileName);
+                    end
+
+                    totSec = totSec + toc;
+                    lastFileName = ['T' my_num2str(obj.simulationParam.T)...
+                        'rho' my_num2str(obj.simulationParam.rho)...
+                        'm' num2str(obj.simulationParam.m)...
+                        'sweepsDone' num2str(sweepCount) 'secPassed'...
+                        my_num2str(totSec) '.txt'];
+                    fileID = fopen(lastFileName, 'w');
+                    fclose(fileID);
                 end
                 
                 clear finalU finalV finalConfiguration finalDistances...
-                    currentmoveCount finalAngs finalAlphas finalThetas
+                    currentmoveCount finalAngs finalAlphas finalThetas...
+                    
             end
             
         end
@@ -816,16 +845,20 @@ classdef MC2DLJoutput
        addOptional(p, 'plotHist', false); 
        addOptional(p, 'plotHist_times_partNum', false);
        addOptional(p, 'startFrom', 1);
+       addOptional(p, 'endAt', []);
        addOptional(p, 'coordsFromObj', false);
        parse(p, varargin{:});
        Results = p.Results;
        plotHist = Results.plotHist;
        plotHist_times_partNum = Results.plotHist_times_partNum;
        startFrom = Results.startFrom;
+       endAt = Results.endAt;
        coordsFromObj = Results.coordsFromObj;
        
        L = obj.simulationParam.L;
-       indIndata = obj.indIndata;
+       if isempty(endAt)
+            endAt = obj.indIndata;
+       end
        N = obj.simulationParam.N;    
            
        if coordsFromObj
@@ -833,11 +866,11 @@ classdef MC2DLJoutput
                 numOfCellsDistribution(obj.currentCoords,...
                 L,numOfSquares);
        else
-           numOfPartInSquare = zeros(1,numOfSquares*indIndata);
+           numOfPartInSquare = zeros(1,numOfSquares*(endAt-startFrom+1));
 
-           for i = startFrom:indIndata
+           for i = 1:(endAt-startFrom+1)
                numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
-                    numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i),...
+                    numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i+startFrom-1),...
                     L,numOfSquares);
            end
        end
@@ -870,7 +903,6 @@ classdef MC2DLJoutput
        
        end
 
-       
        function showStep(obj,step)
            
           if isnumeric(step)
