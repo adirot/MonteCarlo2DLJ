@@ -335,7 +335,10 @@ classdef MC2DLJoutput
                         allAngs = zeros(1,N,1);
 %                         allAlphas = zeros(N,N,1);
 %                         allThetas = zeros(N,N,1);
-                        allAngs(:,:,1) = rand(1,N,1)*pi;
+                        
+                        %allAngs(:,:,1) = rand(1,N,1)*pi;
+                        allAngs(:,:,1) = zeros(1,N,1);
+                        
 %                         allAlphas(:,:,1) =...
 %                             tril(bsxfun(@minus,allAngs(:,:,1),allAngs(:,:,1)'),-1);
 
@@ -433,10 +436,14 @@ classdef MC2DLJoutput
            p = inputParser();
            addOptional(p, 'TalkEvery', []);
            addOptional(p, 'save2data', true);
+           addOptional(p, 'logFile', true);
+           addOptional(p, 'logFileInit', '');
            parse(p, varargin{:});
            R = p.Results;
            TalkEvery = R.TalkEvery;
            save2data = R.save2data;
+           logFile = R.logFile;
+           logFileInit = R.logFileInit;
            
             N = obj.simulationParam.N; 
             rho = obj.simulationParam.rho;
@@ -450,9 +457,10 @@ classdef MC2DLJoutput
             hcr = obj.simulationParam.hcr;
             if hcr
                 hardCoreRepRad = 1;
-                if obj.simulationParam.angleDependent
-                    hardCoreRepRad = (m/12)^(1/(m-12))/2;
-                end
+                %if obj.simulationParam.angleDependent
+                    %hardCoreRepRad = (m/12)^(1/(m-12))/2;
+                    
+                %end
             else 
                 hardCoreRepRad = 0;
             end
@@ -464,6 +472,8 @@ classdef MC2DLJoutput
                 numOfruns2save = N*saveEvery;
             end
             
+            totSec = 0;
+            tic;
             sweepCount = 0;
             while(sweepCount < Nsweeps)
                 [finalU,finalV,finalPressure,...
@@ -535,6 +545,25 @@ classdef MC2DLJoutput
                         obj.currentBettas,...
                         obj.simulationParam.dontSaveDists,talk);
 
+                end
+                
+                
+                % Create log file
+                if logFile
+                    
+                    if sweepCount > numOfruns2save/N
+                        delete(lastFileName);
+                    end
+
+                    totSec = totSec + toc;
+                    lastFileName = [logFileInit ...
+                        'T' my_num2str(obj.simulationParam.T)...
+                        'rho' my_num2str(obj.simulationParam.rho)...
+                        'm' num2str(obj.simulationParam.m)...
+                        'sweepsDone' num2str(sweepCount) 'secPassed'...
+                        my_num2str(totSec) '.txt'];
+                    fileID = fopen(lastFileName, 'w');
+                    fclose(fileID);
                 end
                 
                 clear finalU finalV finalConfiguration finalDistances...
@@ -959,7 +988,7 @@ classdef MC2DLJoutput
           end 
           
           plotParticles(obj.data.allCoords(:,:,ind),obj.simulationParam.L...
-              ,obj.simulationParam.r,obj.currentAngs);
+              ,obj.simulationParam.r,obj.data.allAngs(1,:,ind));
           title(['snapshot of step: ' num2str(step)]);
        end
        
@@ -1833,6 +1862,8 @@ function [ang1, ang2] = reshapeAng(allAngs)
         ang1 = [ang1 ones(1,N-i)*allAngs(i)]; 
         ang2 = [ang2 allAngs(1,(i+1):N)];
     end
+    ang1 = ang1';
+    ang2 = ang2';
 end
 
 function meanProp = my_mean(prop)
