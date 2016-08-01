@@ -336,8 +336,8 @@ classdef MC2DLJoutput
 %                         allAlphas = zeros(N,N,1);
 %                         allThetas = zeros(N,N,1);
                         
-                        %allAngs(:,:,1) = rand(1,N,1)*pi;
-                        allAngs(:,:,1) = zeros(1,N,1);
+                        allAngs(:,:,1) = rand(1,N,1)*pi;
+                        %allAngs(:,:,1) = zeros(1,N,1);
                         
 %                         allAlphas(:,:,1) =...
 %                             tril(bsxfun(@minus,allAngs(:,:,1),allAngs(:,:,1)'),-1);
