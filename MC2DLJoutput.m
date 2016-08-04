@@ -1803,12 +1803,12 @@ function [dist,particlesPosition] = hcp(L,N,r)
         sepDist = L/sqrt(N);
 
         % Make sure the density is not too high
-        if sepDist < 2*r
-            % Display an error message
-            disp('density is too high');
-            particlesPosition = [];
-            return
-        end
+%         if sepDist < 2*r
+%             % Display an error message
+%             disp('density is too high');
+%             particlesPosition = [];
+%             return
+%         end
 
         % Find the box size
         Lx = sepDist * sqrt(N);
@@ -1847,11 +1847,14 @@ function [dist,particlesPosition] = hcp(L,N,r)
 end
 
 function d = reshapeDist(allDists)
-            % make d a row vector
-            d = reshape(allDists,1,[]);
-            % ignore zeros
-            d = nonzeros(d); 
+    [N,~] = size(allDists);
+    d = [];
+    for i=1:N
+        d = [d ; allDists((i+1):N,i)];
+    end
 end
+
+
 
 function [ang1, ang2] = reshapeAng(allAngs)
     N = length(allAngs);
