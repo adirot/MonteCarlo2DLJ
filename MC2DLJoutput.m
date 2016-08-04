@@ -339,7 +339,7 @@ classdef MC2DLJoutput
                         
                         allAngs(:,:,1) = rand(1,N,1)*pi;
                         %allAngs(:,:,1) = zeros(1,N,1);
-                        
+                        allAngs(:,:,1) = rand(1,N,1)*pi;
 %                         allAlphas(:,:,1) =...
 %                             tril(bsxfun(@minus,allAngs(:,:,1),allAngs(:,:,1)'),-1);
 
@@ -378,6 +378,17 @@ classdef MC2DLJoutput
                         'angleDependence',angleDependence,...
                         'relativeCellAngles',ang,...
                         'numOfrelativeCellAngles',3,'ufunc',ufunc);
+%                     [ang1, ang2] = reshapeAng(allAngs);
+%                     ang{1,1} = reshapeDist(allBettas);
+%                     ang{1,2} = ang1;
+%                     ang{1,3} = ang2;
+% 
+%                       allU = pairU(d,rCutoff,m,...
+%                         'angleDependence',angleDependence,...
+%                         'relativeCellAngles',ang,...
+%                         'numOfrelativeCellAngles',3,'ufunc',ufunc);
+                      allU = pairU(d,rCutoff,m,...
+                        'angleDependence',angleDependence,'ufunc',ufunc);
                     %%% this is the long range correction - should be fixed
                     %%% for the case of angle dependence
                     %allUlrc = allU - pi*rho*N/rCutoff^4;
@@ -476,12 +487,15 @@ classdef MC2DLJoutput
             totSec = 0;
             tic;
             sweepCount = 0;
+            totSec = 0;
+            
             while(sweepCount < Nsweeps)
+                tic;
                 [finalU,finalV,finalPressure,...
                     finalConfiguration,finalDistances,...
                     currentmoveCount,...
                     finalAngs,...
-                    finalBettas] = ... %finalAlphas,finalThetas] = ...
+                    finalBettas] = ... 
                     MonteCarlo2DLJHeart(...
                     N,...
                     obj.simulationParam.T,...
@@ -517,6 +531,9 @@ classdef MC2DLJoutput
 %                obj.currentThetas = finalThetas;
                 obj.currentBettas = finalBettas;
             
+                obj.currentAlphas = finalAlphas;
+                obj.currentThetas = finalThetas;
+                
                 % long range correction
                 obj.Ulrc = obj.currentU + 4*pi*N*rho/((2-m)*rCutoff^(m-2));
                 if obj.simulationParam.pressure
@@ -529,6 +546,9 @@ classdef MC2DLJoutput
                 else
                     talk = false;
                 end
+                
+                
+                
                 
                 if save2data
 %                     obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
@@ -546,6 +566,8 @@ classdef MC2DLJoutput
 
                 end
                 
+                
+
                 
                 % Create log file
                 if logFile
@@ -568,6 +590,7 @@ classdef MC2DLJoutput
                 clear finalU finalV finalConfiguration finalDistances...
                     currentmoveCount finalAngs finalAlphas finalThetas...
                     finalBettas
+                    
             end
             
         end
@@ -580,7 +603,7 @@ classdef MC2DLJoutput
                 ,newP,moveCount,currentmaxdr,newUlrc,newpressurelrc,...
                 angleDependent,newAngs,newBettas,dontSaveDists,...
                 varargin)
-            
+          
             p = inputParser();
             addOptional(p, 'talk', false);
             parse(p, varargin{:});
@@ -634,6 +657,7 @@ classdef MC2DLJoutput
                     s(:,:,1) = obj.data.allAngs(:,:);
                     obj.data.allAngs = s;
                     s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
+ 
  %                   s(:,:,2) = newAlphas(:,:,1);
  %                   s(:,:,1) = obj.data.allAlphas(:,:);
  %                   obj.data.allAlphas = s;
@@ -645,12 +669,26 @@ classdef MC2DLJoutput
                    s(:,:,1) = obj.data.allBettas(:,:);
                    obj.data.allBettas = s;
  
+                   s(:,:,2) = newAlphas(:,:,1);
+                   s(:,:,1) = obj.data.allAlphas(:,:);
+                   obj.data.allAlphas = s;
+                   s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
+                   s(:,:,2) = newThetas(:,:,1);
+                   s(:,:,1) = obj.data.allThetas(:,:);
+                   obj.data.allThetas = s;
+ 
+ 
                     clear s;
                 else
                     obj.data.allAngs(:,:,obj.indIndata+1) = newAngs(:,:,1);
+ 
 %                    obj.data.allAlphas(:,:,obj.indIndata+1) = newAlphas(:,:,1);
 %                    obj.data.allThetas(:,:,obj.indIndata+1) = newThetas(:,:,1);
                     obj.data.allBettas(:,:,obj.indIndata+1) = newBettas(:,:,1);
+ 
+                   obj.data.allAlphas(:,:,obj.indIndata+1) = newAlphas(:,:,1);
+                   obj.data.allThetas(:,:,obj.indIndata+1) = newThetas(:,:,1);
+ 
 
                 end
             end
@@ -888,16 +926,20 @@ classdef MC2DLJoutput
        addOptional(p, 'plotHist', false); 
        addOptional(p, 'plotHist_times_partNum', false);
        addOptional(p, 'startFrom', 1);
+       addOptional(p, 'endAt', []);
        addOptional(p, 'coordsFromObj', false);
        parse(p, varargin{:});
        Results = p.Results;
        plotHist = Results.plotHist;
        plotHist_times_partNum = Results.plotHist_times_partNum;
        startFrom = Results.startFrom;
+       endAt = Results.endAt;
        coordsFromObj = Results.coordsFromObj;
        
        L = obj.simulationParam.L;
-       indIndata = obj.indIndata;
+       if isempty(endAt)
+            endAt = obj.indIndata;
+       end
        N = obj.simulationParam.N;    
            
        if coordsFromObj
@@ -905,11 +947,11 @@ classdef MC2DLJoutput
                 numOfCellsDistribution(obj.currentCoords,...
                 L,numOfSquares);
        else
-           numOfPartInSquare = zeros(1,numOfSquares*indIndata);
+           numOfPartInSquare = zeros(1,numOfSquares*(endAt-startFrom+1));
 
-           for i = startFrom:indIndata
+           for i = 1:(endAt-startFrom+1)
                numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
-                    numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i),...
+                    numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i+startFrom-1),...
                     L,numOfSquares);
            end
        end
@@ -1324,10 +1366,10 @@ classdef MC2DLJoutput
            firstSteps2ignore = obj.data.firstSteps2ignore;
            N = obj.simulationParam.N;
            T = obj.simulationParam.T;
-           indIndata = obj.indIndata;
+           endAt = obj.indIndata;
            
            meanU = obj.data.meanUlrcEq;
-           U = obj.data.allUlrc(1,firstSteps2ignore:indIndata);
+           U = obj.data.allUlrc(1,firstSteps2ignore:endAt);
            sigU = mean((U - meanU).^2);
 
            obj.data.sigU = sigU;
@@ -1409,7 +1451,7 @@ classdef MC2DLJoutput
            % copyNum to the file name of the copied object.
                       
            N = obj.simulationParam.N;
-           indIndata = obj.indIndata;
+           endAt = obj.indIndata;
            
            % create a new data file
            simulationParam = obj.simulationParam;
@@ -1419,36 +1461,36 @@ classdef MC2DLJoutput
            
            %add the last step of obj to the new data file
            newdata.allCoords = zeros(2,N,2);
-           newdata.allCoords(1:2,1:N,1) = obj.data.allCoords(1:2,1:N,indIndata);
+           newdata.allCoords(1:2,1:N,1) = obj.data.allCoords(1:2,1:N,endAt);
            [~, ~, s] = size(obj.data.allDists);
            newdata.allDists = zeros(N,N,2);
            newdata.allDists(1:N,1:N,1) = obj.data.allDists(1:N,1:N,s);
            newdata.allU = zeros(1,2);
-           newdata.allU(1,1) = obj.data.allU(1,indIndata);
+           newdata.allU(1,1) = obj.data.allU(1,endAt);
            newdata.currentmaxdr = obj.data.currentmaxdr;
            newdata.moveCount = 0;
            newdata.sweepInd = zeros(1,2);
-           newdata.sweepInd(1,1) = obj.data.sweepInd(1,indIndata);
+           newdata.sweepInd(1,1) = obj.data.sweepInd(1,endAt);
            newdata.indIndata = 1;
            
            if existInMatfile(obj.data,'allP')
                newdata.allP = zeros(1,2);
-               newdata.allP(1,1) = obj.data.allP(1,indIndata);
+               newdata.allP(1,1) = obj.data.allP(1,endAt);
            end
            
            if existInMatfile(obj.data,'allPlrc')
                newdata.allPlrc = zeros(1,2);
-               newdata.allPlrc(1,1) = obj.data.allPlrc(1,indIndata);
+               newdata.allPlrc(1,1) = obj.data.allPlrc(1,endAt);
            end
            
            if existInMatfile(obj.data,'allUlrc')
                newdata.allUlrc = zeros(1,2);
-               newdata.allUlrc(1,1) = obj.data.allUlrc(1,indIndata);
+               newdata.allUlrc(1,1) = obj.data.allUlrc(1,endAt);
            end
            
            if existInMatfile(obj.data,'allV')
                newdata.allV = zeros(1,2);
-               newdata.allV(1,1) = obj.data.allV(1,indIndata);
+               newdata.allV(1,1) = obj.data.allV(1,endAt);
            end
            
            
@@ -1456,16 +1498,16 @@ classdef MC2DLJoutput
                newdata.RDFbins = obj.data.RDFbins;
                [~, s, ~] = size(obj.data.RDFhisto);
                newdata.RDFhisto = zeros(1,s,2);
-               newdata.RDFhisto(1,1:s,1) = obj.data.RDFhisto(1,1:s,indIndata);
+               newdata.RDFhisto(1,1:s,1) = obj.data.RDFhisto(1,1:s,endAt);
            end
            
            if existInMatfile(obj.data,'allAlphas')
                newdata.allAlphas = zeros(N,N,2);
-               newdata.allAlphas(1:N,1:N,1) = obj.data.allAlphas(1:N,1:N,indIndata);
+               newdata.allAlphas(1:N,1:N,1) = obj.data.allAlphas(1:N,1:N,endAt);
                newdata.allAngs = zeros(1,N,2);
-               newdata.allAngs(1,1:N,1) = obj.data.allAngs(1,1:N,indIndata);
+               newdata.allAngs(1,1:N,1) = obj.data.allAngs(1,1:N,endAt);
                newdata.allThetas = zeros(N,N,2);
-               newdata.allThetas(1:N,1:N,1) = obj.data.allThetas(1:N,1:N,indIndata);
+               newdata.allThetas(1:N,1:N,1) = obj.data.allThetas(1:N,1:N,endAt);
            end
            
            % make a copy of the object
@@ -1866,6 +1908,16 @@ function [ang1, ang2] = reshapeAng(allAngs)
     end
     ang1 = ang1';
     ang2 = ang2';
+end
+
+function [ang1, ang2] = reshapeAng(allAngs)
+    N = length(allAngs);
+    ang1 = [];
+    ang2 = [];
+    for i = 1:(N-1)
+        ang1 = [ang1 ones(1,N-i)*allAngs(i)]; 
+        ang2 = [ang2 allAngs(1,(i+1):N)];
+    end
 end
 
 function meanProp = my_mean(prop)
