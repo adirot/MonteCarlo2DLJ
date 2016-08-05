@@ -28,17 +28,25 @@ function U = pairU(dist,rCutoff,m,varargin)
     addOptional(p, 'relativeCellAngles', []);
     addOptional(p, 'numOfrelativeCellAngles', 2);
     addOptional(p, 'ufunc', @(r) (((1./r).^12)-((1./r).^m)));
+    addOptional(p, 'dipolePairStrength', []);
     parse(p, varargin{:});
     Results = p.Results;
     angleDependence = Results.angleDependence;
     relativeCellAngles = Results.relativeCellAngles;
     numOfrelativeCellAngles = Results.numOfrelativeCellAngles;
     ufunc = Results.ufunc;
+    dipolePairStrength = Results.dipolePairStrength;
     
     cutoffInd = dist < rCutoff;
     dist_lt_rCutoff = dist(cutoffInd);
     % u is the energies of each pair
     u = ufunc(dist_lt_rCutoff); 
+    if isempty(dipolePairStrength)
+        dipolePairStrength = ones(1,length(dist_lt_rCutoff));
+    else
+        dipolePairStrength = dipolePairStrength(cutoffInd);
+    end
+    
     if isempty(u)
         u = 0;
     else
@@ -58,7 +66,7 @@ function U = pairU(dist,rCutoff,m,varargin)
             end
             
 
-            u = u.*angleFactor;
+            u = (u.*angleFactor).*dipolePairStrength;
         end
     end
     
