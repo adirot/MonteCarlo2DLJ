@@ -36,11 +36,8 @@ classdef MC2DLJoutput
 % currentDists - the pair distances of all particles in the last step 
 %           calculated (N by N matrix)
 % currentAngs - list of current cell angles
-% currentAlphas - list of current alpha angles (alpha(i,j) is the angle
-%       between the oriantations of cells i,j)
-% currentThetas - list of current Theta angles (theta(i,j) is the angle
-%       between the oriantation of cell i and the connecting vector of
-%       cells i,j.  
+% currentBettas - list of current betta angles (betta(i,j) is the angle
+%       between the connecting vector of cells i,j and the x axis)
 % moveCount - counts accepted moves
 % currentPressure - the pressure in the last step calculated
 % currentmaxdr - the current maximum displacement of the Monte Carlo step.
@@ -74,11 +71,9 @@ classdef MC2DLJoutput
 %                   step saved)
 %       data.RDFbins - bins of the radial distribution function
 %       data.allAng - all cell oriantations in each step
-%       data.allAlphas - all alpha angles (allAlphas(i,j,k) is the angle between
-%                   the oriantations of cells i,j in the k'th step)
-%       data.allThetas - all Theta angles (allThetas(i,j,k) is the angle between
-%                   the oriantation of cell i and the vector connecting
-%                   cells i,j in the k'th step)
+%       data.allBettas - all betta angles (allBettas(i,j,k) is the angle
+%                        between the vector connecting cells i,j and the
+%                        x axis in the k'th step)
 
 
 % usage example: 
@@ -89,7 +84,7 @@ classdef MC2DLJoutput
 %    MC2DLJ = MC2DLJoutput(N,T,rho,initialmaxdr,initialConfig,rCutoff...
 %               ,r,'verelet',rl,'pressure',true);
 
-% monte carlo for 2000 steps, save every 5*N steps
+% monte carlo for 2000 sweeps, save every 5 sweeps (5*N steps)
 %    MC2DLJ = MC2DLJ.MonteCarlo(1000,5)
 
 % show a snapshot of some steps:
@@ -99,7 +94,7 @@ classdef MC2DLJoutput
 %   MC2DLJ.showStep(500); % if step 500 was not saved, this will show the
 %                               closest step to 500.
 
-% monte carlo for another 1000 steps, save every 5*N steps (this will
+% monte carlo for another 1000 sweeps, save every 5 sweeps (this will
 % continue the previus simulation)
 %    MC2DLJ = MC2DLJ.MonteCarlo(1000,5)
 
