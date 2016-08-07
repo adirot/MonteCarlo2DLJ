@@ -1,8 +1,3 @@
-% function [finalU,finalVirial,finalPressure,finalConfiguration,...
-%     finalDistances,moveCount,finalAngs,finalAlphas,finalThetas] = ...
-%     MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
-%     ,initialDistances,initialU,varargin)
-
 function [finalU,finalVirial,finalPressure,finalConfiguration,...
     finalDistances,moveCount,finalAngs,finalBettas] = ...
     MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
@@ -39,23 +34,17 @@ function [finalU,finalVirial,finalPressure,finalConfiguration,...
 % moveCount - counts accepted moves
 
 % the potantial of Lennard-Jonse in reduced units:
-%   U = 4*[(1/r)^12 - (1/r)^6] 
+%   U = (1/r)^12 - (1/r)^6 
 %   (you can change the 6 with the optional input 'm')
 
 % the potantial of Lennard-Jonse in non-reduced units:
-%   U = 4*epsilon*[(sigma/r)^12 - (sigma/r)^6]
+%   U = epsilon*[(sigma/r)^12 - (sigma/r)^6]
 
 % reduced units:
 % T(reduced) = kT/epsilon | r(reduced) = r/sigma | U(reduced) = U/epsilon
 
-% usage examples: 
+% usage example: 
 
-% with verelet algorithm
-% [finalU,finalConfiguration,finalDistances,moveCount] = ...
-%     MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
-%     ,initialDistances,initialU,'verelet',2.7)
-
-% without verelet algorithm
 % [finalU,finalConfiguration,finalDistances,moveCount] = ...
 %     MonteCarlo2DLJHeart(N,T,rho,Nsteps,maxdr,initialConfig,rCutoff...
 %     ,initialDistances,initialU)
@@ -69,13 +58,14 @@ addOptional(p, 'm', 6);
 addOptional(p, 'angleDependent',false);
 addOptional(p, 'angleDependence',[]);
 addOptional(p, 'initialAng', []);
-addOptional(p, 'initialAlphas', []);
-addOptional(p, 'initialThetas', []);
+%addOptional(p, 'initialAlphas', []);
+%addOptional(p, 'initialThetas', []);
 addOptional(p, 'initialBettas', []);
 addOptional(p, 'maxdAng', []);
 addOptional(p, 'ufunc', []);
 addOptional(p, 'hardCoreRepRad', 0);
 addOptional(p, 'TalkEvery', []);
+addOptional(p, 'dipoleStrength', []);
 parse(p, varargin{:});
 Results = p.Results;
 rl = Results.verelet;
@@ -84,16 +74,17 @@ m = Results.m;
 angleDependent = Results.angleDependent;
 angleDependence = Results.angleDependence;
 initialAngs = Results.initialAng;
-initialAlphas = Results.initialAlphas;
-initialThetas = Results.initialThetas;
+% initialAlphas = Results.initialAlphas;
+% initialThetas = Results.initialThetas;
 initialBettas = Results.initialBettas;
 maxdAng = Results.maxdAng;
 ufunc = Results.ufunc;
 hardCoreRepRad = Results.hardCoreRepRad;
 TalkEvery = Results.TalkEvery;
+dipoleStrength = Results.dipoleStrength;
 
 if isempty(ufunc)
-    ufunc = @(r) 4*(((1./r).^12)-((1./r).^m));
+    ufunc = @(r) (((1./r).^12)-((1./r).^m));
 end
 
 % initiate virables
@@ -116,6 +107,10 @@ end
 L = sqrt(N/rho); % board length in reduced units
 moveCount = 0;
 movedParticle = 0;
+
+if isempty(dipoleStrength)
+    dipoleStrength = ones(1,N);
+end
 
 % calculate nieghbour list
 if ~isempty(rl)
@@ -203,7 +198,8 @@ for step = 1:Nsteps
 
             % calculate the change in energy
             dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m,...
-                particlesBettas,newBettas,particlesAngs,newParticlesAngs,angleDependence,ufunc);
+                particlesBettas,newBettas,particlesAngs,newParticlesAngs,...
+                angleDependence,ufunc,dipoleStrength);
 
             % calculate the change in the virial 
             if ~isempty(virial)
@@ -475,16 +471,14 @@ end
                 end   
         end
         
-        %function dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m,...
-        %        alphas,newAlphas,thetas,newThetas,angleDependence,ufunc)
         function dU = Uchange(movedParticle,dist,newDist,N,rCutoff,m,...
-                bettas,newBettas,angs,newAngs,angleDependence,ufunc)
-        
+                bettas,newBettas,angs,newAngs,angleDependence,ufunc,...
+                dipoleStrength)
         % calculates the change in energy after a particle has moved
         
                 % calculate the old energy for the relevant particle pairs
                 
-                % the relenbt row:
+                % the relevent row:
                 if movedParticle > 1
                     
                     if ~isempty(angleDependence)
@@ -504,11 +498,15 @@ end
 %                         pairU(distrow,rCutoff,m,...
 %                         'angleDependence',angleDependence,...
 %                         'relativeCellAngles',relAng,'ufunc',ufunc);
+
+                    dipolePairStrength =...
+                        dipoleStrength(movedParticle)*dipoleStrength(1:(movedParticle-1));
                     oldUrow = ...
                         pairU(distrow,rCutoff,m,...
                         'angleDependence',angleDependence,...
                         'relativeCellAngles',relAng,'ufunc',ufunc,...
-                        'numOfrelativeCellAngles',3);
+                        'numOfrelativeCellAngles',3,...
+                        'dipolePairStrength',dipolePairStrength);
                                          
                     
                 else 
@@ -537,11 +535,16 @@ end
 %                         'angleDependence',angleDependence,...
 %                         'relativeCellAngles',relAng,'ufunc',ufunc);
 
+                    dipolePairStrength =...
+                        dipoleStrength(movedParticle)*dipoleStrength((movedParticle+1):N);
+                    
+
                     oldUcol = ...
                         pairU(distcol,rCutoff,m,...
                         'angleDependence',angleDependence,...
                         'relativeCellAngles',relAng,'ufunc',ufunc,...
-                        'numOfrelativeCellAngles',3);
+                        'numOfrelativeCellAngles',3,...
+                        'dipolePairStrength',dipolePairStrength);
                 else 
                     oldUcol = 0;
                 end
@@ -569,11 +572,15 @@ end
 %                     newUrow = pairU(distrow,rCutoff,m,...
 %                         'angleDependence',angleDependence,...
 %                         'relativeCellAngles',relAng,'ufunc',ufunc);
+
+                    dipolePairStrength = ...
+                        dipoleStrength(movedParticle)*dipoleStrength(1:(movedParticle-1));
                     newUrow = ...
                         pairU(distrow,rCutoff,m,...
                         'angleDependence',angleDependence,...
                         'relativeCellAngles',relAng,'ufunc',ufunc,...
-                        'numOfrelativeCellAngles',3);
+                        'numOfrelativeCellAngles',3,...
+                        'dipolePairStrength',dipolePairStrength);
                 else 
                     newUrow = 0;
                 end
@@ -597,11 +604,15 @@ end
 %                     newUcol = pairU(distcol,rCutoff,m,...
 %                         'angleDependence',angleDependence,...
 %                         'relativeCellAngles',relAng,'ufunc',ufunc);
+
+                    dipolePairStrength = ...
+                        dipoleStrength(movedParticle)*dipoleStrength((movedParticle+1):N);
                     newUcol = ...
                         pairU(distcol,rCutoff,m,...
                         'angleDependence',angleDependence,...
                         'relativeCellAngles',relAng,'ufunc',ufunc,...
-                        'numOfrelativeCellAngles',3);
+                        'numOfrelativeCellAngles',3,...
+                        'dipolePairStrength',dipolePairStrength);
                 else 
                     newUcol = 0;
                 end

@@ -36,11 +36,8 @@ classdef MC2DLJoutput
 % currentDists - the pair distances of all particles in the last step 
 %           calculated (N by N matrix)
 % currentAngs - list of current cell angles
-% currentAlphas - list of current alpha angles (alpha(i,j) is the angle
-%       between the oriantations of cells i,j)
-% currentThetas - list of current Theta angles (theta(i,j) is the angle
-%       between the oriantation of cell i and the connecting vector of
-%       cells i,j.  
+% currentBettas - list of current betta angles (betta(i,j) is the angle
+%       between the connecting vector of cells i,j and the x axis)
 % moveCount - counts accepted moves
 % currentPressure - the pressure in the last step calculated
 % currentmaxdr - the current maximum displacement of the Monte Carlo step.
@@ -74,11 +71,9 @@ classdef MC2DLJoutput
 %                   step saved)
 %       data.RDFbins - bins of the radial distribution function
 %       data.allAng - all cell oriantations in each step
-%       data.allAlphas - all alpha angles (allAlphas(i,j,k) is the angle between
-%                   the oriantations of cells i,j in the k'th step)
-%       data.allThetas - all Theta angles (allThetas(i,j,k) is the angle between
-%                   the oriantation of cell i and the vector connecting
-%                   cells i,j in the k'th step)
+%       data.allBettas - all betta angles (allBettas(i,j,k) is the angle
+%                        between the vector connecting cells i,j and the
+%                        x axis in the k'th step)
 
 
 % usage example: 
@@ -89,7 +84,7 @@ classdef MC2DLJoutput
 %    MC2DLJ = MC2DLJoutput(N,T,rho,initialmaxdr,initialConfig,rCutoff...
 %               ,r,'verelet',rl,'pressure',true);
 
-% monte carlo for 2000 steps, save every 5*N steps
+% monte carlo for 2000 sweeps, save every 5 sweeps (5*N steps)
 %    MC2DLJ = MC2DLJ.MonteCarlo(1000,5)
 
 % show a snapshot of some steps:
@@ -99,7 +94,7 @@ classdef MC2DLJoutput
 %   MC2DLJ.showStep(500); % if step 500 was not saved, this will show the
 %                               closest step to 500.
 
-% monte carlo for another 1000 steps, save every 5*N steps (this will
+% monte carlo for another 1000 sweeps, save every 5 sweeps (this will
 % continue the previus simulation)
 %    MC2DLJ = MC2DLJ.MonteCarlo(1000,5)
 
@@ -120,8 +115,8 @@ classdef MC2DLJoutput
       currentmaxdr,...
           moveCount,currentCoords,currentDists,currentU,currentPressure,...
           currentVir,Ulrc,Plrc,currentSweep,currentStep,...
-          currentThetas,currentAlphas,currentAngs,...
-          currentBettas;
+          currentAngs,currentBettas,...
+          dipoleStrength;
       fileName,data,indIndata;
       RDFhisto, RDFbins;
       runNum;
@@ -158,6 +153,12 @@ classdef MC2DLJoutput
                     obj.currentDists =...
                         calcDists(obj.currentCoords,obj.simulationParam.L);
                     obj.currentU = obj.data.allU(1,obj.indIndata);
+                    
+                    if isempty(obj.data.dipoleStrength)
+                        obj.dipoleStrength = ones(1,obj.simulationParam.N);
+                    else
+                        obj.dipoleStrength = obj.data.dipoleStrength;
+                    end
                     
                     if ~isfield(obj.simulationParam,'angleDependent')
                         obj.simulationParam.angleDependent = false;
@@ -218,6 +219,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'ufunc', []);
                     addOptional(p, 'hcr', false);
                     addOptional(p, 'dontSaveDists', false);
+                    addOptional(p, 'dipoleStrength', []);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.verelet;
@@ -231,6 +233,7 @@ classdef MC2DLJoutput
                     ufunc = Results.ufunc;
                     hcr = Results.hcr;
                     dontSaveDists = Results.dontSaveDists;
+                    dipoleStrength = Results.dipoleStrength;
                     
                     if dontSaveDists
                         pressure = true;
@@ -281,6 +284,12 @@ classdef MC2DLJoutput
                     obj.indIndata = 0;
                     obj.runNum = runNum;
                     
+                    if isempty(dipoleStrength)
+                        obj.dipoleStrength = ones(1,N);
+                    else
+                        obj.dipoleStrength = dipoleStrength;
+                    end
+                    
                     if ~isempty(rl)
                         vereletstr = ['verelet' my_num2str(rl)];
                     else
@@ -291,6 +300,12 @@ classdef MC2DLJoutput
                         pressurestr = 'pressure';
                     else
                         pressurestr = '';
+                    end
+                    
+                    if ~isempty(dipoleStrength)
+                        dipoleStrengthstr = 'dipoleStrength_';
+                    else
+                        dipoleStrengthstr = '';
                     end
                     
                     if angleDependent
@@ -321,6 +336,7 @@ classdef MC2DLJoutput
                           angleDependencestr ...
                           maxdAngstr ...
                           ufuncstr ...
+                           dipoleStrengthstr... 
                           'runNum' num2str(runNum) ...
                           'date'...
                         nowdatetimestr()];
@@ -373,11 +389,15 @@ classdef MC2DLJoutput
                     ang{1,1} = reshapeDist(allBettas);
                     ang{1,2} = ang1;
                     ang{1,3} = ang2;
+                    dipolePairStrength =...
+                        bsxfun(@times,dipoleStrength',dipoleStrength);
+                    dipolePairStrength = reshapeDist(dipolePairStrength);
 
                       allU = pairU(d,rCutoff,m,...
                         'angleDependence',angleDependence,...
                         'relativeCellAngles',ang,...
-                        'numOfrelativeCellAngles',3,'ufunc',ufunc);
+                        'numOfrelativeCellAngles',3,'ufunc',ufunc,...
+                        'dipolePairStrength',dipolePairStrength);
 %                     [ang1, ang2] = reshapeAng(allAngs);
 %                     ang{1,1} = reshapeDist(allBettas);
 %                     ang{1,2} = ang1;
@@ -386,9 +406,9 @@ classdef MC2DLJoutput
 %                       allU = pairU(d,rCutoff,m,...
 %                         'angleDependence',angleDependence,...
 %                         'relativeCellAngles',ang,...
-%                         'numOfrelativeCellAngles',3,'ufunc',ufunc);
-                      allU = pairU(d,rCutoff,m,...
-                        'angleDependence',angleDependence,'ufunc',ufunc);
+% %                         'numOfrelativeCellAngles',3,'ufunc',ufunc);
+%                       allU = pairU(d,rCutoff,m,...
+%                         'angleDependence',angleDependence,'ufunc',ufunc);
                     %%% this is the long range correction - should be fixed
                     %%% for the case of angle dependence
                     %allUlrc = allU - pi*rho*N/rCutoff^4;
@@ -423,15 +443,13 @@ classdef MC2DLJoutput
                             'moveCount','indIndata'...
                             ,'currentmaxdr','simulationParam','runNum',...
                             'allAlphas','allThetas',...
-                            'allAngs','allBettas','-v7.3');
+                            'allAngs','allBettas','dipoleStrength','-v7.3');
                     obj.data = matfile(obj.fileName);
                     obj.data = matfile(obj.fileName,'Writable',true);
                         
                     obj.currentCoords = allCoords;
                     obj.currentDists = allDists;
                     obj.currentAngs = allAngs;
-                    obj.currentAlphas = allAlphas;
-                    obj.currentThetas = allThetas;
                     obj.currentBettas = allBettas;
                     obj.currentU = allU;
                     %obj.Ulrc = allUlrc;
@@ -511,6 +529,7 @@ classdef MC2DLJoutput
                     'angleDependence',angleDependence,...
                     'initialAng',obj.currentAngs,...
                     'initialBettas', obj.currentBettas,...
+                    'dipoleStrength', obj.dipoleStrength,...
                     'maxdAng',maxdAng,...
                     'ufunc',ufunc,...
                     'hardCoreRepRad',hardCoreRepRad,...
@@ -528,10 +547,7 @@ classdef MC2DLJoutput
 %                obj.currentAlphas = finalAlphas;
 %                obj.currentThetas = finalThetas;
                 obj.currentBettas = finalBettas;
-            
-                obj.currentAlphas = finalAlphas;
-                obj.currentThetas = finalThetas;
-                
+                            
                 % long range correction
                 obj.Ulrc = obj.currentU + 4*pi*N*rho/((2-m)*rCutoff^(m-2));
                 if obj.simulationParam.pressure
@@ -667,13 +683,13 @@ classdef MC2DLJoutput
                    s(:,:,1) = obj.data.allBettas(:,:);
                    obj.data.allBettas = s;
  
-                   s(:,:,2) = newAlphas(:,:,1);
-                   s(:,:,1) = obj.data.allAlphas(:,:);
-                   obj.data.allAlphas = s;
-                   s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
-                   s(:,:,2) = newThetas(:,:,1);
-                   s(:,:,1) = obj.data.allThetas(:,:);
-                   obj.data.allThetas = s;
+%                   s(:,:,2) = newAlphas(:,:,1);
+%                   s(:,:,1) = obj.data.allAlphas(:,:);
+%                   obj.data.allAlphas = s;
+%                   s = zeros(obj.simulationParam.N,obj.simulationParam.N,2);
+%                   s(:,:,2) = newThetas(:,:,1);
+%                   s(:,:,1) = obj.data.allThetas(:,:);
+%                   obj.data.allThetas = s;
  
  
                     clear s;
@@ -684,8 +700,8 @@ classdef MC2DLJoutput
 %                    obj.data.allThetas(:,:,obj.indIndata+1) = newThetas(:,:,1);
                     obj.data.allBettas(:,:,obj.indIndata+1) = newBettas(:,:,1);
  
-                   obj.data.allAlphas(:,:,obj.indIndata+1) = newAlphas(:,:,1);
-                   obj.data.allThetas(:,:,obj.indIndata+1) = newThetas(:,:,1);
+%                   obj.data.allAlphas(:,:,obj.indIndata+1) = newAlphas(:,:,1);
+%                   obj.data.allThetas(:,:,obj.indIndata+1) = newThetas(:,:,1);
  
 
                 end
@@ -1027,7 +1043,8 @@ classdef MC2DLJoutput
           end 
           
           plotParticles(obj.data.allCoords(:,:,ind),obj.simulationParam.L...
-              ,obj.simulationParam.r,obj.data.allAngs(1,:,ind));
+              ,obj.simulationParam.r,'angles',obj.data.allAngs(1,:,ind),...
+              'dipoleStrength',obj.dipoleStrength);
           title(['snapshot of step: ' num2str(step)]);
        end
        
