@@ -1,6 +1,0 @@
-function str = nowdatetimestr()
-    d1 = datevec(now);
-    str = strcat(int2str(d1(3)),int2str(d1(2))...
-        ,int2str(d1(1)),'_',int2str(d1(4)),int2str(d1(5))...
-        ,int2str(floor(d1(6))));
-end
