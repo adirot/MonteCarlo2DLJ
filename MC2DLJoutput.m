@@ -484,8 +484,6 @@ classdef MC2DLJoutput
                 numOfruns2save = N*saveEvery;
             end
             
-            totSec = 0;
-            tic;
             sweepCount = 0;
             totSec = 0;
             
@@ -1908,16 +1906,6 @@ function [ang1, ang2] = reshapeAng(allAngs)
     end
     ang1 = ang1';
     ang2 = ang2';
-end
-
-function [ang1, ang2] = reshapeAng(allAngs)
-    N = length(allAngs);
-    ang1 = [];
-    ang2 = [];
-    for i = 1:(N-1)
-        ang1 = [ang1 ones(1,N-i)*allAngs(i)]; 
-        ang2 = [ang2 allAngs(1,(i+1):N)];
-    end
 end
 
 function meanProp = my_mean(prop)
