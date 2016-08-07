@@ -84,7 +84,7 @@ TalkEvery = Results.TalkEvery;
 dipoleStrength = Results.dipoleStrength;
 
 if isempty(ufunc)
-    ufunc = @(r) (((1./r).^12)-((1./r).^m));
+    ufunc = @(r,m) (((1./r).^12)-((1./r).^m));
 end
 
 % initiate virables
@@ -99,6 +99,7 @@ else
 %    particlesAlphas = [];
 %    particlesThetas = [];
     particlesBettas = [];
+    particlesAngs = [];
 end
 U = initialU;
 if ~isempty(virial)
@@ -194,6 +195,7 @@ for step = 1:Nsteps
 %                 newAlphas = [];
 %                 newThetas = [];
                 newBettas = [];
+                newParticlesAngs = [];
             end
 
             % calculate the change in energy

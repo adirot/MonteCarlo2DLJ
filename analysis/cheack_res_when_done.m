@@ -1,4 +1,5 @@
 %% check results when run is done
+%s = '_hcr_';
 
 N = M.simulationParam.N;
 T = M.simulationParam.T;
@@ -7,13 +8,13 @@ m = M.simulationParam.m;
 
 % U,P vs. step
 [M, h] = M.plotPropVsStep('U');
-saveas(h,['UvsStepN' num2str(N) 'T' my_num2str(T) 'm' num2str(m) 'angdep' '.fig']);
-saveas(h,['UvsStepN' num2str(N) 'T' my_num2str(T) 'm' num2str(m) 'angdep' '.jpg']);
+saveas(h,['UvsStep' s M.fileName(startind:end-4) '.fig']);
+saveas(h,['UvsStepN' s M.fileName(startind:end-4) 'angdep' '.jpg']);
 close all;
     
 [M, h] = M.plotPropVsStep('P');
-saveas(h,['PvsStepN' num2str(N) 'T' my_num2str(T) 'm' num2str(m) 'angdep' '.fig']);
-saveas(h,['PvsStepN' num2str(N) 'T' my_num2str(T) 'm' num2str(m) 'angdep' '.jpg']);
+saveas(h,['PvsStepN' s M.fileName(startind:end-4) '.fig']);
+saveas(h,['PvsStepN' s M.fileName(startind:end-4) '.jpg']);
 close all;
 
 disp('ploted U,P vs step');
@@ -32,11 +33,9 @@ ylabel('Energy or Pressure variance');
 title(['variance for Energy and Pressure Vs. steps, T = '...
    num2str(M.simulationParam.T) ' N = '...
    num2str(M.simulationParam.N) ' \rho = '... 
-   num2str(M.simulationParam.rho) ' angle dep']);
+   num2str(M.simulationParam.rho) s]);
 
-name = ['varUPvsSteps_T' my_num2str(M.simulationParam.T)...
-   'N' my_num2str(M.simulationParam.N) 'rho'...
-   my_num2str(M.simulationParam.rho) 'angdep'];
+name = ['varUPvsSteps' s M.fileName(startind:end-4)];
 saveas(gcf,[name '.fig']);
 saveas(gcf,[name '.jpg']);
 close all;
@@ -54,11 +53,9 @@ ylabel('Energy or Pressure variance of variance');
 title(['variance of variance for Energy and Pressure Vs. steps, T = '...
    num2str(M.simulationParam.T) ' N = '...
    num2str(M.simulationParam.N) ' \rho = '... 
-   num2str(M.simulationParam.rho) ' angle dep']);
+   num2str(M.simulationParam.rho) s]);
 
-name = ['varVarUPvsSteps_T' my_num2str(M.simulationParam.T)...
-   'N' my_num2str(M.simulationParam.N) 'rho'...
-   my_num2str(M.simulationParam.rho) 'angdep'];
+name = ['varVarUPvsSteps' s M.fileName(startind:end-4) ];
 saveas(gcf,[name '.fig']);
 saveas(gcf,[name '.jpg']);
 close all;
@@ -67,9 +64,7 @@ disp('ploted var var U,P vs step');
 
 % RDF
 plot(M.data.RDFbins,mean(M.data.RDFhisto,3));
-name = ['RDF_T' my_num2str(M.simulationParam.T)...
-   'N' my_num2str(M.simulationParam.N) 'rho'...
-   my_num2str(M.simulationParam.rho) 'angdep'];
+name = ['RDF' s M.fileName(startind:end-4)];
 saveas(gcf,[name '.fig']);
 saveas(gcf,[name '.jpg']);
 close all;
@@ -78,9 +73,7 @@ disp('ploted RDF');
 
 
 % snapshots
-name = ['snapshot_T' my_num2str(M.simulationParam.T)...
-   'N' my_num2str(M.simulationParam.N) 'rho'...
-   my_num2str(M.simulationParam.rho) 'angdep'];
+name = ['snapshot' s M.fileName(startind:end-4)];
 M.showStep('first');
 saveas(gcf,[name '1.fig']);
 saveas(gcf,[name '1.jpg']);

@@ -241,10 +241,10 @@ classdef MC2DLJoutput
                     
                     if isempty(ufunc)
                         if hcr
-                            ufunc = @(r) (-((1./r).^m));
+                            ufunc = @(r,m) (-((1./r).^m));
                             ufuncstr = '_hcr_';
                         else
-                            ufunc = @(r) (((1./r).^12)-((1./r).^m));
+                            ufunc = @(r,m) (((1./r).^12)-((1./r).^m));
                             ufuncstr = '';
                         end
                     else
@@ -483,7 +483,7 @@ classdef MC2DLJoutput
             angleDependent = obj.simulationParam.angleDependent;
             angleDependence = obj.simulationParam.angleDependence;
             maxdAng = obj.simulationParam.maxdAng;
-            ufunc = obj.simulationParam.ufunc;
+            ufunc = str2func(func2str(obj.simulationParam.ufunc));
             hcr = obj.simulationParam.hcr;
             if hcr
                 hardCoreRepRad = 1;
@@ -1042,9 +1042,15 @@ classdef MC2DLJoutput
               
           end 
           
-          plotParticles(obj.data.allCoords(:,:,ind),obj.simulationParam.L...
-              ,obj.simulationParam.r,'angles',obj.data.allAngs(1,:,ind),...
-              'dipoleStrength',obj.dipoleStrength);
+          if obj.simulationParam.angleDependent
+                plotParticles(obj.data.allCoords(:,:,ind),obj.simulationParam.L...
+                    ,obj.simulationParam.r,'angles',obj.data.allAngs(1,:,ind),...
+                    'dipoleStrength',obj.dipoleStrength);
+          else
+              plotParticles(obj.data.allCoords(:,:,ind),obj.simulationParam.L...
+                    ,obj.simulationParam.r,...
+                    'dipoleStrength',obj.dipoleStrength);
+          end
           title(['snapshot of step: ' num2str(step)]);
        end
        

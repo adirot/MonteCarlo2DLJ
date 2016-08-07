@@ -1,6 +1,6 @@
 %% get all rho distributions, mean over a few simulations
 numOfSquares = 16^2;
-folderName = 'rhoDist/';
+folderName = 'hcr/';
 
 totSec = 0;
 tic; 
@@ -11,7 +11,7 @@ for t = [1 1.5 2]
     for r = 0.1
         rind = rind + 1;
         mind = 0;
-        for m = 3
+        for m = [3 6]
             disp([num2str(tind) num2str(rind) num2str(mind)]);
             mind = mind + 1;
             
@@ -33,8 +33,8 @@ for t = [1 1.5 2]
                     end
                 end
                 [M, rho{tind,rind,mind,ii}, PL{tind,rind,mind,ii},...
-                cellsInSq{tind,rind,mind,ii}] =...
-                M.calcRhoDistrib(numOfSquares);
+                    cellsInSq{tind,rind,mind,ii}] =...
+                    M.calcRhoDistrib(numOfSquares,'startFrom',4000);
                 PLN{tind,rind,mind,ii} = ...
                     PL{tind,rind,mind,ii}.*(0:M.simulationParam.N);
             
