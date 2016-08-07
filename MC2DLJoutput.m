@@ -154,7 +154,7 @@ classdef MC2DLJoutput
                         calcDists(obj.currentCoords,obj.simulationParam.L);
                     obj.currentU = obj.data.allU(1,obj.indIndata);
                     
-                    if isempty(obj.data.dipoleStrength)
+                    if ~existInMatfile(obj.fileName,'dipoleStrength')
                         obj.dipoleStrength = ones(1,obj.simulationParam.N);
                     else
                         obj.dipoleStrength = obj.data.dipoleStrength;
@@ -934,7 +934,7 @@ classdef MC2DLJoutput
        % PL(rho) = histnumOfPartInSquare(rho)/(indIndata*numOfSquares);
        % To get the probability that a particle will be found in a
        % subsystem with a spesific density:
-       % PLN(rho) = numOfPartInSquare(rho)*histnumOfPartInSquare(rho)/N
+       % PLN(rho) = (0:N).*histnumOfPartInSquare/N
        
        p = inputParser();
        addOptional(p, 'plotHist', false); 
