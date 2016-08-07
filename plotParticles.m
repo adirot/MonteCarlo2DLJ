@@ -120,9 +120,16 @@ for i = 1:length(uniDipoleStrength)
     h(i) = plot(0,0,'color',cmap(i,:), 'visible', 'off');
     leg{1,i} = num2str(uniDipoleStrength(i));
 end
-l = legend(h, leg);
-t = get(l,'title');
-set(t,'string','Dipole strength');
+if numOfColors <= 10
+    l = legend(h, leg);
+    try
+        t = get(l,'title');
+        set(t,'string','Dipole strength');
+    end
+else
+    colormap(cmap);
+    lcolorbar(leg,'fontweight','bold');
+end
 
     function plotCircle(x,y,r,varargin)
         p = inputParser();

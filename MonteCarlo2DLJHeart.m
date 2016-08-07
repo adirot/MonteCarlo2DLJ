@@ -84,7 +84,7 @@ TalkEvery = Results.TalkEvery;
 dipoleStrength = Results.dipoleStrength;
 
 if isempty(ufunc)
-    ufunc = @(r) 4*(((1./r).^12)-((1./r).^m));
+    ufunc = @(r) (((1./r).^12)-((1./r).^m));
 end
 
 % initiate virables
