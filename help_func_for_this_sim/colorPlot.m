@@ -16,7 +16,7 @@ addOptional(p, 'length2plot', []);
 addOptional(p, 'plotFrom', []);
 addOptional(p, 'colormap','jet');
 addOptional(p, 'figHandle', []);
-addOptional(p, 'lineStyle', '+');
+addOptional(p, 'lineStyle', '-');
 
 parse(p, varargin{:});
 Results = p.Results;
