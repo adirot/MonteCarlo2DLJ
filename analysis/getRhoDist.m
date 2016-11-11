@@ -23,16 +23,43 @@ for t = inputT
                 my_num2str(m) '*.mat']);
             list = {list.name}';      
             numOfRuns = length(list);
+            
+            if isempty(list)
+                disp(['Missing file: T = ' num2str(t) ' rho = '...
+                    num2str(r) ' m = ' num2str(m)]);
+                
+                logFileInit = [folderName 'rhoDistrib_T' my_num2str(t)...
+                    'rho' my_num2str(r) 'm' num2str(m)...
+                    'numOfSquares' num2str(numOfSquares) 'missing_file'];
+                
+                if and(tind == 1,and(rind == 1,mind == 1))
+                    oldLogFileName = [];
+                else
+                    oldLogFileName = newLogFileName;
+                end
+                totSec = totSec + toc;
+                newLogFileName =...
+                    createLogFile(logFileInit,oldLogFileName,totSec);
 
-            for ii = 1:numOfRuns
-                try
-                    M = MC2DLJoutput([folderName list{ii,1}]);
-                    filelist{1,fileListind} = [folderName list{ii,1}];
-                    fileListind = fileListind + 1;
-                    
+            else
+
+                for ii = 1:numOfRuns
+                    try
+                        M = MC2DLJoutput([folderName list{ii,1}]);
+                        filelist{1,fileListind} = [folderName list{ii,1}];
+                        fileListind = fileListind + 1;
+                    catch
+                        if isempty(list)
+                            disp(['Missing file: T = ' num2str(t) ' rho = '...
+                                num2str(r) ' m = ' num2str(m)]);
+                        else
+                            disp(['Unknown error in : T = ' num2str(t) ' rho = '...
+                                num2str(r) ' m = ' num2str(m)]);
+                        end
+                    end
                     [M, rho{tind,rind,mind,ii}, PL{tind,rind,mind,ii},...
-                    cellsInSq{tind,rind,mind,ii}] =...
-                    M.calcRhoDistrib(numOfSquares,'startFrom',4000);
+                        cellsInSq{tind,rind,mind,ii}] =...
+                        M.calcRhoDistrib(numOfSquares,'startFrom',4000);
                     PLN{tind,rind,mind,ii} = ...
                         PL{tind,rind,mind,ii}.*(0:M.simulationParam.N);
 
@@ -50,7 +77,7 @@ for t = inputT
                     %create log file
                     logFileInit = [folderName 'rhoDistrib_T' my_num2str(t)...
                         'rho' my_num2str(r) 'm' num2str(m)...
-                        'numOfSquares' num2str(numOfSquares) list{ii,1}];
+                        'numOfSquares' num2str(numOfSquares)];
                     if and(tind == 1,and(rind == 1,and(mind == 1,ii == 1)))
                         oldLogFileName = [];
                     else
@@ -59,73 +86,37 @@ for t = inputT
                     totSec = totSec + toc;
                     newLogFileName =...
                         createLogFile(logFileInit,oldLogFileName,totSec);
-
-                catch
-                    if isempty(list)
-                        disp(['Missing file: T = ' num2str(t) ' rho = '...
-                            num2str(r) ' m = ' num2str(m)]);
-                        
-                        %create log file
-                        logFileInit = [folderName 'rhoDistrib_T' my_num2str(t)...
-                            'rho' my_num2str(r) 'm' num2str(m)...
-                            'numOfSquares' num2str(numOfSquares) 'missingFile' list{ii,1}];
-                        if and(tind == 1,and(rind == 1,and(mind == 1,ii == 1)))
-                            oldLogFileName = [];
-                        else
-                            oldLogFileName = newLogFileName;
-                        end
-                        totSec = totSec + toc;
-                        newLogFileName =...
-                            createLogFile(logFileInit,oldLogFileName,totSec);
-                    else
-                        disp(['Unknown error in : T = ' num2str(t) ' rho = '...
-                            num2str(r) ' m = ' num2str(m)]);
-                        
-                        %create log file
-                        logFileInit = [folderName 'rhoDistrib_T' my_num2str(t)...
-                            'rho' my_num2str(r) 'm' num2str(m)...
-                            'numOfSquares' num2str(numOfSquares) 'unknownError' list{ii,1}];
-                        if and(tind == 1,and(rind == 1,and(mind == 1,ii == 1)))
-                            oldLogFileName = [];
-                        else
-                            oldLogFileName = newLogFileName;
-                        end
-                        totSec = totSec + toc;
-                        newLogFileName =...
-                            createLogFile(logFileInit,oldLogFileName,totSec);
-                    end
                 end
+                % avg
+                PLavg{tind,rind,mind} = PLavg{tind,rind,mind}/numOfRuns;
+                PLNavg{tind,rind,mind} = PLNavg{tind,rind,mind}/numOfRuns;
+
+                % plot
+                plotArea =...
+                    sum(rho{tind,rind,mind,1}(2)*PLavg{tind,rind,mind});
+
+                plot(rho{tind,rind,mind,1},PLavg{tind,rind,mind}/plotArea);
+
+                name = [folderName 'rhoDistrib_avg_Psubsys_T' my_num2str(t)...
+                    'rho' my_num2str(r) 'm' my_num2str(m)...
+                    'numOfSquares' num2str(numOfSquares)];
+                title(name);
+                saveas(gcf, [name '.fig']);
+                saveas(gcf, [name '.jpg']);
+                close all;
+
+                plotArea =...
+                    sum(rho{tind,rind,mind,1}(2)*PLNavg{tind,rind,mind});
+
+                plot(rho{tind,rind,mind,1},PLNavg{tind,rind,mind}/plotArea);
+
+                name = [folderName 'rhoDistrib_avg_Pcells_T' my_num2str(t)...
+                    'rho' my_num2str(r) 'm' my_num2str(m)];
+                title(name);
+                saveas(gcf, [name '.fig']);
+                saveas(gcf, [name '.jpg']);
+                close all;
             end
-            % avg
-            PLavg{tind,rind,mind} = PLavg{tind,rind,mind}/numOfRuns;
-            PLNavg{tind,rind,mind} = PLNavg{tind,rind,mind}/numOfRuns;
-            
-            % plot
-            plotArea =...
-                sum(rho{tind,rind,mind,1}(2)*PLavg{tind,rind,mind});
-            
-            plot(rho{tind,rind,mind,1},PLavg{tind,rind,mind}/plotArea);
-            
-            name = [folderName 'rhoDistrib_avg_Psubsys_T' my_num2str(t)...
-                'rho' my_num2str(r) 'm' my_num2str(m)...
-                'numOfSquares' num2str(numOfSquares)];
-            title(name);
-            saveas(gcf, [name '.fig']);
-            saveas(gcf, [name '.jpg']);
-            close all;
-            
-            plotArea =...
-                sum(rho{tind,rind,mind,1}(2)*PLNavg{tind,rind,mind});
-            
-            plot(rho{tind,rind,mind,1},PLNavg{tind,rind,mind}/plotArea);
-            
-            name = [folderName 'rhoDistrib_avg_Pcells_T' my_num2str(t)...
-                'rho' my_num2str(r) 'm' my_num2str(m)];
-            title(name);
-            saveas(gcf, [name '.fig']);
-            saveas(gcf, [name '.jpg']);
-            close all;
-            
         end
     end
 end
