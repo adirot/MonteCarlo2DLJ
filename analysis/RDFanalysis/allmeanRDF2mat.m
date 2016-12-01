@@ -1,104 +1,162 @@
-steps = {'10';'50'; '100'; '1k'; '2k'; '6k'; '12k'};
-%start = 4000;
+steps = {'10k';'14k';'21k';'24k';'28k';'34k'};
+start = 4000;
+folderName = 'hcr/'; 
 
 tind = 0;
 rind = 0;
 mind = 0;
 
-for t = [0.45,0.6,0.8,1,1.5,2]
+for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
     tind = tind + 1;
     rind = 0;
-    for r = [0.005,0.01,0.05,0.1]
+    for r = [0.005,0.01,0.05,0.1,0.2]
         rind = rind + 1;
         mind = 0;
-        for m = [3,4,5,6]
+        for m = 3
             mind = mind + 1; 
             disp(t); 
             disp(r);
             disp(m);
             disp('-----');
             
-            if ~and(and(tind == 1, rind == 1),mind == 1)
-            list = dir(['*T' my_num2str(t) 'rho' my_num2str(r) '*_m' num2str(m)...
-                '*mat']);
+            list = dir([folderName '*T' my_num2str(t) 'rho'...
+                my_num2str(r) '*_m' num2str(m) '*mat']);
             list = {list.name}';
 
             if length(list) > 1
-                disp('more than one file!');
-            end
-
-            M = MC2DLJoutput(list{1,1});
-
-            if and(and(t == 0.45,r == 0.005), m==4)
-                x = M.data.RDFbins;
+                disp('more than one file!');-
+                
             end
             
-            RDF10{tind,rind,mind} = mean(M.data.RDFhisto(1:10,1:300));
-            RDF50{tind,rind,mind} = mean(M.data.RDFhisto(1:50,1:300));
-            RDF100{tind,rind,mind} = mean(M.data.RDFhisto(1:100,1:300));
-            RDF1k{tind,rind,mind} = mean(M.data.RDFhisto(1:1000,1:300));
-            RDF2k{tind,rind,mind} = mean(M.data.RDFhisto(1:2000,1:300));
-            RDF6k{tind,rind,mind} = mean(M.data.RDFhisto(1:6000,1:300));
+            if isempty(list)
+                disp('missing file!');
+            else
+                M = MC2DLJoutput([folderName list{1,1}]);
+                if length(list) > 1
+                    if M.indIndata < 1000
+                        M = MC2DLJoutput([folderName list{2,1}]);
+                    end
+                end
             
-            logRDF10{tind,rind,mind} = -log(RDF10{tind,rind,mind});
-            logRDF50{tind,rind,mind} = -log(RDF50{tind,rind,mind});
-            logRDF100{tind,rind,mind} = -log(RDF100{tind,rind,mind});
-            logRDF1k{tind,rind,mind} = -log(RDF1k{tind,rind,mind});
-            logRDF2k{tind,rind,mind} = -log(RDF2k{tind,rind,mind});
-            logRDF6k{tind,rind,mind} = -log(RDF6k{tind,rind,mind});
-            try
-                RDF12k{tind,rind,mind} = mean(M.data.RDFhisto(1:12000,1:300));
-                logRDF12k{tind,rind,mind} = -log(mean(M.data.RDFhisto(1:12000,1:300)));
-            catch
-                RDF12k{tind,rind,mind} = [];
-                logRDF12k{tind,rind,mind} = [];
-            end
-            
-            goodInd = ~or(isnan(logRDF10{tind,rind,mind}), logRDF10{tind,rind,mind} == inf);
-            logRDF10{tind,rind,mind} = logRDF10{tind,rind,mind}(goodInd);
-            xlogRDF10{tind,rind,mind} = x(goodInd);
-        
-            
-            goodInd = ~or(isnan(logRDF50{tind,rind,mind}), logRDF50{tind,rind,mind} == inf);
-            logRDF50{tind,rind,mind} = logRDF50{tind,rind,mind}(goodInd);
-            xlogRDF50{tind,rind,mind} = x(goodInd);
-            
-            
-            goodInd = ~or(isnan(logRDF100{tind,rind,mind}), logRDF100{tind,rind,mind} == inf);
-            logRDF100{tind,rind,mind} = logRDF100{tind,rind,mind}(goodInd);
-            xlogRDF100{tind,rind,mind} = x(goodInd);
-            
-            
-            goodInd = ~or(isnan(logRDF1k{tind,rind,mind}), logRDF1k{tind,rind,mind} == inf);
-            logRDF1k{tind,rind,mind} = logRDF1k{tind,rind,mind}(goodInd);
-            xlogRDF1k{tind,rind,mind} = x(goodInd);
+                if and(and(tind == 1,rind == 1), mind==2)
+                    x = M.data.RDFbins;
+                end
 
-            
-            goodInd = ~or(isnan(logRDF2k{tind,rind,mind}), logRDF2k{tind,rind,mind} == inf);
-            logRDF2k{tind,rind,mind} = logRDF2k{tind,rind,mind}(goodInd);
-            xlogRDF2k{tind,rind,mind} = x(goodInd);
-            
-            
-            goodInd = ~or(isnan(logRDF6k{tind,rind,mind}), logRDF6k{tind,rind,mind} == inf);
-            logRDF6k{tind,rind,mind} = logRDF6k{tind,rind,mind}(goodInd);
-            xlogRDF6k{tind,rind,mind} = x(goodInd);
+                try
+                    RDF10k{tind,rind,mind} = mean(M.data.RDFhisto(1,1:300,start:10000),3);
+                    logRDF10k{tind,rind,mind} = -log(RDF10k{tind,rind,mind});
+                catch
+                    RDF10k{tind,rind,mind} = [];
+                    logRDF10k{tind,rind,mind} = [];
+                end
 
-            try
-                goodInd = ~or(isnan(logRDF12k{tind,rind,mind}), logRDF12k{tind,rind,mind} == inf);
-                logRDF12k{tind,rind,mind} = logRDF12k{tind,rind,mind}(goodInd);
-                xlogRDF12k{tind,rind,mind} = x(goodInd);
-            catch
-                xlogRDF12k{tind,rind,mind} = [];
-            end
+                try
+                    RDF14k{tind,rind,mind} = mean(M.data.RDFhisto(1,1:300,start:14000),3);
+                    logRDF14k{tind,rind,mind} = -log(RDF14k{tind,rind,mind});
+                catch
+                    RDF14k{tind,rind,mind} = [];
+                    logRDF14k{tind,rind,mind} = [];
+
+                end
+
+                try
+                    RDF21k{tind,rind,mind} = mean(M.data.RDFhisto(1,1:300,start:21000),3);
+                    logRDF21k{tind,rind,mind} = -log(RDF21k{tind,rind,mind});
+
+                catch
+                    RDF21k{tind,rind,mind} = [];
+                    logRDF21k{tind,rind,mind} = [];
+
+                end
+
+                try
+                    RDF24k{tind,rind,mind} = mean(M.data.RDFhisto(1,1:300,start:24000),3);
+                    logRDF24k{tind,rind,mind} = -log(RDF24k{tind,rind,mind});
+
+                catch
+                    RDF24k{tind,rind,mind} = [];
+                    logRDF24k{tind,rind,mind} = [];
+
+                end
+
+                try
+                    RDF28k{tind,rind,mind} = mean(M.data.RDFhisto(1,1:300,start:28000),3);
+                    logRDF28k{tind,rind,mind} = -log(RDF28k{tind,rind,mind});
+
+                catch
+                    RDF28k{tind,rind,mind} = [];
+                    logRDF28k{tind,rind,mind} = [];
+
+                end
+
+                try
+                    RDF34k{tind,rind,mind} = mean(M.data.RDFhisto(1,1:300,start:34000),3);
+                    logRDF34k{tind,rind,mind} = -log(RDF34k{tind,rind,mind});
+
+                catch
+                    RDF34k{tind,rind,mind} = [];
+                    logRDF34k{tind,rind,mind} = [];
+                end
+
+                %'10k';'14k';'21k';'24k';'28k';'34k'
+                try
+                    goodInd = ~or(isnan(logRDF10k{tind,rind,mind}), logRDF10k{tind,rind,mind} == inf);
+                    logRDF10k{tind,rind,mind} = logRDF10k{tind,rind,mind}(goodInd);
+                    xlogRDF10k{tind,rind,mind} = x(goodInd);
+                catch
+                    xlogRDF10k{tind,rind,mind} = [];
+                end
+
+                try
+                    goodInd = ~or(isnan(logRDF14k{tind,rind,mind}), logRDF14k{tind,rind,mind} == inf);
+                    logRDF14k{tind,rind,mind} = logRDF14k{tind,rind,mind}(goodInd);
+                    xlogRDF14k{tind,rind,mind} = x(goodInd);
+                catch
+                    xlogRDF14k{tind,rind,mind} = [];
+                end
+
+                try
+                    goodInd = ~or(isnan(logRDF21k{tind,rind,mind}), logRDF21k{tind,rind,mind} == inf);
+                    logRDF21k{tind,rind,mind} = logRDF21k{tind,rind,mind}(goodInd);
+                    xlogRDF21k{tind,rind,mind} = x(goodInd);
+                catch
+                    xlogRDF21k{tind,rind,mind} = [];
+                end
+
+
+                try
+                    goodInd = ~or(isnan(logRDF24k{tind,rind,mind}), logRDF24k{tind,rind,mind} == inf);
+                    logRDF24k{tind,rind,mind} = logRDF24k{tind,rind,mind}(goodInd);
+                    xlogRDF24k{tind,rind,mind} = x(goodInd);
+                catch
+                    xlogRDF24k{tind,rind,mind} = [];
+                end
+
+                try
+                    goodInd = ~or(isnan(logRDF28k{tind,rind,mind}), logRDF28k{tind,rind,mind} == inf);
+                    logRDF28k{tind,rind,mind} = logRDF28k{tind,rind,mind}(goodInd);
+                    xlogRDF28k{tind,rind,mind} = x(goodInd);
+                catch
+                    xlogRDF28k{tind,rind,mind} = [];
+                end
+
+                try
+                    goodInd = ~or(isnan(logRDF34k{tind,rind,mind}), logRDF34k{tind,rind,mind} == inf);
+                    logRDF34k{tind,rind,mind} = logRDF34k{tind,rind,mind}(goodInd);
+                    xlogRDF34k{tind,rind,mind} = x(goodInd);
+                catch
+                    xlogRDF34k{tind,rind,mind} = [];
+                end
 
             end
         end 
     end
 end
 
-save('logRDFdata2.mat','logRDF10','xlogRDF10','logRDF50','xlogRDF50','logRDF100','xlogRDF100',...
-    'logRDF1k','xlogRDF1k','logRDF2k','xlogRDF2k','logRDF6k','xlogRDF6k',...
-    'logRDF12k','xlogRDF12k','RDF10','RDF50','RDF100',...
-    'RDF1k','RDF2k','RDF6k',...
-    'RDF12k');
+save('logRDFdataHCR.mat','logRDF10k','xlogRDF10k','logRDF14k',...
+    'xlogRDF14k','logRDF21k','xlogRDF21k',...
+    'logRDF24k','xlogRDF24k','logRDF28k','xlogRDF28k',...
+    'logRDF34k','xlogRDF34k',...
+    'RDF10k','RDF14k','RDF21k',...
+    'RDF24k','RDF28k','RDF34k');
 
