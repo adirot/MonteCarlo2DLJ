@@ -13,12 +13,15 @@ function [fitresult, mfit, mError, nfit, nError, Tfit, TError, gof] =...
 %  See also FIT, CFIT, SFIT.
 
 p = inputParser();
-addOptional(p, 'plotFig', true);
+addOptional(p, 'plotFig', false);
 addOptional(p, 'freen', false);
 addOptional(p, 'freeTandn', false);
 addOptional(p, 'freeTnbound', false);
 addOptional(p, 'freeTnset', false);
 addOptional(p, 'nset', []);
+addOptional(p, 'hcr', false);
+addOptional(p, 'hcr_set_T', false);
+addOptional(p, 'ignoreZerosAtend', true);
 parse(p, varargin{:});
 Results = p.Results;
 plotFig = Results.plotFig;
@@ -27,6 +30,12 @@ freeTandn = Results.freeTandn;
 freeTnbound = Results.freeTnbound;
 freeTnset = Results.freeTnset;
 nset = Results.nset; 
+hcr = Results.hcr;
+hcr_set_T = Results.hcr_set_T;
+ignoreZerosAtend = Results.ignoreZerosAtend;
+
+
+fitProblem = false;
 
 if freeTandn
     freen = false;
@@ -60,7 +69,7 @@ if plotFig
                 message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
             
             else
-		if freeTnset
+                if freeTnset
 
                     title(['RDF with fit for T = ' num2str(T) ' \rho = '...
                         num2str(rho) ' m = ' num2str(m) ' n set to ' num2str(nset)]);
@@ -71,6 +80,19 @@ if plotFig
                         num2str(rho) ' m = ' num2str(m) ' n set to 12']);
 
                     message = sprintf(['4*(1/' num2str(T) ')*((1/x)^{12} - (1/x)^m)']);
+                    if hcr
+                        title(['RDF with fit for T = ' num2str(T) ' \rho = '...
+                        num2str(rho) ' m = ' num2str(m) ' hcr ']);
+
+                        message = sprintf('(1/T)*(- (1/x)^m)');
+                    else
+                        if hcr_set_T
+                            title(['RDF with fit for T = ' num2str(T) ' \rho = '...
+                            num2str(rho) ' m = ' num2str(m) ' hcr with set T']);
+
+                            message = sprintf(['(1/' num2str(T) ')*(- (1/x)^m)']);
+                        end 
+                    end
                 end
             end
         end
@@ -105,6 +127,15 @@ else
             else
                 ft = fittype( ['4*(1/' num2str(T) ')*((1/x)^12 - (1/x)^m)'],...
                         'independent', 'x', 'dependent', 'y' );
+                if hcr
+                    ft = fittype('(1/T)*(- (1/x)^m)',...
+                        'independent', 'x', 'dependent', 'y' );
+                else
+                    if hcr_set_T
+                        ft = fittype(['(1/' num2str(T) ')*(- (1/x)^m)'],...
+                            'independent', 'x', 'dependent', 'y' );
+                    end 
+                end
             end
         end
     end
@@ -117,8 +148,23 @@ end
 
 
 for i = 1:Nplots
-    y = ys(i,:);
-    x = xs(i,:);
+    
+    %  hcr should only be done for r > 1. for 300 bins and rcutoff 10 its
+    %  from 31
+    if hcr
+        sind = 31;
+    else
+        sind = 1;
+    end
+    
+    if ignoreZerosAtend
+        lind = max(find(ys(i,:)));
+    else
+        sind = 300;
+    end
+    
+    y = ys(i,sind:lind);
+    x = xs(i,sind:lind);
     [xData, yData] = prepareCurveData( x, y );
 
     % stop warning about no starting point provided
@@ -128,45 +174,125 @@ for i = 1:Nplots
 
     % Fit model to data.
 %     [fitresult, gof] = fit( xData, yData, ft, opts );
-    [fitresult, gof] = fit( xData, yData, ft);
-    conf = confint(fitresult);
-    coeff = coeffvalues(fitresult);
-    
-    mfit(i) = coeff(1);
-    mError(i,1) = conf(1,1);
-    mError(i,2) = conf(2,1);
-    nfit = []; nError = [];
-    Tfit = []; TError = [];
-    
-    if freen 
-        nfit(i) = coeff(2);
-        nError(i,1) = conf(1,2);
-        nError(i,2) = conf(2,2);
-    else
-        if or(freeTandn,freeTnbound)
-            Tfit(i) = coeff(1);
-            TError(i,1) = conf(1,1);
-            TError(i,2) = conf(2,1);
-            mfit(i) = coeff(2);
-            mError(i,1) = conf(1,2);
-            mError(i,2) = conf(2,2);
-            nfit(i) = coeff(3);
-            nError(i,1) = conf(1,3);
-            nError(i,2) = conf(2,3);
+     try
+        [fitresult, gof] = fit( xData, yData, ft);
+        conf = confint(fitresult);
+        coeff = coeffvalues(fitresult);
+
+        mfit{i} = coeff(1);
+        mError{i,1} = conf(1,1);
+        mError{i,2} = conf(2,1);
+        nfit = []; nError = [];
+        Tfit = []; TError = [];
+
+        if freen 
+            nfit{i} = coeff(2);
+            nError{i,1} = conf(1,2);
+            nError{i,2} = conf(2,2);
+        else
+            if or(freeTandn,freeTnbound)
+                Tfit{i} = coeff(1);
+                TError{i,1} = conf(1,1);
+                TError{i,2} = conf(2,1);
+                mfit{i} = coeff(2);
+                mError{i,1} = conf(1,2);
+                mError{i,2} = conf(2,2);
+                nfit{i} = coeff(3);
+                nError{i,1} = conf(1,3);
+                nError{i,2} = conf(2,3);
+            end
+
+            if freeTnset
+                Tfit{i} = coeff(1);
+                TError{i,1} = conf(1,1);
+                TError{i,2} = conf(2,1);
+                mfit{i} = coeff(2);
+                mError{i,1} = conf(1,2);
+                mError{i,2} = conf(2,2);
+            end
+        
+                
         end
-	
-        if freeTnset
-            Tfit(i) = coeff(1);
-            TError(i,1) = conf(1,1);
-            TError(i,2) = conf(2,1);
-            mfit(i) = coeff(2);
-            mError(i,1) = conf(1,2);
-            mError(i,2) = conf(2,2);
+        
+        if hcr
+                Tfit{i} = coeff(1);
+                TError{i,1} = conf(1,1);
+                TError{i,2} = conf(2,1);
+                mfit{i} = coeff(2);
+                mError{i,1} = conf(1,2);
+                mError{i,2} = conf(2,2);
+        end
+        
+        if hcr_set_T
+                Tfit{i} = coeff(1);
+                TError{i,1} = conf(1,1);
+                TError{i,2} = conf(2,1);
+                mfit{i} = coeff(2);
+                mError{i,1} = conf(1,2);
+                mError{i,2} = conf(2,2);
         end
             
-    end
+    catch ME
+        conf = [];
+        coeff = [];
+
+        mfit{i} = [];
+        mError{i,1} = [];
+        mError{i,2} = [];
+        nfit = []; nError = [];
+        Tfit = []; TError = [];
+
+        if freen 
+            nfit{i} = [];
+            nError{i,1} = [];
+            nError{i,2} = [];
+        else
+            if or(freeTandn,freeTnbound)
+                Tfit{i} = [];
+                TError{i,1} = [];
+                TError{i,2} = [];
+                mfit{i} = [];
+                mError{i,1} = [];
+                mError{i,2} = [];
+                nfit{i} = [];
+                nError{i,1} = [];
+                nError{i,2} = [];
+            end
+
+            if freeTnset
+                Tfit{i} = [];
+                TError{i,1} = [];
+                TError{i,2} = [];
+                mfit{i} = [];
+                mError{i,1} = [];
+                mError{i,2} = [];
+            end
         
-    if plotFig
+            if hcr
+                Tfit{i} = [];
+                TError{i,1} = [];
+                TError{i,2} = [];
+                mfit{i} = [];
+                mError{i,1} = [];
+                mError{i,2} = [];
+            end
+            if hcr_set_T
+                Tfit{i} = [];
+                TError{i,1} = [];
+                TError{i,2} = [];
+                mfit{i} = [];
+                mError{i,1} = [];
+                mError{i,2} = [];
+            end
+                
+        end        
+            disp('fit problem!');
+            fitProblem = true;
+            disp(ME.message);
+    end
+end
+    
+    if and(plotFig,~fitProblem)
         % Plot fit 
         plot( fitresult );
         %legend( h, 'simulation', 'fit', 'Location', 'NorthEast' );
@@ -208,11 +334,11 @@ for i = 1:Nplots
     end
 end
 
-if plotFig
-    ylim([-3 8])
-    set(findall(gcf,'-property','FontSize'),'FontSize',12);
-
-    % Label axes
-    xlabel( 'distance' );
-    ylabel( '-log(RDF)' );
-end
+% if plotFig
+%     ylim([-3 8])
+%     set(findall(gcf,'-property','FontSize'),'FontSize',12);
+% 
+%     % Label axes
+%     xlabel( 'distance' );
+%     ylabel( '-log(RDF)' );
+% end
