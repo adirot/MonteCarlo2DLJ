@@ -24,7 +24,7 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
             list = {list.name}';
 
             if length(list) > 1
-                disp('more than one file!');-
+                disp('more than one file!');
                 
             end
             
@@ -98,8 +98,8 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
                     logRDF34k{tind,rind,mind} = [];
                 end
 
-                %'10k';'14k';'21k';'24k';'28k';'34k'
                 try
+                                        
                     goodInd = ~or(isnan(logRDF10k{tind,rind,mind}), logRDF10k{tind,rind,mind} == inf);
                     logRDF10k{tind,rind,mind} = logRDF10k{tind,rind,mind}(goodInd);
                     xlogRDF10k{tind,rind,mind} = x(goodInd);

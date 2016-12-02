@@ -5,7 +5,16 @@
 steps = {'10k';'14k';'21k';'24k';'28k';'34k'};
 % {'10';'50'; '100'; '1k'; '2k'; '6k'; '12k'};
 folderName = 'hcr/';
-
+for i = 1:17 
+    for j = 1:5 
+        if ~isempty(xlogRDF10k{i,j}) 
+            plot(xlogRDF10k{i,j},logRDF10k{i,j}(1,1:length(xlogRDF10k{i,j})); 
+            title(['-log(RDF) T = ' num2str(T(i)) ' \rho = ' num2str(rho(j)) ' m = 3']); 
+            saveas(gcf,['hcr/logRDFT' my_num2str(T(i)) 'rho' my_num2str(rho(j)) 'm3hcr.fig']); 
+            disp([num2str(i) '   ' num2str(j)]); 
+        end; 
+    end; 
+end;
 
 
 
@@ -22,7 +31,7 @@ first = true;
 for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
     tind = tind + 1;
     rind = 0;
-    for r = [0.005,0.01,0.05,0.1,0.2]
+    for r = [0.005,0.01,0.05,0.1]
         rind = rind + 1;
         mind = 0;
         for m = 3
@@ -82,7 +91,7 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
 
                 % hcr
                 [fitresult, mfit, mError, nfit, nError, Tfit, TError, gof] =...
-                    createFitRDF(xs, ys, t, r, m, steps, 'hcr',true);
+                    createFitRDF(xs, ys, t, r, m, steps, 'hcr_set_T',true);
                 
                 try
                     allfittedm10k{tind,rind,mind} = mfit{1};

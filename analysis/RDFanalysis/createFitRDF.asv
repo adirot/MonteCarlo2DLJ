@@ -152,8 +152,7 @@ for i = 1:Nplots
     %  hcr should only be done for r > 1. for 300 bins and rcutoff 10 its
     %  from 31
     if hcr
-        [~, hcrInd] = min(abs(xs(i,:)-2));
-        sind = hcrInd + 1;
+        
     else
         sind = 1;
     end
