@@ -197,7 +197,10 @@ classdef MC2DLJoutput
                     end
                     
                     if existInMatfile(obj.fileName,'stepInd')
-                        obj.currentStep = obj.data.stepInd(1,obj.indIndata);
+                        try
+                            obj.currentStep = obj.data.stepInd(1,obj.indIndata);
+                        catch
+                        end
                     else
                         obj.currentSweep = obj.data.sweepInd(1,obj.indIndata);
                     end
@@ -726,7 +729,7 @@ classdef MC2DLJoutput
        end
        
        function [obj, bins, RDFhisto] =...
-               calcRDF(obj,maxDist,numOfBins,varargin)
+                       calcRDF(obj,maxDist,numOfBins,varargin)
             %% calculate 2D radial distribution function, with pediodic boundary
             %% conditions.
             
@@ -954,7 +957,7 @@ classdef MC2DLJoutput
        if isempty(endAt)
             endAt = obj.indIndata;
        end
-       N = obj.simulationParam.N;    
+       N = obj.simulationParam.N;  
            
        if coordsFromObj
            numOfPartInSquare(1,1:numOfSquares) =...
@@ -1125,31 +1128,35 @@ classdef MC2DLJoutput
            obj.data.meanUlrcEq =...
                mean(obj.data.allUlrc(1,firstSteps2ignore:obj.indIndata));
            
-           if isempty(obj.RDFpeakLocs)
-               [obj, ~] = obj.findRDFpeaks();
-           end
+%            if isempty(obj.RDFpeakLocs)
+%                [obj, ~] = obj.findRDFpeaks();
+%            end
            
-           obj.data.meanRDFpeaksEq = ...
-               mean(obj.data.RDFhisto(firstSteps2ignore:obj.indIndata,...
-               obj.RDFpeakLocs));
+%            obj.data.meanRDFpeaksEq = ...
+%                mean(obj.data.RDFhisto(firstSteps2ignore:obj.indIndata,...
+%                obj.RDFpeakLocs));
        end
         
        function [obj,tauP,tauU] = inefficiency(obj,n,varargin)
            % for error calculations. see computer simulation of liquids
-           % page 192
+           % page 192 (n = tau_b)
            
            p = inputParser();
            addOptional(p, 'plotSVsSqrtTau', true);
            addOptional(p, 'saveFigSVsSqrtTau', true);           
            addOptional(p, 'firstSteps2ignore', []);
            addOptional(p, 'keepFigOpen', false);
+           addOptional(p, 'RDFind', []); % if you dont want the peak, but you want specific indexies from the RDF
+           addOptional(p, 'fileNameInit', '');
+           
            parse(p, varargin{:});
            Results = p.Results;
            plotSVsSqrtTau = Results.plotSVsSqrtTau;
            firstSteps2ignore = Results.firstSteps2ignore;
            saveFigSVsSqrtTau = Results.saveFigSVsSqrtTau;
            keepFigOpen = Results.keepFigOpen;
-           
+           RDFind = Results.RDFind;
+           fileNameInit = Results.fileNameInit;
            
            % calculate <A>
            if isempty(firstSteps2ignore)
@@ -1167,14 +1174,26 @@ classdef MC2DLJoutput
                obj = calcMeanWithoutFirstSteps(obj, firstSteps2ignore);
                meanP = obj.data.meanPlrcEq;
                meanU = obj.data.meanUlrcEq;
-               meanRDFpeaks = obj.data.meanRDFpeaksEq;
+               if isempty(RDFind)
+                    meanRDFpeaks = obj.data.meanRDFpeaksEq;
+               else
+                   for ii = 1:length(RDFind)
+                        meanRDFpointInd(ii) = mean(obj.data.RDFhisto(1,RDFind(ii),firstSteps2ignore:obj.data.indIndata),3);
+                   end
+               end
            end
            
            P = obj.data.allPlrc(1,firstSteps2ignore:obj.data.indIndata);
            U = obj.data.allUlrc(1,firstSteps2ignore:obj.data.indIndata);
-           RDFpeaks = obj.RDFhisto(firstSteps2ignore:obj.data.indIndata,...
-               obj.RDFlocs);
-           [~, Npeaks] = size(RDFpeaks);
+           if isempty(RDFind)
+                RDFpeaks = obj.RDFhisto(firstSteps2ignore:obj.data.indIndata,...
+                    obj.RDFlocs);
+                [~, Npeaks] = size(RDFpeaks);
+           else
+               RDFpointInd = obj.data.RDFhisto(1,RDFind,...
+                   firstSteps2ignore:obj.indIndata);
+               
+           end
 
            nt = (obj.indIndata - firstSteps2ignore);
            
@@ -1185,9 +1204,15 @@ classdef MC2DLJoutput
                    
                     Pmeanb(ind) = mean(P(i:(i+n(j)-1)));
                     Umeanb(ind) = mean(U(i:(i+n(j)-1)));
-                    RDFpeaksMeanb(ind,1:Npeaks) =...
-                        mean(RDFpeaks(i:(i+n(j)-1),1:Npeaks));
-                    ind = ind + 1;
+                    if isempty(RDFind)
+                        RDFpeaksMeanb(ind,1:Npeaks) =...
+                            mean(RDFpeaks(i:(i+n(j)-1),1:Npeaks));
+                        ind = ind + 1;
+                    else
+                        RDFpointIndMeanb(ind,1:length(RDFind)) =...
+                            mean(RDFpointInd(1,1:length(RDFind),i:(i+n(j)-1)),3);
+                        ind = ind + 1;
+                    end
                 end
            
                 % calculate sigma^2(<A>b) for all the different tau values
@@ -1195,27 +1220,51 @@ classdef MC2DLJoutput
                 nb(j) = length(Pmeanb);
                 varMeanP(j) = mean((Pmeanb - mean(Pmeanb)).^2);
                 varMeanU(j) = mean((Umeanb - mean(Umeanb)).^2);
-                varMeanRDFpeaks(j,1:Npeaks) =...
-                    mean((RDFpeaksMeanb - mean(RDFpeaksMeanb)).^2);
+                if isempty(RDFind)
+                    varMeanRDFpeaks(j,1:Npeaks) =...
+                        mean((RDFpeaksMeanb - mean(RDFpeaksMeanb)).^2);
+                else
+                    for ii = 1:length(RDFind)
+                        varMeanRDFpointInd(j,ii) =...
+                            mean((RDFpointIndMeanb(:,ii) - mean(RDFpointIndMeanb(:,ii))).^2);
+                    end
+                end
                 Pmeanb = [];
                 Umeanb = [];
-                RDFpeaksMeanb = [];
+                if isempty(RDFind)
+                    RDFpeaksMeanb = [];
+                else
+                    RDFpointIndMeanb = [];
+                end
                 
            end
             
            %calculate sigma^2(A)
            varP = mean((P(:) - meanP).^2);
            varU = mean((U(:) - meanU).^2);
-           varRDFpeaks = mean((RDFpeaks - meanP).^2);
+           if isempty(RDFind)
+               varRDFpeaks = mean((RDFpeaks - meanRDFpeaks).^2);
+           else
+               for ii = 1:length(RDFind)
+                   varRDFpointInd(ii) = mean((RDFpointInd(1,ii,:) - meanRDFpointInd(1,ii)).^2);
+               end
+           end
 
            % calculate tau
            tauP = n.*varMeanP/varP;
            tauU = n.*varMeanU/varU;
-           
-           for i = 1:Npeaks
-                tauRDFpeaks(i,:) = n.*varMeanRDFpeaks(:,i)/varRDFpeaks(:,i);
-                tauRDFpeaksX(i,:) = sqrt(n);
-                RDFpeaksLeg{1,i} = ['peak num: ' num2str(i)];
+           if isempty(RDFind)
+               for i = 1:Npeaks
+                    tauRDFpeaks(i,:) = n.*varMeanRDFpeaks(:,i)/varRDFpeaks(:,i);
+                    tauRDFpeaksX(i,:) = sqrt(n);
+                    RDFpeaksLeg{1,i} = ['peak num: ' num2str(i)];
+               end
+           else
+               for i = 1:length(RDFind)
+                    tauRDFpointInd(i,:) = n.*varMeanRDFpointInd(:,i)'/varRDFpointInd(:,i)';
+                    tauRDFpointIndX(i,:) = sqrt(n);
+                    RDFpointIndLeg{1,i} = ['point ind: ' num2str(RDFind(i))];
+               end
            end
            
            if saveFigSVsSqrtTau
@@ -1226,8 +1275,9 @@ classdef MC2DLJoutput
                figure;
                plot(sqrt(n),tauP);
                hold on;
-               title('$$t_A^c$$ for the pressure and energy',...
-                   24,'Interpreter','latex');
+%                title('$$t_A^c$$ for the pressure and energy',...
+%                    24,'Interpreter','latex');
+               title('$$t_A^c$$ for the pressure and energy');
                xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
                ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
                    'FontSize',24,'Interpreter','latex');
@@ -1238,24 +1288,39 @@ classdef MC2DLJoutput
                    fileName = ['SVsSqrtTauN' num2str(obj.simulationParam.N)... 
                        'T' my_num2str(obj.simulationParam.T)...
                        'rho' my_num2str(obj.simulationParam.rho)];
-                   saveas(gcf,[fileName '.fig']);
-                   saveas(gcf,[fileName '.jpg']);
+                   saveas(gcf,[fileNameInit fileName '.fig']);
+                   saveas(gcf,[fileNameInit fileName '.jpg']);
                end
 
-               
-               colorPlot(tauRDFpeaksX,tauRDFpeaks,'addLegend',RDFpeaksLeg);
-               title('$$t_A^c$$ for RDF peaks',...
-                   24,'Interpreter','latex');
-               xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
-               ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
-                   'FontSize',24,'Interpreter','latex');
+               if isempty(RDFind)
+                   colorPlot(tauRDFpeaksX,tauRDFpeaks,'addLegend',RDFpeaksLeg);
+                   %title('$$t_A^c$$ for RDF peaks',24,'Interpreter','latex');
+                   title('$$t_A^c$$ for RDF peaks');
+                   xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
+                   ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
+                       'FontSize',24,'Interpreter','latex');
+               else
+                   colorPlot(tauRDFpointIndX,tauRDFpointInd,'addLegend',RDFpointIndLeg);
+%                    title('$$t_A^c$$ for RDF points',...
+%                        24,'Interpreter','latex');
+                   title('$$t_A^c$$ for RDF points');
+                   xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
+                   ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
+                       'FontSize',24,'Interpreter','latex');
+               end
                
                if saveFigSVsSqrtTau
-                   fileName = ['SVsSqrtTauNRDF' num2str(obj.simulationParam.N)... 
+                   if isempty(RDFind)
+                       s1 = 'RDFpeaks';
+                   else
+                       s1 = 'RDFpoints';
+                   end
+                   fileName = ['SVsSqrtTauN' s1 num2str(obj.simulationParam.N)... 
                        'T' my_num2str(obj.simulationParam.T)...
-                       'rho' my_num2str(obj.simulationParam.rho)];
-                   saveas(gcf,[fileName '.fig']);
-                   saveas(gcf,[fileName '.jpg']);
+                       'rho' my_num2str(obj.simulationParam.rho)... 
+                       'm' num2str(obj.simulationParam.m)];
+                   saveas(gcf,[fileNameInit fileName '.fig']);
+                   saveas(gcf,[fileNameInit fileName '.jpg']);
                end
                
            end
