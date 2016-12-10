@@ -1333,8 +1333,8 @@ classdef MC2DLJoutput
        
        function [obj, varU, varP, steps, varVarU, varVarP] =...
                varOfvar(obj,varargin)
-           % calculate the variance of the variance of P,U as a function of
-           % steps in the simulation.
+           % calculate the variance of the variance of P,U,RDF specific
+           % points as a function of steps in the simulation.
            
            p = inputParser();
            addOptional(p,'startFromStep',0);
@@ -1343,6 +1343,9 @@ classdef MC2DLJoutput
            addOptional(p, 'saveFig', true);
            addOptional(p, 'add2savedFigName', '');
            addOptional(p, 'keepFigOpen', false);
+           addOptional(p, 'RDFind', []); % if you want specific indexies from the RDF
+           addOptional(p, 'fileNameInit', '');
+      
            parse(p, varargin{:});
            Results = p.Results;
            plotVarVsStep = Results.plotVarVsStep;
@@ -1351,6 +1354,8 @@ classdef MC2DLJoutput
            add2savedFigName = Results.add2savedFigName;
            keepFigOpen = Results.keepFigOpen;
            startFromStep = Results.startFromStep;
+           RDFind = Results.RDFind;
+           fileNameInit = Results.fileNameInit;
            
            if startFromStep == 0
                minInd = 1;
@@ -1366,12 +1371,24 @@ classdef MC2DLJoutput
                varVarU(i-minInd+1) = var(varU);
                varP(i-minInd+1) = var(obj.data.allPlrc(1,minInd:i));
                varVarP(i-minInd+1) = var(varP);
+               
+               if ~isempty(RDFind)
+                   for j = 1:length(RDFind)
+                       varRDF(j,i-minInd+1) =...
+                           var(obj.data.RDFhisto(1,RDFind(j),minInd:i));
+                       varVarRDF(j,i-minInd+1) = var(varRDF(j,:));
+                   end
+               end
+               
            end
            
            obj.data.varU = varU;
            obj.data.varP = varP;
+           obj.data.varRDF = varRDF;
+           obj.data.varRDFind = RDFind;
            obj.data.varVarU = varVarU;
            obj.data.varVarP = varVarP;
+           obj.data.varVarRDF = varVarRDF;
            
            steps = obj.data.sweepInd(1,minInd:obj.indIndata);
            
@@ -1390,12 +1407,42 @@ classdef MC2DLJoutput
            end
            
            if saveFig
-               name = ['varUPvsSteps_T' my_num2str(obj.simulationParam.T)...
+               name = [fileNameInit 'varUPvsSteps_T'...
+                   my_num2str(obj.simulationParam.T)...
                    'N' my_num2str(obj.simulationParam.N) 'rho'...
                    my_num2str(obj.simulationParam.rho)];
                saveas(gcf,[name add2savedFigName '.fig']);
                saveas(gcf,[name add2savedFigName '.jpg']);
            end
+           
+           
+           if plotVarVsStep
+               figure;
+               hold on;
+               for ii = 1:length(RDFind)
+                   leg{1,ii} = ['RDF index: ' num2str(RDFind(ii))];
+                   steps4RDFplot(ii,:) = steps;
+               end
+               colorPlot(steps4RDFplot,varRDF,addLegend,leg);
+               xlabel('steps');
+               ylabel('RDF variance');
+               title(['variance for RDF Vs. steps, T = '...
+                   num2str(obj.simulationParam.T) ' N = '...
+                   num2str(obj.simulationParam.N) ' \rho = '... 
+                   num2str(obj.simulationParam.rho)... 
+                   ' m = ' num2str(obj.simulationParam.m)]);
+           end
+           
+           if saveFig
+               name = [fileNameInit 'varRDFvsSteps_T'...
+                   my_num2str(obj.simulationParam.T)...
+                   'N' my_num2str(obj.simulationParam.N) 'rho'...
+                   my_num2str(obj.simulationParam.rho) 'm'...
+                   num2str(obj.simulationParam.m)];
+               saveas(gcf,[name add2savedFigName '.fig']);
+               saveas(gcf,[name add2savedFigName '.jpg']);
+           end
+           
            
            if plotVarVarVsStep
                figure;
@@ -1420,6 +1467,35 @@ classdef MC2DLJoutput
                saveas(gcf,[name add2savedFigName '.fig']);
                saveas(gcf,[name add2savedFigName '.jpg']);
            end
+           
+           if plotVarVarVsStep
+               figure;
+               hold on;
+               for ii = 1:length(RDFind)
+                   leg{1,ii} = ['RDF index: ' num2str(RDFind(ii))];
+                   steps4RDFplot(ii,:) = steps;
+               end
+               colorPlot(steps4RDFplot,varVarRDF,addLegend,leg);
+               xlabel('steps');
+               ylabel('RDF variance of variance');
+               title(['variance of variance '...
+                   'for RDF Vs. steps, T = '...
+                   num2str(obj.simulationParam.T) ' N = '...
+                   num2str(obj.simulationParam.N) ' \rho = '... 
+                   num2str(obj.simulationParam.rho) ...
+                   ' m = ' num2str(obj.simulationParam.m)]);
+           end
+           
+           if saveFig
+               name = [fileNameInit 'varVarRDFvsSteps_T'...
+                   my_num2str(obj.simulationParam.T)...
+                   'N' my_num2str(obj.simulationParam.N) 'rho'...
+                   my_num2str(obj.simulationParam.rho) 'm' ...
+                   num2str(obj.simulationParam.m)];
+               saveas(gcf,[name add2savedFigName '.fig']);
+               saveas(gcf,[name add2savedFigName '.jpg']);
+           end
+           
            
            if ~keepFigOpen
                close all;
