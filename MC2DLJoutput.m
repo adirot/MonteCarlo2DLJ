@@ -929,76 +929,88 @@ classdef MC2DLJoutput
        function [obj, histxnumOfPartInSquare, histnumOfPartInSquare,...
                numOfPartInSquare] =...
                calcRhoDistrib(obj, numOfSquares, varargin)
-       % We devide every step to numOfSquares subsystem. We count how many
-       % particles are in each subsystem, in every step.
-       % histnumOfCellsInSquare is the histogram of densities in 
-       % the system, considering all steps.
-       % To get the probability of a spesific density in a subsystem:
-       % PL(rho) = histnumOfPartInSquare(rho)/(indIndata*numOfSquares);
-       % To get the probability that a particle will be found in a
-       % subsystem with a spesific density:
-       % PLN(rho) = (0:N).*histnumOfPartInSquare/N
-       
-       p = inputParser();
-       addOptional(p, 'plotHist', false); 
-       addOptional(p, 'plotHist_times_partNum', false);
-       addOptional(p, 'startFrom', 1);
-       addOptional(p, 'endAt', []);
-       addOptional(p, 'coordsFromObj', false);
-       parse(p, varargin{:});
-       Results = p.Results;
-       plotHist = Results.plotHist;
-       plotHist_times_partNum = Results.plotHist_times_partNum;
-       startFrom = Results.startFrom;
-       endAt = Results.endAt;
-       coordsFromObj = Results.coordsFromObj;
-       
-       L = obj.simulationParam.L;
-       if isempty(endAt)
-            endAt = obj.indIndata;
-       end
-       N = obj.simulationParam.N;  
-           
-       if coordsFromObj
-           numOfPartInSquare(1,1:numOfSquares) =...
-                numOfCellsDistribution(obj.currentCoords,...
-                L,numOfSquares);
-       else
-           numOfPartInSquare = zeros(1,numOfSquares*(endAt-startFrom+1));
+           % We devide every step to numOfSquares subsystem. We count how many
+           % particles are in each subsystem, in every step.
+           % histnumOfCellsInSquare is the histogram of densities in 
+           % the system, considering all steps.
+           % To get the probability of a spesific density in a subsystem:
+           % PL(rho) = histnumOfPartInSquare(rho)/(indIndata*numOfSquares);
+           % To get the probability that a particle will be found in a
+           % subsystem with a spesific density:
+           % PLN(rho) = (0:N).*histnumOfPartInSquare/N
 
-           for i = 1:(endAt-startFrom+1)
-               numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
-                    numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i+startFrom-1),...
-                    L,numOfSquares);
+           p = inputParser();
+           addOptional(p, 'plotHist', false); 
+           addOptional(p, 'plotHist_times_partNum', false);
+           addOptional(p, 'startFrom', 1);
+           addOptional(p, 'endAt', []);
+           addOptional(p, 'coordsFromObj', false);
+           addOptional(p, 'save2Obj', true);
+           parse(p, varargin{:});
+           Results = p.Results;
+           plotHist = Results.plotHist;
+           plotHist_times_partNum = Results.plotHist_times_partNum;
+           startFrom = Results.startFrom;
+           endAt = Results.endAt;
+           coordsFromObj = Results.coordsFromObj;
+           save2Obj = Results.save2Obj;
+
+           L = obj.simulationParam.L;
+           if isempty(endAt)
+                endAt = obj.indIndata;
            end
-       end
-       
-       histxnumOfPartInSquare = 0:N;
-       histnumOfPartInSquare =...
-           hist(numOfPartInSquare,histxnumOfPartInSquare);
-       % Normalize
-       histxnumOfPartInSquare = histxnumOfPartInSquare / ((L^2/numOfSquares)*(N/L^2));       
-       
-       if plotHist
-           figure;
-           bin = histxnumOfPartInSquare(2);
-           areaUnderPlot = sum(bin*histnumOfPartInSquare.*histxnumOfPartInSquare);
-           plot(histxnumOfPartInSquare,histnumOfPartInSquare.*histxnumOfPartInSquare/areaUnderPlot);
-           xlabel('Density');
-           ylabel('Probability of a particle to be in a square with a certain density');
-           title('Density histogram');
-       end
-       
-       if plotHist_times_partNum
-           figure;
-           bin = histxnumOfPartInSquare(2);
-           areaUnderPlot = sum(bin*histnumOfPartInSquare);
-           plot(histxnumOfPartInSquare,histnumOfPartInSquare/areaUnderPlot);
-           xlabel('Density');
-           ylabel('Probability of a subsystem to be in a square with a certain density');
-           title('Density histogram');
-       end
-       
+           N = obj.simulationParam.N;  
+
+           if coordsFromObj
+               numOfPartInSquare(1,1:numOfSquares) =...
+                    numOfCellsDistribution(obj.currentCoords,...
+                    L,numOfSquares);
+           else
+               numOfPartInSquare = zeros(1,numOfSquares*(endAt-startFrom+1));
+
+               for i = 1:(endAt-startFrom+1)
+                   numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
+                        numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i+startFrom-1),...
+                        L,numOfSquares);
+               end
+           end
+
+           histxnumOfPartInSquare = 0:N;
+           histnumOfPartInSquare =...
+               hist(numOfPartInSquare,histxnumOfPartInSquare);
+           % Normalize
+           histxnumOfPartInSquare = histxnumOfPartInSquare / ((L^2/numOfSquares)*(N/L^2));       
+
+           if plotHist
+               figure;
+               bin = histxnumOfPartInSquare(2);
+               areaUnderPlot = sum(bin*histnumOfPartInSquare.*histxnumOfPartInSquare);
+               plot(histxnumOfPartInSquare,histnumOfPartInSquare.*histxnumOfPartInSquare/areaUnderPlot);
+               xlabel('Density');
+               ylabel('Probability of a particle to be in a square with a certain density');
+               title('Density histogram');
+           end
+
+           if plotHist_times_partNum
+               figure;
+               bin = histxnumOfPartInSquare(2);
+               areaUnderPlot = sum(bin*histnumOfPartInSquare);
+               plot(histxnumOfPartInSquare,histnumOfPartInSquare/areaUnderPlot);
+               xlabel('Density');
+               ylabel('Probability of a subsystem to be in a square with a certain density');
+               title('Density histogram');
+           end
+
+           if save2Obj
+
+               bin = histxnumOfPartInSquare(2);
+               areaUnderPlot = sum(bin*histnumOfPartInSquare);
+
+               obj.data.rhoDistribX = histxnumOfPartInSquare;
+               obj.data.rhoDistribY = histnumOfPartInSquare/areaUnderPlot;
+
+           end
+
        end
 
        
@@ -1147,6 +1159,7 @@ classdef MC2DLJoutput
            addOptional(p, 'firstSteps2ignore', []);
            addOptional(p, 'keepFigOpen', false);
            addOptional(p, 'RDFind', []); % if you dont want the peak, but you want specific indexies from the RDF
+           addOptional(p, 'rhoDistribInd', []);
            addOptional(p, 'fileNameInit', '');
            
            parse(p, varargin{:});
@@ -1156,6 +1169,7 @@ classdef MC2DLJoutput
            saveFigSVsSqrtTau = Results.saveFigSVsSqrtTau;
            keepFigOpen = Results.keepFigOpen;
            RDFind = Results.RDFind;
+           rhoDistribInd = Results.rhoDistribInd;
            fileNameInit = Results.fileNameInit;
            
            % calculate <A>
@@ -1175,23 +1189,44 @@ classdef MC2DLJoutput
                meanP = obj.data.meanPlrcEq;
                meanU = obj.data.meanUlrcEq;
                if isempty(RDFind)
-                    meanRDFpeaks = obj.data.meanRDFpeaksEq;
+                   
+                   % meanRDFpeaks = obj.data.meanRDFpeaksEq;
+                   
                else
                    for ii = 1:length(RDFind)
                         meanRDFpointInd(ii) = mean(obj.data.RDFhisto(1,RDFind(ii),firstSteps2ignore:obj.data.indIndata),3);
                    end
                end
+               
+               if isempty(rhoDistribInd)
+                    meanRhoDistribPointInd = [];
+               else
+                   [l,~] = size(obj.data.rhoDistribY);
+                   for ii = 1:length(rhoDistribInd)
+                        meanRhoDistribPointInd(ii) =...
+                            mean(obj.data.rhoDistribY(1:l,...
+                            rhoDistribInd(ii)));
+                   end
+               end
+               
            end
            
            P = obj.data.allPlrc(1,firstSteps2ignore:obj.data.indIndata);
            U = obj.data.allUlrc(1,firstSteps2ignore:obj.data.indIndata);
            if isempty(RDFind)
-                RDFpeaks = obj.RDFhisto(firstSteps2ignore:obj.data.indIndata,...
-                    obj.RDFlocs);
-                [~, Npeaks] = size(RDFpeaks);
+%                 RDFpeaks = obj.RDFhisto(firstSteps2ignore:obj.data.indIndata,...
+%                     obj.RDFlocs);
+%                 [~, Npeaks] = size(RDFpeaks);
            else
                RDFpointInd = obj.data.RDFhisto(1,RDFind,...
                    firstSteps2ignore:obj.indIndata);
+               
+           end
+           
+           if ~isempty(rhoDistribInd)
+               
+               rhoDistribPointInd = obj.data.rhoDistribY(...
+                   1:l,rhoDistribInd);
                
            end
 
@@ -1205,9 +1240,9 @@ classdef MC2DLJoutput
                     Pmeanb(ind) = mean(P(i:(i+n(j)-1)));
                     Umeanb(ind) = mean(U(i:(i+n(j)-1)));
                     if isempty(RDFind)
-                        RDFpeaksMeanb(ind,1:Npeaks) =...
-                            mean(RDFpeaks(i:(i+n(j)-1),1:Npeaks));
-                        ind = ind + 1;
+%                         RDFpeaksMeanb(ind,1:Npeaks) =...
+%                             mean(RDFpeaks(i:(i+n(j)-1),1:Npeaks));
+%                         ind = ind + 1;
                     else
                         RDFpointIndMeanb(ind,1:length(RDFind)) =...
                             mean(RDFpointInd(1,1:length(RDFind),i:(i+n(j)-1)),3);
@@ -1217,12 +1252,12 @@ classdef MC2DLJoutput
            
                 % calculate sigma^2(<A>b) for all the different tau values
                 
-                nb(j) = length(Pmeanb);
+                nb(j) = length(Pmeanb); %number of blocks
                 varMeanP(j) = mean((Pmeanb - mean(Pmeanb)).^2);
                 varMeanU(j) = mean((Umeanb - mean(Umeanb)).^2);
                 if isempty(RDFind)
-                    varMeanRDFpeaks(j,1:Npeaks) =...
-                        mean((RDFpeaksMeanb - mean(RDFpeaksMeanb)).^2);
+%                     varMeanRDFpeaks(j,1:Npeaks) =...
+%                         mean((RDFpeaksMeanb - mean(RDFpeaksMeanb)).^2);
                 else
                     for ii = 1:length(RDFind)
                         varMeanRDFpointInd(j,ii) =...
@@ -1232,33 +1267,76 @@ classdef MC2DLJoutput
                 Pmeanb = [];
                 Umeanb = [];
                 if isempty(RDFind)
-                    RDFpeaksMeanb = [];
+%                     RDFpeaksMeanb = [];
                 else
                     RDFpointIndMeanb = [];
                 end
                 
            end
+           
+           if ~isempty(rhoDistribInd)
+               for j = 1:length(n)
+                    % calculate <A>b
+                    ind = 1;
+                    for i = 1:n(j):(l-n(j)+1)
+
+                        if ~isempty(rhoDistribInd)
+                            
+                            rhoDistribPointIndMeanb(ind,1:length(rhoDistribInd)) =...
+                                mean(rhoDistribPointInd(i:(i+n(j)-1),1:length(rhoDistribInd)),1);
+                            ind = ind + 1;
+                            
+                        end
+                        
+                    end
+
+                    % calculate sigma^2(<A>b) for all the different tau values
+
+                    nb(j) = ind - 1; %number of blocks
+                    if ~isempty(rhoDistribInd)
+                        
+                        for ii = 1:length(rhoDistribInd)
+                            varMeanRhoDistribPointInd(j,ii) =...
+                                mean((rhoDistribPointIndMeanb(:,ii) - mean(rhoDistribPointIndMeanb(:,ii))).^2);
+                        end
+                    end
+                    if ~isempty(rhoDistribInd)
+                        rhoDistribPointIndMeanb = [];
+                    end
+
+               end
+
+           end
+
             
            %calculate sigma^2(A)
            varP = mean((P(:) - meanP).^2);
            varU = mean((U(:) - meanU).^2);
            if isempty(RDFind)
-               varRDFpeaks = mean((RDFpeaks - meanRDFpeaks).^2);
+%                varRDFpeaks = mean((RDFpeaks - meanRDFpeaks).^2);
            else
                for ii = 1:length(RDFind)
                    varRDFpointInd(ii) = mean((RDFpointInd(1,ii,:) - meanRDFpointInd(1,ii)).^2);
                end
            end
+           
+           if ~isempty(rhoDistribInd)
+               
+               for ii = 1:length(rhoDistribInd)
+                   varRhoDistribPointInd(ii) =...
+                       mean((rhoDistribPointInd(:,ii) - meanRhoDistribPointInd(ii)).^2);
+               end
+           end
 
-           % calculate tau
+           % calculate tau - inefficiency
            tauP = n.*varMeanP/varP;
            tauU = n.*varMeanU/varU;
            if isempty(RDFind)
-               for i = 1:Npeaks
-                    tauRDFpeaks(i,:) = n.*varMeanRDFpeaks(:,i)/varRDFpeaks(:,i);
-                    tauRDFpeaksX(i,:) = sqrt(n);
-                    RDFpeaksLeg{1,i} = ['peak num: ' num2str(i)];
-               end
+%                for i = 1:Npeaks
+%                     tauRDFpeaks(i,:) = n.*varMeanRDFpeaks(:,i)/varRDFpeaks(:,i);
+%                     tauRDFpeaksX(i,:) = sqrt(n);
+%                     RDFpeaksLeg{1,i} = ['peak num: ' num2str(i)];
+%                end
            else
                for i = 1:length(RDFind)
                     tauRDFpointInd(i,:) = n.*varMeanRDFpointInd(:,i)'/varRDFpointInd(:,i)';
@@ -1266,7 +1344,18 @@ classdef MC2DLJoutput
                     RDFpointIndLeg{1,i} = ['point ind: ' num2str(RDFind(i))];
                end
            end
-           
+
+           if ~isempty(rhoDistribInd)
+               
+               for i = 1:length(rhoDistribInd)
+                    tauRhoDistribPointInd(i,:) =...
+                        n.*varMeanRhoDistribPointInd(:,i)'/varRhoDistribPointInd(:,i);
+                    tauRhoDistribPointIndX(i,:) = sqrt(n);
+                    rhoDistribPointIndLeg{1,i} =...
+                        ['point ind: ' num2str(rhoDistribInd(i))];
+               end
+           end
+
            if saveFigSVsSqrtTau
                plotSVsSqrtTau = true;
            end
@@ -1293,12 +1382,12 @@ classdef MC2DLJoutput
                end
 
                if isempty(RDFind)
-                   colorPlot(tauRDFpeaksX,tauRDFpeaks,'addLegend',RDFpeaksLeg);
-                   %title('$$t_A^c$$ for RDF peaks',24,'Interpreter','latex');
-                   title('$$t_A^c$$ for RDF peaks');
-                   xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
-                   ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
-                       'FontSize',24,'Interpreter','latex');
+%                    colorPlot(tauRDFpeaksX,tauRDFpeaks,'addLegend',RDFpeaksLeg);
+%                    %title('$$t_A^c$$ for RDF peaks',24,'Interpreter','latex');
+%                    title('$$t_A^c$$ for RDF peaks');
+%                    xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
+%                    ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
+%                        'FontSize',24,'Interpreter','latex');
                else
                    colorPlot(tauRDFpointIndX,tauRDFpointInd,'addLegend',RDFpointIndLeg);
 %                    title('$$t_A^c$$ for RDF points',...
@@ -1311,7 +1400,7 @@ classdef MC2DLJoutput
                
                if saveFigSVsSqrtTau
                    if isempty(RDFind)
-                       s1 = 'RDFpeaks';
+                        s1 = 'RDFpeaks';
                    else
                        s1 = 'RDFpoints';
                    end
@@ -1323,6 +1412,33 @@ classdef MC2DLJoutput
                    saveas(gcf,[fileNameInit fileName '.jpg']);
                end
                
+               if ~isempty(rhoDistribInd)
+                   
+                   colorPlot(tauRhoDistribPointIndX,...
+                       tauRhoDistribPointInd,'addLegend',...
+                       rhoDistribPointIndLeg);
+%                    title('$$t_A^c$$ for RDF points',...
+%                        24,'Interpreter','latex');
+                   title('$$t_A^c$$ for rho distribution points');
+                   xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
+                   ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
+                       'FontSize',24,'Interpreter','latex');
+               end
+               
+               if saveFigSVsSqrtTau
+                   if ~isempty(rhoDistribInd)
+                       
+                   
+                       fileName = ['SVsSqrtTau_rhoDistrib_N'...
+                           num2str(obj.simulationParam.N)... 
+                           'T' my_num2str(obj.simulationParam.T)...
+                           'rho' my_num2str(obj.simulationParam.rho)... 
+                           'm' num2str(obj.simulationParam.m)];
+                       saveas(gcf,[fileNameInit fileName '.fig']);
+                       saveas(gcf,[fileNameInit fileName '.jpg']);
+                   end
+               end
+               
            end
            
            
@@ -1331,7 +1447,8 @@ classdef MC2DLJoutput
            end
        end
        
-       function [obj, varU, varP, steps, varVarU, varVarP] =...
+       function [obj, varU, varP, steps, varVarU, varVarP,...
+               varRDF, varVarRDF, varRhoDistrib, varVarRhoDistrib] =...
                varOfvar(obj,varargin)
            % calculate the variance of the variance of P,U,RDF specific
            % points as a function of steps in the simulation.
@@ -1343,9 +1460,13 @@ classdef MC2DLJoutput
            addOptional(p, 'saveFig', true);
            addOptional(p, 'add2savedFigName', '');
            addOptional(p, 'keepFigOpen', false);
+           addOptional(p, 'U' , false);
+           addOptional(p, 'P' , false);
            addOptional(p, 'RDFind', []); % if you want specific indexies from the RDF
+           addOptional(p, 'rhoDistribInd', []);
            addOptional(p, 'fileNameInit', '');
-      
+           addOptional(p, 'talk', false);
+           
            parse(p, varargin{:});
            Results = p.Results;
            plotVarVsStep = Results.plotVarVsStep;
@@ -1354,8 +1475,12 @@ classdef MC2DLJoutput
            add2savedFigName = Results.add2savedFigName;
            keepFigOpen = Results.keepFigOpen;
            startFromStep = Results.startFromStep;
+           U = Results.U;
+           P = Results.P;
            RDFind = Results.RDFind;
+           rhoDistribInd = Results.rhoDistribInd;
            fileNameInit = Results.fileNameInit;
+           talk = Results.talk;
            
            if startFromStep == 0
                minInd = 1;
@@ -1367,135 +1492,307 @@ classdef MC2DLJoutput
            
            for i = minInd:obj.data.indIndata
                
-               varU(i-minInd+1) = var(obj.data.allUlrc(1,minInd:i));
-               varVarU(i-minInd+1) = var(varU);
-               varP(i-minInd+1) = var(obj.data.allPlrc(1,minInd:i));
-               varVarP(i-minInd+1) = var(varP);
+               if U
+                   varU(i-minInd+1) = var(obj.data.allUlrc(1,minInd:i));
+                   varVarU(i-minInd+1) = var(varU);
+               else
+                   varU = [];
+                   varVarU = [];
+               end
+               
+               if P
+                    varP(i-minInd+1) = var(obj.data.allPlrc(1,minInd:i));
+                    varVarP(i-minInd+1) = var(varP);
+               else 
+                   varP = [];
+                   varVarP = [];
+               end
                
                if ~isempty(RDFind)
                    for j = 1:length(RDFind)
                        varRDF(j,i-minInd+1) =...
                            var(obj.data.RDFhisto(1,RDFind(j),minInd:i));
                        varVarRDF(j,i-minInd+1) = var(varRDF(j,:));
+                       
                    end
+               else
+                   varRDF = [];
+                   varVarRDF = [];
                end
                
+               if ~isempty(rhoDistribInd)
+                   try
+                       obj.data.rhoDistribX;
+                   catch
+                       error(['first calculate rhoDistrib for'... 
+                           ' all of the steps named obj.data.rhoDistribX/Y' ...
+                           ' without first steps, size: (steps , N+1) ']);
+                   end
+                   for j = 1:length(rhoDistribInd)
+                       
+                       varRhoDistrib(i,j) =...
+                           var(obj.data.rhoDistribY(1:i,rhoDistribInd(j)));
+                       varVarRhoDistrib(i,j) = var(varRhoDistrib(:,j));
+                       
+                   end
+               else
+                   varRhoDistrib = [];
+                   varVarRhoDistrib = [];
+               end
+               
+               if talk
+                    disp(num2str(i));
+               end
            end
            
-           obj.data.varU = varU;
-           obj.data.varP = varP;
-           obj.data.varRDF = varRDF;
-           obj.data.varRDFind = RDFind;
-           obj.data.varVarU = varVarU;
-           obj.data.varVarP = varVarP;
-           obj.data.varVarRDF = varVarRDF;
+           if U
+                obj.data.varU = varU;
+                obj.data.varVarU = varVarU;
+           end
+           
+           if P
+                obj.data.varP = varP;
+                obj.data.varVarP = varVarP;
+           end
+           
+           if ~isempty(RDFind)
+                obj.data.varRDF = varRDF;
+                obj.data.varRDFind = RDFind;
+                obj.data.varVarRDF = varVarRDF;
+           end
+           
+           if ~isempty(rhoDistribInd)
+                obj.data.varRhoDistrib = varRhoDistrib';
+                obj.data.varRhoDistribInd = rhoDistribInd;
+                obj.data.varVarRhoDistrib = varVarRhoDistrib';
+           end
            
            steps = obj.data.sweepInd(1,minInd:obj.indIndata);
            
            if plotVarVsStep
-               figure;
-               hold on;
-               plot(steps,varU);
-               plot(steps,varP,'r');
-               legend({'Energy variance','Pressure variance'});
-               xlabel('steps');
-               ylabel('Energy or Pressure variance');
-               title(['variance for Energy and Pressure Vs. steps, T = '...
-                   num2str(obj.simulationParam.T) ' N = '...
-                   num2str(obj.simulationParam.N) ' \rho = '... 
-                   num2str(obj.simulationParam.rho)]);
-           end
-           
-           if saveFig
-               name = [fileNameInit 'varUPvsSteps_T'...
-                   my_num2str(obj.simulationParam.T)...
-                   'N' my_num2str(obj.simulationParam.N) 'rho'...
-                   my_num2str(obj.simulationParam.rho)];
-               saveas(gcf,[name add2savedFigName '.fig']);
-               saveas(gcf,[name add2savedFigName '.jpg']);
-           end
-           
-           
-           if plotVarVsStep
-               figure;
-               hold on;
-               for ii = 1:length(RDFind)
-                   leg{1,ii} = ['RDF index: ' num2str(RDFind(ii))];
-                   steps4RDFplot(ii,:) = steps;
+               if or(U,P)
+                   figure;
+                   hold on;
+                   if U
+                        plot(steps,varU);
+                   end
+
+                   if P
+                        plot(steps,varP,'r');
+                   end
+
+                   if and(U,P)
+                        legend({'Energy variance','Pressure variance'});
+                   end
+                   xlabel('steps');
+
+                   if and(U,P)
+                        ylabel('Energy or Pressure variance');
+                        s = 'Energy and Pressure';
+                   end
+
+                   if and(U,~P)
+                        ylabel('Energy variance');
+                        s = 'Energy';
+                   end
+
+                   if and(~U,P)
+                        ylabel('Pressure variance');
+                        s = 'Pressure';
+                   end
+
+                   title(['variance for ' s ' Vs. steps, T = '...
+                       num2str(obj.simulationParam.T) ' N = '...
+                       num2str(obj.simulationParam.N) ' \rho = '... 
+                       num2str(obj.simulationParam.rho) ' m '... 
+                       num2str(obj.simulationParam.m)]);
                end
-               colorPlot(steps4RDFplot,varRDF,addLegend,leg);
-               xlabel('steps');
-               ylabel('RDF variance');
-               title(['variance for RDF Vs. steps, T = '...
-                   num2str(obj.simulationParam.T) ' N = '...
-                   num2str(obj.simulationParam.N) ' \rho = '... 
-                   num2str(obj.simulationParam.rho)... 
-                   ' m = ' num2str(obj.simulationParam.m)]);
            end
            
            if saveFig
-               name = [fileNameInit 'varRDFvsSteps_T'...
-                   my_num2str(obj.simulationParam.T)...
-                   'N' my_num2str(obj.simulationParam.N) 'rho'...
-                   my_num2str(obj.simulationParam.rho) 'm'...
-                   num2str(obj.simulationParam.m)];
-               saveas(gcf,[name add2savedFigName '.fig']);
-               saveas(gcf,[name add2savedFigName '.jpg']);
+               if or(U,P)
+                   name = [fileNameInit 'varUPvsSteps_T'...
+                       my_num2str(obj.simulationParam.T)...
+                       'N' my_num2str(obj.simulationParam.N) 'rho'...
+                       my_num2str(obj.simulationParam.rho) 'm' ...
+                       num2str(obj.simulationParam.m)];
+                   saveas(gcf,[name add2savedFigName '.fig']);
+                   saveas(gcf,[name add2savedFigName '.jpg']);
+               end
            end
            
+           if ~isempty(RDFind)
+               if plotVarVsStep
+                   figure;
+                   hold on;
+                   for ii = 1:length(RDFind)
+                       leg{1,ii} = ['RDF index: ' num2str(RDFind(ii))];
+                       steps4RDFplot(ii,:) = steps;
+                   end
+                   colorPlot(steps4RDFplot,varRDF,'addLegend',leg);
+                   xlabel('steps');
+                   ylabel('RDF variance');
+                   title(['variance for RDF Vs. steps, T = '...
+                       num2str(obj.simulationParam.T) ' N = '...
+                       num2str(obj.simulationParam.N) ' \rho = '... 
+                       num2str(obj.simulationParam.rho)... 
+                       ' m = ' num2str(obj.simulationParam.m)]);
+               end
+
+               if saveFig
+                   name = [fileNameInit 'varRDFvsSteps_T'...
+                       my_num2str(obj.simulationParam.T)...
+                       'N' my_num2str(obj.simulationParam.N) 'rho'...
+                       my_num2str(obj.simulationParam.rho) 'm'...
+                       num2str(obj.simulationParam.m)];
+                   saveas(gcf,[name add2savedFigName '.fig']);
+                   saveas(gcf,[name add2savedFigName '.jpg']);
+               end
+
+           end
+           
+           if ~isempty(rhoDistribInd)
+               if plotVarVsStep
+                   figure;
+                   hold on;
+                   for ii = 1:length(rhoDistribInd)
+                       leg{1,ii} = ['rho Distribtion index: '...
+                           num2str(rhoDistribInd(ii))];
+                       steps4RhoDistribPlot(ii,:) = steps;
+                   end
+                   colorPlot(steps4RhoDistribPlot,varRhoDistrib,'addLegend',leg);
+                   xlabel('steps');
+                   ylabel('Rho Distribtion variance');
+                   title(['variance for Rho Distribtion Vs. steps, T = '...
+                       num2str(obj.simulationParam.T) ' N = '...
+                       num2str(obj.simulationParam.N) ' \rho = '... 
+                       num2str(obj.simulationParam.rho)... 
+                       ' m = ' num2str(obj.simulationParam.m)]);
+               end
+
+               if saveFig
+                   name = [fileNameInit 'varRhoDistribVsSteps_T'...
+                       my_num2str(obj.simulationParam.T)...
+                       'N' my_num2str(obj.simulationParam.N) 'rho'...
+                       my_num2str(obj.simulationParam.rho) 'm'...
+                       num2str(obj.simulationParam.m)];
+                   saveas(gcf,[name add2savedFigName '.fig']);
+                   saveas(gcf,[name add2savedFigName '.jpg']);
+               end
+
+           end
            
            if plotVarVarVsStep
-               figure;
-               hold on;
-               plot(steps,varVarU);
-               plot(steps,varVarP,'r');
-               legend({'Energy variance of variance',...
-                   'Pressure variance of variance'});
-               xlabel('steps');
-               ylabel('Energy or Pressure variance of variance');
-               title(['variance of variance '...
-                   'for Energy and Pressure Vs. steps, T = '...
-                   num2str(obj.simulationParam.T) ' N = '...
-                   num2str(obj.simulationParam.N) ' \rho = '... 
-                   num2str(obj.simulationParam.rho)]);
-           end
-           
-           if saveFig
-               name = ['varVarUPvsSteps_T' my_num2str(obj.simulationParam.T)...
-                   'N' my_num2str(obj.simulationParam.N) 'rho'...
-                   my_num2str(obj.simulationParam.rho)];
-               saveas(gcf,[name add2savedFigName '.fig']);
-               saveas(gcf,[name add2savedFigName '.jpg']);
-           end
-           
-           if plotVarVarVsStep
-               figure;
-               hold on;
-               for ii = 1:length(RDFind)
-                   leg{1,ii} = ['RDF index: ' num2str(RDFind(ii))];
-                   steps4RDFplot(ii,:) = steps;
+               if or(U,P)
+                   figure;
+                   hold on;
+                   if U
+                        plot(steps,varVarU);
+                   end
+                   if P
+                        plot(steps,varVarP,'r');
+                   end
+
+                   if and(U,P)
+                        legend({'Energy variance of variance',...
+                            'Pressure variance of variance'});
+                        ylabel('Energy or Pressure variance of variance');
+                        s = 'Energy and Pressure';
+                   else
+                       if U
+                           legend({'Energy variance of variance'});
+                           ylabel('Energy variance of variance');
+                           s = 'Energy';
+                       end
+
+                       if P
+                           legend({'Pressure variance of variance'});
+                            ylabel('Pressure variance of variance');
+                            s = 'Pressure';
+                       end
+                   end
+                   xlabel('steps');
+                   title(['variance of variance '...
+                       'for ' s ' Vs. steps, T = '...
+                       num2str(obj.simulationParam.T) ' N = '...
+                       num2str(obj.simulationParam.N) ' \rho = '... 
+                       num2str(obj.simulationParam.rho)]);
                end
-               colorPlot(steps4RDFplot,varVarRDF,addLegend,leg);
-               xlabel('steps');
-               ylabel('RDF variance of variance');
-               title(['variance of variance '...
-                   'for RDF Vs. steps, T = '...
-                   num2str(obj.simulationParam.T) ' N = '...
-                   num2str(obj.simulationParam.N) ' \rho = '... 
-                   num2str(obj.simulationParam.rho) ...
-                   ' m = ' num2str(obj.simulationParam.m)]);
            end
            
            if saveFig
-               name = [fileNameInit 'varVarRDFvsSteps_T'...
-                   my_num2str(obj.simulationParam.T)...
-                   'N' my_num2str(obj.simulationParam.N) 'rho'...
-                   my_num2str(obj.simulationParam.rho) 'm' ...
-                   num2str(obj.simulationParam.m)];
-               saveas(gcf,[name add2savedFigName '.fig']);
-               saveas(gcf,[name add2savedFigName '.jpg']);
+               if or(U,P)
+                   name = ['varVarUPvsSteps_T' my_num2str(obj.simulationParam.T)...
+                       'N' my_num2str(obj.simulationParam.N) 'rho'...
+                       my_num2str(obj.simulationParam.rho)];
+                   saveas(gcf,[name add2savedFigName '.fig']);
+                   saveas(gcf,[name add2savedFigName '.jpg']);
+               end
            end
            
+           if ~isempty(RDFind)
+               if plotVarVarVsStep
+
+                   figure;
+                   hold on;
+                   for ii = 1:length(RDFind)
+                       leg{1,ii} = ['RDF index: ' num2str(RDFind(ii))];
+                       steps4RDFplot(ii,:) = steps;
+                   end
+                   colorPlot(steps4RDFplot,varVarRDF,'addLegend',leg);
+                   xlabel('steps');
+                   ylabel('RDF variance of variance');
+                   title(['variance of variance '...
+                       'for RDF Vs. steps, T = '...
+                       num2str(obj.simulationParam.T) ' N = '...
+                       num2str(obj.simulationParam.N) ' \rho = '... 
+                       num2str(obj.simulationParam.rho) ...
+                       ' m = ' num2str(obj.simulationParam.m)]);
+               end
+
+               if saveFig
+                   name = [fileNameInit 'varVarRDFvsSteps_T'...
+                       my_num2str(obj.simulationParam.T)...
+                       'N' my_num2str(obj.simulationParam.N) 'rho'...
+                       my_num2str(obj.simulationParam.rho) 'm' ...
+                       num2str(obj.simulationParam.m)];
+                   saveas(gcf,[name add2savedFigName '.fig']);
+                   saveas(gcf,[name add2savedFigName '.jpg']);
+               end
+           end
+           
+           if ~isempty(rhoDistribInd)
+               if plotVarVarVsStep
+
+                   figure;
+                   hold on;
+                   for ii = 1:length(rhoDistribInd)
+                       leg{1,ii} = ['rho Distribtion index: '...
+                           num2str(rhoDistribInd(ii))];
+                       steps4RDFplot(ii,:) = steps;
+                   end
+                   colorPlot(steps4RhoDistribPlot,varVarRhoDistrib,...
+                       'addLegend',leg);
+                   xlabel('steps');
+                   ylabel('Rho Distribution variance of variance');
+                   title(['variance of variance '...
+                       'for Rho Distribution Vs. steps, T = '...
+                       num2str(obj.simulationParam.T) ' N = '...
+                       num2str(obj.simulationParam.N) ' \rho = '... 
+                       num2str(obj.simulationParam.rho) ...
+                       ' m = ' num2str(obj.simulationParam.m)]);
+               end
+
+               if saveFig
+                   name = [fileNameInit 'varVarRhoDistribVsSteps_T'...
+                       my_num2str(obj.simulationParam.T)...
+                       'N' my_num2str(obj.simulationParam.N) 'rho'...
+                       my_num2str(obj.simulationParam.rho) 'm' ...
+                       num2str(obj.simulationParam.m)];
+                   saveas(gcf,[name add2savedFigName '.fig']);
+                   saveas(gcf,[name add2savedFigName '.jpg']);
+               end
+           end
            
            if ~keepFigOpen
                close all;
