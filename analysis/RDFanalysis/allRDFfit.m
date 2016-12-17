@@ -19,7 +19,9 @@ rind = 0;
 mind = 0;
 first = true;
 
-for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
+%for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
+for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,5]
+
     tind = tind + 1;
     rind = 0;
     for r = [0.005,0.01,0.05,0.1,0.2]
@@ -68,11 +70,10 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
                ys = [logRDF10k{tind,rind,mind};logRDF14k{tind,rind,mind};...
                    logRDF21k{tind,rind,mind};logRDF24k{tind,rind,mind};...
                     logRDF28k{tind,rind,mind};logRDF34k{tind,rind,mind}];
-                [sizeys, ~] = size(ys);
-                xs = [];
-                for ind = 1:sizeys
-                    xs = [xs;x];
-                end
+               xs = [xlogRDF10k{tind,rind,mind};xlogRDF14k{tind,rind,mind};...
+                   xlogRDF21k{tind,rind,mind};xlogRDF24k{tind,rind,mind};...
+                    xlogRDF28k{tind,rind,mind};xlogRDF34k{tind,rind,mind}];
+               
                 % with n set to 12
                 %[fitresult,mfit,merror, gof] = createFitRDF(xs, ys, t, r,m,steps);
 
@@ -81,8 +82,8 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
                 %    createFitRDF(xs, ys, t, r,m,steps,'freeTandn',true);
 
                 % hcr
-                [fitresult, mfit, mError, nfit, nError, Tfit, TError, gof] =...
-                    createFitRDF(xs, ys, t, r, m, steps, 'hcr',true);
+                [fitresult, mfit, merror, nfit, nError, Tfit, Terror, gof] =...
+                    createFitRDF(xs, ys, t, r, m, steps, 'hcr',true,'ignoreZerosAtend',true);
                 
                 try
                     allfittedm10k{tind,rind,mind} = mfit{1};
@@ -217,37 +218,37 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
                 end
                 
                 try    
-                    allTerror10k{tind,rind,mind} = Terror{1};
+                    allTerror10k{tind,rind,mind} = Terror(1,1:2);
                 catch 
                     allTerror10k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allTerror14k{tind,rind,mind} = Terror{2};
+                    allTerror14k{tind,rind,mind} = Terror(2,1:2);
                 catch 
                     allTerror14k{tind,rind,mind} = [];
                 end
                 
                 try   
-                    allTerror21k{tind,rind,mind} = Terror{3};
+                    allTerror21k{tind,rind,mind} = Terror(3,1:2);
                 catch 
                     allTerror21k{tind,rind,mind} = [];
                 end
                 
                 try   
-                    allTerror24k{tind,rind,mind} = Terror{4};
+                    allTerror24k{tind,rind,mind} = Terror(4,1:2);
                 catch 
                     allTerror24k{tind,rind,mind} = [];
                 end
                 
                 try   
-                    allTerror28k{tind,rind,mind} = Terror{5};
+                    allTerror28k{tind,rind,mind} = Terror(5,1:2);
                 catch 
                     allTerror28k{tind,rind,mind} = [];
                 end
                 
                 try   
-                    allTerror34k{tind,rind,mind} = Terror{6};
+                    allTerror34k{tind,rind,mind} = Terror(6,1:2);
                 catch 
                     allTerror34k{tind,rind,mind} = [];
                 end

@@ -146,22 +146,26 @@ end
 % opts.StartPoint = 0.970592781760616;
 % opts.Upper = Inf;
 
+nfit = []; nError = [];
+Tfit = []; TError = [];
+mfit = []; mError = [];
 
 for i = 1:Nplots
     
-    %  hcr should only be done for r > 1. for 300 bins and rcutoff 10 its
-    %  from 31
+    %  hcr should only be done for r > 2. for 300 bins and rcutoff 10 its
+    %  from 32
     if hcr
         [~, hcrInd] = min(abs(xs(i,:)-2));
-        sind = hcrInd + 1;
+        sind = hcrInd + 2;
     else
         sind = 1;
     end
     
     if ignoreZerosAtend
-        lind = max(find(ys(i,:)));
+        lind = max(find(xs(i,:)));
+        lind = lind - 1;
     else
-        sind = 300;
+        lind = 300;
     end
     
     y = ys(i,sind:lind);
@@ -183,9 +187,6 @@ for i = 1:Nplots
         mfit{i} = coeff(1);
         mError{i,1} = conf(1,1);
         mError{i,2} = conf(2,1);
-        nfit = []; nError = [];
-        Tfit = []; TError = [];
-
         if freen 
             nfit{i} = coeff(2);
             nError{i,1} = conf(1,2);
@@ -240,9 +241,7 @@ for i = 1:Nplots
         mfit{i} = [];
         mError{i,1} = [];
         mError{i,2} = [];
-        nfit = []; nError = [];
-        Tfit = []; TError = [];
-
+        
         if freen 
             nfit{i} = [];
             nError{i,1} = [];
