@@ -34,7 +34,7 @@ hcr = Results.hcr;
 hcr_set_T = Results.hcr_set_T;
 ignoreZerosAtend = Results.ignoreZerosAtend;
 
-
+fitresult=[]; mfit=[]; mError=[]; nfit=[]; nError=[]; Tfit=[]; TError=[]; gof=[];
 fitProblem = false;
 
 if freeTandn

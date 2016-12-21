@@ -2,7 +2,7 @@
 
 % fit all matfiles to the potantail (logRDF) for different steps
 
-steps = {'10k';'14k';'21k';'24k';'28k';'34k'};
+steps = {'4010';'4050';'4100';'5k';'10k';'14k';'21k';'24k';'28k';'34k'};
 % {'10';'50'; '100'; '1k'; '2k'; '6k'; '12k'};
 folderName = 'hcr/';
 
@@ -12,22 +12,22 @@ folderName = 'hcr/';
 list = dir([folderName 'N*mat']);
 list = {list.name}';
 start = 4000;
-load('hcr/logRDFdataHCR.mat');
+load('logRDFdataHCR.mat');
 
 tind = 0;
 rind = 0;
 mind = 0;
 first = true;
 
-%for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
-for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,5]
+for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
+%for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,5]
 
     tind = tind + 1;
     rind = 0;
     for r = [0.005,0.01,0.05,0.1,0.2]
         rind = rind + 1;
         mind = 0;
-        for m = 3
+        for m = [3 4 5 6]
             mind = mind + 1; 
             
             disp(t); 
@@ -66,11 +66,16 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,5]
 %             RDF2k = mean(M.data.RDFhisto(start:(start+2000),1:300));
 %             RDF6k = mean(M.data.RDFhisto(start:(start+6000),1:300));
 %             RDF12k = mean(M.data.RDFhisto(start:(start+12000),1:300));
-                
-               ys = [logRDF10k{tind,rind,mind};logRDF14k{tind,rind,mind};...
+                %steps = {'4010';'4050';'4100';'5k';'10k';'14k';'21k';'24k';'28k';'34k'};
+
+               ys = [logRDF4010{tind,rind,mind};logRDF4050{tind,rind,mind};...
+                   logRDF4100{tind,rind,mind};logRDF5k{tind,rind,mind};...
+                   logRDF10k{tind,rind,mind};logRDF14k{tind,rind,mind};...
                    logRDF21k{tind,rind,mind};logRDF24k{tind,rind,mind};...
                     logRDF28k{tind,rind,mind};logRDF34k{tind,rind,mind}];
-               xs = [xlogRDF10k{tind,rind,mind};xlogRDF14k{tind,rind,mind};...
+               xs = [xlogRDF4010{tind,rind,mind};xlogRDF4050{tind,rind,mind};...
+                   xlogRDF4100{tind,rind,mind};xlogRDF5k{tind,rind,mind};...
+                   xlogRDF10k{tind,rind,mind};xlogRDF14k{tind,rind,mind};...
                    xlogRDF21k{tind,rind,mind};xlogRDF24k{tind,rind,mind};...
                     xlogRDF28k{tind,rind,mind};xlogRDF34k{tind,rind,mind}];
                
@@ -83,81 +88,118 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,5]
 
                 % hcr
                 [fitresult, mfit, merror, nfit, nError, Tfit, Terror, gof] =...
-                    createFitRDF(xs, ys, t, r, m, steps, 'hcr',true,'ignoreZerosAtend',true);
-                
+                    createFitRDF(xs, ys, t, r, m, steps, 'hcr',true,...
+                    'ignoreZerosAtend',true);
                 try
-                    allfittedm10k{tind,rind,mind} = mfit{1};
+                    allfittedm4010{tind,rind,mind} = mfit{1};
+                catch 
+                    allfittedm4010{tind,rind,mind} = [];
+                end
+                try
+                    allfittedm4050{tind,rind,mind} = mfit{2};
+                catch 
+                    allfittedm4050{tind,rind,mind} = [];
+                end
+                try
+                    allfittedm4100{tind,rind,mind} = mfit{3};
+                catch 
+                    allfittedm4100{tind,rind,mind} = [];
+                end
+                try
+                    allfittedm5k{tind,rind,mind} = mfit{4};
+                catch 
+                    allfittedm5k{tind,rind,mind} = [];
+                end
+                try
+                    allfittedm10k{tind,rind,mind} = mfit{5};
                 catch 
                     allfittedm10k{tind,rind,mind} = [];
                 end
                 
                 try 
-                    allfittedm14k{tind,rind,mind} = mfit{2};
+                    allfittedm14k{tind,rind,mind} = mfit{6};
                 catch 
                     allfittedm14k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allfittedm21k{tind,rind,mind} = mfit{3};
+                    allfittedm21k{tind,rind,mind} = mfit{7};
                 catch 
                     allfittedm21k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allfittedm24k{tind,rind,mind} = mfit{4};
+                    allfittedm24k{tind,rind,mind} = mfit{8};
                 catch 
                     allfittedm24k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allfittedm28k{tind,rind,mind} = mfit{5};
+                    allfittedm28k{tind,rind,mind} = mfit{9};
                 catch 
                     allfittedm28k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allfittedm34k{tind,rind,mind} = mfit{6};
+                    allfittedm34k{tind,rind,mind} = mfit{10};
                 catch 
                     allfittedm34k{tind,rind,mind} = [];
                 end
                 
 
-% 
-%                 steps = {'10k';'14k';'21k';'24k';'28k';'34k'};
-                % {'10';'50'; '100'; '1k'; '2k'; '6k'; '12k'};
-
                 try
-                    allmerror10k{tind,rind,mind} = merror{1};
+                    allmerror4010{tind,rind,mind} = merror{1};
+                catch 
+                    allmerror4010{tind,rind,mind} = [];
+                end
+                try
+                    allmerror4050{tind,rind,mind} = merror{2};
+                catch 
+                    allmerror4050{tind,rind,mind} = [];
+                end
+                try
+                    allmerror4100{tind,rind,mind} = merror{3};
+                catch 
+                    allmerror4100{tind,rind,mind} = [];
+                end
+                try
+                    allmerror5k{tind,rind,mind} = merror{4};
+                catch 
+                    allmerror5k{tind,rind,mind} = [];
+                end
+                
+                try
+                    allmerror10k{tind,rind,mind} = merror{5};
                 catch 
                     allmerror10k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allmerror14k{tind,rind,mind} = merror{2};
+                    allmerror14k{tind,rind,mind} = merror{6};
                 catch 
                     allmerror14k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allmerror21k{tind,rind,mind} = merror{3};
+                    allmerror21k{tind,rind,mind} = merror{7};
                 catch 
                     allmerror21k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allmerror24k{tind,rind,mind} = merror{4};
+                    allmerror24k{tind,rind,mind} = merror{8};
                 catch 
                     allmerror24k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allmerror28k{tind,rind,mind} = merror{5};
+                    allmerror28k{tind,rind,mind} = merror{9};
                 catch 
                     allmerror28k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allmerror34k{tind,rind,mind} = merror{6};
+                    allmerror34k{tind,rind,mind} = merror{10};
                 catch 
                     allmerror34k{tind,rind,mind} = [];
                 end
@@ -178,77 +220,120 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,5]
     %             allnerror34k{tind,rind,mind} = nerror(6);
     %             allnerror128k{tind,rind,mind} = nerror(7);
 
+                
                 try
-                    allfittedT10k{tind,rind,mind} = Tfit{1};
+                    allfittedT4010{tind,rind,mind} = Tfit{1};
+                catch 
+                    allfittedT4010{tind,rind,mind} = [];
+                end
+                 try
+                    allfittedT4050{tind,rind,mind} = Tfit{2};
+                catch 
+                    allfittedT4050{tind,rind,mind} = [];
+                 end
+                try
+                    allfittedT4100{tind,rind,mind} = Tfit{3};
+                catch 
+                    allfittedT4100{tind,rind,mind} = [];
+                end
+                 
+                 try
+                    allfittedT5k{tind,rind,mind} = Tfit{4};
+                catch 
+                    allfittedT5k{tind,rind,mind} = [];
+                end
+                 
+                try
+                    allfittedT10k{tind,rind,mind} = Tfit{5};
                 catch 
                     allfittedT10k{tind,rind,mind} = [];
                 end
                     
                 try
-                    allfittedT14k{tind,rind,mind} = Tfit{2};
+                    allfittedT14k{tind,rind,mind} = Tfit{6};
                 catch 
                     allfittedT14k{tind,rind,mind} = [];
                 end
                     
                 try
-                    allfittedT21k{tind,rind,mind} = Tfit{3};
+                    allfittedT21k{tind,rind,mind} = Tfit{7};
                 catch 
                     allfittedT21k{tind,rind,mind} = [];
                 end
                 
                 
                 try
-                    allfittedT24k{tind,rind,mind} = Tfit{4};
+                    allfittedT24k{tind,rind,mind} = Tfit{8};
                 catch 
                     allfittedT24k{tind,rind,mind} = [];
                 end
                 
                 
                 try    
-                    allfittedT28k{tind,rind,mind} = Tfit{5};
+                    allfittedT28k{tind,rind,mind} = Tfit{9};
                 catch 
                     allfittedT28k{tind,rind,mind} = [];
                 end
                 
                 
                 try   
-                    allfittedT34k{tind,rind,mind} = Tfit{6};
+                    allfittedT34k{tind,rind,mind} = Tfit{10};
                 catch 
                     allfittedT34k{tind,rind,mind} = [];
                 end
+                try    
+                    allTerror4010{tind,rind,mind} = Terror(1,1:2);
+                catch 
+                    allTerror4010{tind,rind,mind} = [];
+                end
+                try    
+                    allTerror4050{tind,rind,mind} = Terror(2,1:2);
+                catch 
+                    allTerror4050{tind,rind,mind} = [];
+                end
+                try    
+                    allTerror4100{tind,rind,mind} = Terror(3,1:2);
+                catch 
+                    allTerror4100{tind,rind,mind} = [];
+                end
+                try    
+                    allTerror5k{tind,rind,mind} = Terror(4,1:2);
+                catch 
+                    allTerror5k{tind,rind,mind} = [];
+                end
                 
                 try    
-                    allTerror10k{tind,rind,mind} = Terror(1,1:2);
+                    allTerror10k{tind,rind,mind} = Terror(5,1:2);
                 catch 
                     allTerror10k{tind,rind,mind} = [];
                 end
                 
                 try
-                    allTerror14k{tind,rind,mind} = Terror(2,1:2);
+                    allTerror14k{tind,rind,mind} = Terror(6,1:2);
                 catch 
                     allTerror14k{tind,rind,mind} = [];
                 end
                 
                 try   
-                    allTerror21k{tind,rind,mind} = Terror(3,1:2);
+                    allTerror21k{tind,rind,mind} = Terror(7,1:2);
                 catch 
                     allTerror21k{tind,rind,mind} = [];
                 end
                 
                 try   
-                    allTerror24k{tind,rind,mind} = Terror(4,1:2);
+                    allTerror24k{tind,rind,mind} = Terror(8,1:2);
                 catch 
                     allTerror24k{tind,rind,mind} = [];
                 end
                 
                 try   
-                    allTerror28k{tind,rind,mind} = Terror(5,1:2);
+                    allTerror28k{tind,rind,mind} = Terror(9,1:2);
                 catch 
                     allTerror28k{tind,rind,mind} = [];
                 end
                 
                 try   
-                    allTerror34k{tind,rind,mind} = Terror(6,1:2);
+                    allTerror34k{tind,rind,mind} = Terror(10,1:2);
                 catch 
                     allTerror34k{tind,rind,mind} = [];
                 end
