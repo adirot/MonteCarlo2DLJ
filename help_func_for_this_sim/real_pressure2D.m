@@ -13,14 +13,21 @@ function [P,rho,rho_times_B2,good_ind,cantusevirial_ind...
 
 %       B2 = pi * int(exp(-4 beta((1/r)^12 - (1/r)^6)) - 1)rdr
 
+%      for hard core repulsion:
+%       B2 = pi * int(exp(- beta(- (1/r)^m)) - 1)rdr
+
 % The analitical solution is:
 
 %       B2 = pi*(1/(2^(2/3)))beta^(1/6) (-Gamma[5/6] F1[-(1/6), 1/2, beta] + 
 %               Sqrt[beta] Gamma[4/3] F1[1/3, 3/2, beta])
 
+% for hcr:
+%       B2 = (Pi/3)*(6-4*ExpIntegralE[5/3,-beta]+(-beta)^(2/3)*Gamma[-2/3])
+
 % where gamma is the gamma function, and F1 is the 
 %   Kummer confluent hypergeometric function  
 % (http://mathworld.wolfram.com/ConfluentHypergeometricFunctionoftheFirstKind.html)
+% ExpIntegralE[n,z] = integral from 1 to inf over Exp(-z*t)/t^n dt 
 
 % some values calculated with wolfram alpha:
 % Tdb = [0.1 0.2 0.3 0.4 0.45 0.5 0.6 0.7 0.9 1 10 100];
@@ -30,7 +37,7 @@ function [P,rho,rho_times_B2,good_ind,cantusevirial_ind...
 %     0.387399, -0.00116176, -0.448385 , -0.588563 , -1.49065 , -1.56293];
 
 p = inputParser();
-addOptional(p,'m',6);
+addOptional(p,'m',3);
 parse(p, varargin{:});
 Results = p.Results;
 m = Results.m;
@@ -62,6 +69,8 @@ end
         switch potantial
             case 'st'
                 B2 = B2stdb(ind);
+            case 'hcr'
+                B2 = calc_B2_hcr(T,m);
             otherwise
                 B2 = calc_B2(T,m);
         end
