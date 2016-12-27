@@ -90,6 +90,7 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
                 [fitresult, mfit, merror, nfit, nError, Tfit, Terror, gof] =...
                     createFitRDF(xs, ys, t, r, m, steps, 'hcr',true,...
                     'ignoreZerosAtend',true);
+                allgof{tind,rind,mind} = gof;
                 try
                     allfittedm4010{tind,rind,mind} = mfit{1};
                 catch 

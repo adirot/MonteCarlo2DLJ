@@ -165,7 +165,7 @@ for i = 1:Nplots
         lind = max(find(xs(i,:)));
         lind = lind - 1;
     else
-        lind = 300;
+        lind = 299;
     end
     
     y = ys(i,sind:lind);
