@@ -1149,7 +1149,7 @@ classdef MC2DLJoutput
 %                obj.RDFpeakLocs));
        end
         
-       function [obj,tauP,tauU] = inefficiency(obj,n,varargin)
+       function [obj,tauP,tauU,tauRDF] = inefficiency(obj,n,varargin)
            % for error calculations. see computer simulation of liquids
            % page 192 (n = tau_b)
            
@@ -1158,9 +1158,12 @@ classdef MC2DLJoutput
            addOptional(p, 'saveFigSVsSqrtTau', true);           
            addOptional(p, 'firstSteps2ignore', []);
            addOptional(p, 'keepFigOpen', false);
+           addOptional(p, 'doU', false);
+           addOptional(p, 'doP', false);
            addOptional(p, 'RDFind', []); % if you dont want the peak, but you want specific indexies from the RDF
            addOptional(p, 'rhoDistribInd', []);
            addOptional(p, 'fileNameInit', '');
+           addOptional(p, 'talk', true);
            
            parse(p, varargin{:});
            Results = p.Results;
@@ -1168,10 +1171,14 @@ classdef MC2DLJoutput
            firstSteps2ignore = Results.firstSteps2ignore;
            saveFigSVsSqrtTau = Results.saveFigSVsSqrtTau;
            keepFigOpen = Results.keepFigOpen;
+           doU = Results.doU;
+           doP = Results.doP;
            RDFind = Results.RDFind;
            rhoDistribInd = Results.rhoDistribInd;
            fileNameInit = Results.fileNameInit;
+           talk = Results.talk;
            
+           tauP = []; tauU = []; tauRDF = [];
            % calculate <A>
            if isempty(firstSteps2ignore)
                 if existInMatfile(obj.fileName,'meanPlrcEq')
@@ -1186,14 +1193,21 @@ classdef MC2DLJoutput
                 end
            else
                obj = calcMeanWithoutFirstSteps(obj, firstSteps2ignore);
-               meanP = obj.data.meanPlrcEq;
-               meanU = obj.data.meanUlrcEq;
+               if doP
+                    meanP = obj.data.meanPlrcEq;
+               end
+               if doU
+                    meanU = obj.data.meanUlrcEq;
+               end
                if isempty(RDFind)
                    
                    % meanRDFpeaks = obj.data.meanRDFpeaksEq;
                    
                else
                    for ii = 1:length(RDFind)
+                        if talk
+                            disp(['calculating mean RDF ' num2str(ii)]);
+                        end
                         meanRDFpointInd(ii) = mean(obj.data.RDFhisto(1,RDFind(ii),firstSteps2ignore:obj.data.indIndata),3);
                    end
                end
@@ -1211,8 +1225,12 @@ classdef MC2DLJoutput
                
            end
            
-           P = obj.data.allPlrc(1,firstSteps2ignore:obj.data.indIndata);
-           U = obj.data.allUlrc(1,firstSteps2ignore:obj.data.indIndata);
+           if doP
+                P = obj.data.allPlrc(1,firstSteps2ignore:obj.data.indIndata);
+           end
+           if doU
+                U = obj.data.allUlrc(1,firstSteps2ignore:obj.data.indIndata);
+           end
            if isempty(RDFind)
 %                 RDFpeaks = obj.RDFhisto(firstSteps2ignore:obj.data.indIndata,...
 %                     obj.RDFlocs);
@@ -1235,10 +1253,16 @@ classdef MC2DLJoutput
            for j = 1:length(n)
                 % calculate <A>b
                 ind = 1;
+                if talk
+                    disp(['calculating tau ' num2str(j)]);
+                end
                 for i = 1:n(j):(nt-n(j)+1)
-                   
-                    Pmeanb(ind) = mean(P(i:(i+n(j)-1)));
-                    Umeanb(ind) = mean(U(i:(i+n(j)-1)));
+                    if doP
+                        Pmeanb(ind) = mean(P(i:(i+n(j)-1)));
+                    end
+                    if doU
+                        Umeanb(ind) = mean(U(i:(i+n(j)-1)));
+                    end
                     if isempty(RDFind)
 %                         RDFpeaksMeanb(ind,1:Npeaks) =...
 %                             mean(RDFpeaks(i:(i+n(j)-1),1:Npeaks));
@@ -1252,9 +1276,17 @@ classdef MC2DLJoutput
            
                 % calculate sigma^2(<A>b) for all the different tau values
                 
-                nb(j) = length(Pmeanb); %number of blocks
-                varMeanP(j) = mean((Pmeanb - mean(Pmeanb)).^2);
-                varMeanU(j) = mean((Umeanb - mean(Umeanb)).^2);
+                try
+                    nb(j) = length(Pmeanb); %number of blocks
+                catch
+                    nb(j) = length(RDFpointIndMeanb);
+                end
+                if doP    
+                    varMeanP(j) = mean((Pmeanb - mean(Pmeanb)).^2);
+                end
+                if doU
+                    varMeanU(j) = mean((Umeanb - mean(Umeanb)).^2);
+                end
                 if isempty(RDFind)
 %                     varMeanRDFpeaks(j,1:Npeaks) =...
 %                         mean((RDFpeaksMeanb - mean(RDFpeaksMeanb)).^2);
@@ -1310,8 +1342,12 @@ classdef MC2DLJoutput
 
             
            %calculate sigma^2(A)
-           varP = mean((P(:) - meanP).^2);
-           varU = mean((U(:) - meanU).^2);
+           if doP
+                varP = mean((P(:) - meanP).^2);
+           end
+           if doU
+                varU = mean((U(:) - meanU).^2);
+           end
            if isempty(RDFind)
 %                varRDFpeaks = mean((RDFpeaks - meanRDFpeaks).^2);
            else
@@ -1329,20 +1365,30 @@ classdef MC2DLJoutput
            end
 
            % calculate tau - inefficiency
-           tauP = n.*varMeanP/varP;
-           tauU = n.*varMeanU/varU;
+           if doP
+                tauP = n.*varMeanP/varP;
+           else 
+               tauP = [];
+           end
+           if doU
+                tauU = n.*varMeanU/varU;
+           else
+               tauU = [];
+           end
            if isempty(RDFind)
 %                for i = 1:Npeaks
 %                     tauRDFpeaks(i,:) = n.*varMeanRDFpeaks(:,i)/varRDFpeaks(:,i);
 %                     tauRDFpeaksX(i,:) = sqrt(n);
 %                     RDFpeaksLeg{1,i} = ['peak num: ' num2str(i)];
 %                end
+                tauRDF = [];
            else
                for i = 1:length(RDFind)
                     tauRDFpointInd(i,:) = n.*varMeanRDFpointInd(:,i)'/varRDFpointInd(:,i)';
                     tauRDFpointIndX(i,:) = sqrt(n);
                     RDFpointIndLeg{1,i} = ['point ind: ' num2str(RDFind(i))];
                end
+               tauRDF = tauRDFpointInd;
            end
 
            if ~isempty(rhoDistribInd)
@@ -1361,26 +1407,27 @@ classdef MC2DLJoutput
            end
            
            if plotSVsSqrtTau
-               figure;
-               plot(sqrt(n),tauP);
-               hold on;
-%                title('$$t_A^c$$ for the pressure and energy',...
-%                    24,'Interpreter','latex');
-               title('$$t_A^c$$ for the pressure and energy');
-               xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
-               ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
-                   'FontSize',24,'Interpreter','latex');
-               plot(sqrt(n),tauU,'r');
-               legend('pressure','energy');
-               
-               if saveFigSVsSqrtTau
-                   fileName = ['SVsSqrtTauN' num2str(obj.simulationParam.N)... 
-                       'T' my_num2str(obj.simulationParam.T)...
-                       'rho' my_num2str(obj.simulationParam.rho)];
-                   saveas(gcf,[fileNameInit fileName '.fig']);
-                   saveas(gcf,[fileNameInit fileName '.jpg']);
-               end
+               if doP
+                   figure;
+                   plot(sqrt(n),tauP);
+                   hold on;
+    %                title('$$t_A^c$$ for the pressure and energy',...
+    %                    24,'Interpreter','latex');
+                   title('$$t_A^c$$ for the pressure and energy');
+                   xlabel('$$\sqrt{t_b}$$','FontSize',24,'Interpreter','latex');
+                   ylabel('$$t_A^c=\frac{t_b \sigma^2 (<A>_b)}{\sigma^2(A)}$$',...
+                       'FontSize',24,'Interpreter','latex');
+                   plot(sqrt(n),tauU,'r');
+                   legend('pressure','energy');
 
+                   if saveFigSVsSqrtTau
+                       fileName = ['SVsSqrtTauN' num2str(obj.simulationParam.N)... 
+                           'T' my_num2str(obj.simulationParam.T)...
+                           'rho' my_num2str(obj.simulationParam.rho)];
+                       saveas(gcf,[fileNameInit fileName '.fig']);
+                       saveas(gcf,[fileNameInit fileName '.jpg']);
+                   end
+               end
                if isempty(RDFind)
 %                    colorPlot(tauRDFpeaksX,tauRDFpeaks,'addLegend',RDFpeaksLeg);
 %                    %title('$$t_A^c$$ for RDF peaks',24,'Interpreter','latex');
@@ -1489,6 +1536,17 @@ classdef MC2DLJoutput
                [~, minInd] = min(abs(startFromStep - obj.data.sweepInd));
            end
            
+           if ~isempty(rhoDistribInd)
+               try
+                   obj.data.rhoDistribX;
+                   [distrib_steps, ~] = size(obj.data.rhoDistribX);
+               catch
+                   error(['first calculate rhoDistrib for'... 
+                       ' all of the steps named obj.data.rhoDistribX/Y' ...
+                       ' without first steps, size: (steps , N+1) ']);
+               end
+                   
+           end
            
            for i = minInd:obj.data.indIndata
                
@@ -1521,19 +1579,14 @@ classdef MC2DLJoutput
                end
                
                if ~isempty(rhoDistribInd)
-                   try
-                       obj.data.rhoDistribX;
-                   catch
-                       error(['first calculate rhoDistrib for'... 
-                           ' all of the steps named obj.data.rhoDistribX/Y' ...
-                           ' without first steps, size: (steps , N+1) ']);
-                   end
-                   for j = 1:length(rhoDistribInd)
-                       
-                       varRhoDistrib(i,j) =...
-                           var(obj.data.rhoDistribY(1:i,rhoDistribInd(j)));
-                       varVarRhoDistrib(i,j) = var(varRhoDistrib(:,j));
-                       
+                   if i <= distrib_steps
+                       for j = 1:length(rhoDistribInd)
+
+                           varRhoDistrib(i,j) =...
+                               var(obj.data.rhoDistribY(1:i,rhoDistribInd(j)));
+                           varVarRhoDistrib(i,j) = var(varRhoDistrib(:,j));
+
+                       end
                    end
                else
                    varRhoDistrib = [];
@@ -1568,6 +1621,7 @@ classdef MC2DLJoutput
            end
            
            steps = obj.data.sweepInd(1,minInd:obj.indIndata);
+           steps_rhoDistrib = obj.data.sweepInd(1,1:distrib_steps);
            
            if plotVarVsStep
                if or(U,P)
@@ -1658,7 +1712,7 @@ classdef MC2DLJoutput
                    for ii = 1:length(rhoDistribInd)
                        leg{1,ii} = ['rho Distribtion index: '...
                            num2str(rhoDistribInd(ii))];
-                       steps4RhoDistribPlot(ii,:) = steps;
+                       steps4RhoDistribPlot(ii,:) = steps_rhoDistrib;
                    end
                    colorPlot(steps4RhoDistribPlot,varRhoDistrib,'addLegend',leg);
                    xlabel('steps');
@@ -1769,7 +1823,7 @@ classdef MC2DLJoutput
                    for ii = 1:length(rhoDistribInd)
                        leg{1,ii} = ['rho Distribtion index: '...
                            num2str(rhoDistribInd(ii))];
-                       steps4RDFplot(ii,:) = steps;
+                       steps4RDFplot(ii,:) = steps_rhoDistrib;
                    end
                    colorPlot(steps4RhoDistribPlot,varVarRhoDistrib,...
                        'addLegend',leg);
