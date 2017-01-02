@@ -1,4 +1,4 @@
-function [fitresult, mfit, mError, nfit, nError, Tfit, TError, gof] =...
+function [fitresult, mfit, mError, nfit, nError, Tfit, TError, allgof] =...
     createFitRDF(xs, ys, T, rho,m , steps, varargin)
 %CREATEFIT(X,Y)
 %  Create a fit for RDF.
@@ -187,10 +187,12 @@ for i = 1:Nplots
         mfit{i} = coeff(1);
         mError{i,1} = conf(1,1);
         mError{i,2} = conf(2,1);
+        allgof{i} = gof;
         if freen 
             nfit{i} = coeff(2);
             nError{i,1} = conf(1,2);
             nError{i,2} = conf(2,2);
+            allgof{i} = gof;
         else
             if or(freeTandn,freeTnbound)
                 Tfit{i} = coeff(1);
@@ -202,6 +204,7 @@ for i = 1:Nplots
                 nfit{i} = coeff(3);
                 nError{i,1} = conf(1,3);
                 nError{i,2} = conf(2,3);
+                allgof{i} = gof;
             end
 
             if freeTnset
@@ -211,6 +214,7 @@ for i = 1:Nplots
                 mfit{i} = coeff(2);
                 mError{i,1} = conf(1,2);
                 mError{i,2} = conf(2,2);
+                allgof{i} = gof;
             end
         
                 
@@ -223,6 +227,7 @@ for i = 1:Nplots
                 mfit{i} = coeff(2);
                 mError{i,1} = conf(1,2);
                 mError{i,2} = conf(2,2);
+                allgof{i} = gof;
         end
         
         if hcr_set_T
@@ -232,6 +237,7 @@ for i = 1:Nplots
                 mfit{i} = coeff(2);
                 mError{i,1} = conf(1,2);
                 mError{i,2} = conf(2,2);
+                allgof{i} = gof;
         end
             
     catch ME
@@ -241,6 +247,7 @@ for i = 1:Nplots
         mfit{i} = [];
         mError{i,1} = [];
         mError{i,2} = [];
+        allgof{i} = [];
         
         if freen 
             nfit{i} = [];
