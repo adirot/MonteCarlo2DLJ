@@ -1,5 +1,3 @@
-
-
 % fit all matfiles to the potantail (logRDF) for different steps
 
 steps = {'4010';'4050';'4100';'5k';'10k';'14k';'21k';'24k';'28k';'34k'};
@@ -25,6 +23,8 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
     tind = tind + 1;
     rind = 0;
     for r = [0.005,0.01,0.05,0.1,0.2]
+    %for r = 0.005
+    
         rind = rind + 1;
         mind = 0;
         for m = [3 4 5 6]
@@ -90,61 +90,81 @@ for t = [0.01,0.02,0.03,0.04,0.05,0.07,0.08,0.09,0.1,0.2,0.3,0.4,0.5,1,1.5,2,5]
                 [fitresult, mfit, merror, nfit, nError, Tfit, Terror, gof] =...
                     createFitRDF(xs, ys, t, r, m, steps, 'hcr',true,...
                     'ignoreZerosAtend',true);
-                allgof{tind,rind,mind} = gof;
+                
                 try
                     allfittedm4010{tind,rind,mind} = mfit{1};
+                    allgof4010{tind,rind,mind} = gof{1};
                 catch 
                     allfittedm4010{tind,rind,mind} = [];
+                    allgof4010{tind,rind,mind} = [];
                 end
                 try
                     allfittedm4050{tind,rind,mind} = mfit{2};
+                    allgof4050{tind,rind,mind} = gof{2};
                 catch 
                     allfittedm4050{tind,rind,mind} = [];
+                    allgof4050{tind,rind,mind} = [];
                 end
                 try
                     allfittedm4100{tind,rind,mind} = mfit{3};
+                    allgof4100{tind,rind,mind} = gof{3};
                 catch 
                     allfittedm4100{tind,rind,mind} = [];
+                    allgof4100{tind,rind,mind} = [];
                 end
                 try
                     allfittedm5k{tind,rind,mind} = mfit{4};
+                    allgof5k{tind,rind,mind} = gof{4};
                 catch 
                     allfittedm5k{tind,rind,mind} = [];
+                    allgof5k{tind,rind,mind} = [];
                 end
                 try
                     allfittedm10k{tind,rind,mind} = mfit{5};
+                    allgof10k{tind,rind,mind} = gof{5};
                 catch 
                     allfittedm10k{tind,rind,mind} = [];
+                    allgof10k{tind,rind,mind} = [];
                 end
                 
                 try 
                     allfittedm14k{tind,rind,mind} = mfit{6};
+                    allgof14k{tind,rind,mind} = gof{6};
                 catch 
                     allfittedm14k{tind,rind,mind} = [];
+                    allgof14k{tind,rind,mind} = [];
                 end
                 
                 try
                     allfittedm21k{tind,rind,mind} = mfit{7};
+                    allgof21k{tind,rind,mind} = gof{7};
                 catch 
                     allfittedm21k{tind,rind,mind} = [];
+                    allgof21k{tind,rind,mind} = [];
                 end
                 
                 try
                     allfittedm24k{tind,rind,mind} = mfit{8};
+                    allgof24k{tind,rind,mind} = gof{8};
                 catch 
                     allfittedm24k{tind,rind,mind} = [];
+                    allgof24k{tind,rind,mind} = [];
                 end
                 
                 try
                     allfittedm28k{tind,rind,mind} = mfit{9};
+                    allgof28k{tind,rind,mind} = gof{9};
                 catch 
                     allfittedm28k{tind,rind,mind} = [];
+                    allgof28k{tind,rind,mind} = [];
                 end
                 
                 try
                     allfittedm34k{tind,rind,mind} = mfit{10};
+                    allgof34k{tind,rind,mind} = gof{10};
                 catch 
                     allfittedm34k{tind,rind,mind} = [];
+                    allgof34k{tind,rind,mind} = [];
                 end
                 
 
