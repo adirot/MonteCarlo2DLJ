@@ -22,6 +22,7 @@ addOptional(p, 'nset', []);
 addOptional(p, 'hcr', false);
 addOptional(p, 'hcr_set_T', false);
 addOptional(p, 'ignoreZerosAtend', false);
+addOptional(p, 'weights', false);
 parse(p, varargin{:});
 Results = p.Results;
 plotFig = Results.plotFig;
@@ -33,6 +34,7 @@ nset = Results.nset;
 hcr = Results.hcr;
 hcr_set_T = Results.hcr_set_T;
 ignoreZerosAtend = Results.ignoreZerosAtend;
+weights = Results.weights;
 
 fitresult=[]; mfit=[]; mError=[]; nfit=[]; nError=[]; Tfit=[]; TError=[]; gof=[];
 fitProblem = false;
@@ -177,10 +179,15 @@ for i = 1:Nplots
     % stop warning about removing nan and inf data
     warning('off','curvefit:prepareFittingData:removingNaNAndInf');
 
+    
     % Fit model to data.
 %     [fitresult, gof] = fit( xData, yData, ft, opts );
      try
-        [fitresult, gof] = fit( xData, yData, ft);
+        if ~isempty(weights)
+            [fitresult, gof] = fit( xData, yData, ft, 'Weights', weights(i,:));
+        else 
+            [fitresult, gof] = fit( xData, yData, ft);
+        end
         conf = confint(fitresult);
         coeff = coeffvalues(fitresult);
 

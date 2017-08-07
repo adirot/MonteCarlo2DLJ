@@ -13,6 +13,8 @@ r = 0.1; m = 3; sq = 256; sqind = sqrt(sq); t = 2; simind = 9;
 %    meanhistnumOfCellsInSquare{tind,1,1,sqind}*sq*M.indIndata;
 %meanhistnumOfPartInSquare_inStep{tind,1} = meanhistnumOfCellsInSquare{tind,1,1,sqind};
 
+
+
 steps(1,1) = 1;
 [M, histXnumOfPartInSquare, histnumOfPartInSquare,...
                numOfPartInSquare] =...
