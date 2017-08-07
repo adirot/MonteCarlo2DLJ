@@ -6,9 +6,13 @@ h = gcf;
 axesObjs = get(h,'Children');
 dataObjs = get(axesObjs,'Children');
 %objTypes = get(dataObjs,'Type');
-lineData = findobj(dataObjs,'Type','line');
+try 
+    lineData = findobj(dataObjs,'Type','line');
+catch
+        lineData = findobj(dataObjs{2,1},'Type','line');
+end
 xdata = get(lineData,'XData');
-ydata = get(dataObjs,'YData');
+ydata = get(lineData,'YData');
 
 
 end
