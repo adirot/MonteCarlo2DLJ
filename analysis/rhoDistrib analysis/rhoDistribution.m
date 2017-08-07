@@ -1,4 +1,4 @@
-function [rho, PL, densities] = rhoDistribution2(coords,L,numOfSquares,numOfBins)
+function [rho, PL, densities] = rhoDistribution(coords,L,numOfSquares,numOfBins)
 %% Find a histogram of the densities in a montecarlo step
 
 % Given coordinates of N particles in 2D box, we devide the box to numOfSquares
