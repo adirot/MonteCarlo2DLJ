@@ -18,7 +18,7 @@ function [finalU,finalVirial,finalPressure,finalConfiguration,...
 % initialConfig - initial configuration of particles (2 by N matrix)
 % initialU - initial energy of the configuration
 % rCutoff - the cutoff distance for the energy
-% optional: 'verelet', rl : use verelet neighbor algorithm with rCutoff
+% optional: 'vereletRadius', rl : use verelet neighbor algorithm with rCutoff
 %           (rc) inner radius and rl outer radius. see section 5.3.1 in the
 %           book computer simulation of liquids for more information.
 % optional: the 'm' in the intetraction (U = 4((1/r)^12 - (1/r)^-m)),
@@ -52,7 +52,8 @@ function [finalU,finalVirial,finalPressure,finalConfiguration,...
 
 % parse input parameters
 p = inputParser();
-addOptional(p, 'verelet', []); 
+addOptional(p, 'vereletRadius', []);
+addOptional(p, 'energyCutoffRadius', []); 
 addOptional(p, 'virial', []);
 addOptional(p, 'm', 6);
 addOptional(p, 'angleDependent',false);
@@ -68,7 +69,8 @@ addOptional(p, 'TalkEvery', []);
 addOptional(p, 'dipoleStrength', []);
 parse(p, varargin{:});
 Results = p.Results;
-rl = Results.verelet;
+rl = Results.vereletRadius;
+rc = Results.energyCutoffRadius;
 virial = Results.virial;
 m = Results.m;
 angleDependent = Results.angleDependent;
@@ -115,9 +117,12 @@ end
 
 % calculate nieghbour list
 if ~isempty(rl)
-    
-    % construct neighbors list object
-    nlist = verelet(dist,rl,N);
+    if isempty(rc)
+        error('Cutoff radius input is needed for verelet algoritm');
+    else
+        % construct neighbors list object (see verelet.m)
+        nlist = verelet(dist,rl,rc,N);
+    end
 else 
     nlist = [];
 
