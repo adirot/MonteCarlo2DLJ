@@ -632,6 +632,7 @@ classdef MC2DLJoutput
                     num2str(size(obj.data.allU))]);
             end
             
+            
             obj.data.sweepInd(1,obj.indIndata+1) = newInd;
             if obj.indIndata == 1
                 s = zeros(2,obj.simulationParam.N,2);

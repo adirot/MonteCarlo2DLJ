@@ -50,10 +50,10 @@ classdef verelet
             obj.N = N;
       end
       
-      function obj = updateDisplacement(obj,movedParticleInd,diplacement)
-            obj.dispacements(1,movedParticleInd) = ...
-                obj.dispacements(1,movedParticleInd) + diplacement;
-            [max1,Ind] = max(obj.dispacements);
+      function obj = updateDisplacement(obj, movedParticleInd, diplacements)
+            obj.dispacements(1, movedParticleInd) = ...
+                obj.dispacements(1, movedParticleInd) + diplacements;
+            [max1, Ind] = max(obj.dispacements);
             
             % get the second maximal value
             nomax1 = [obj.dispacements(1:(Ind-1))...

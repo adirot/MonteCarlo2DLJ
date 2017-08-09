@@ -146,11 +146,11 @@ for step = 1:Nsteps
               
                 % Update the neighbors list
                 
-                    movedParticles = find(nlist.dispacements > 0);
-                    dist = reCalcDist(dist,movedParticles,particlesPosition,N,L,[]);
+                movedParticles = find(nlist.dispacements > 0);
+                dist = reCalcDist(dist,movedParticles,particlesPosition,N,L,[]);
             
                 % and the verlet list
-                nlist = verelet(dist,rl,N);
+                nlist = verelet(dist,rl,rc,N);
             end
         end
        
@@ -237,7 +237,7 @@ for step = 1:Nsteps
 
                     % update verelet displacement count
                     if ~isempty(nlist)
-                        nlist = nlist.updateDisplace(movedParticle,displace);
+                        nlist = nlist.updateDisplacement(movedParticle,displace);
                     end
 
                 else
@@ -264,7 +264,7 @@ for step = 1:Nsteps
 
                         % update verelet displacement count
                         if ~isempty(nlist)
-                            nlist = nlist.updateDisplace(movedParticle,displace);
+                            nlist = nlist.updateDisplacement(movedParticle,displace);
                         end
 
                     end
