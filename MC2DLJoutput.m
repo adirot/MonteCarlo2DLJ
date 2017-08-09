@@ -211,7 +211,7 @@ classdef MC2DLJoutput
                     
                     
                     p = inputParser();
-                    addOptional(p, 'verelet', []);
+                    addOptional(p, 'vereletRadius', []);
                     addOptional(p, 'pressure', false);
                     addOptional(p, 'fileNameInit', '');
                     addOptional(p, 'm', 6);
@@ -225,7 +225,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'dipoleStrength', []);
                     parse(p, varargin{8:end});
                     Results = p.Results;
-                    rl = Results.verelet;
+                    rl = Results.vereletRadius;
                     pressure = Results.pressure;
                     fileNameInit = Results.fileNameInit;
                     m = Results.m;
@@ -478,10 +478,10 @@ classdef MC2DLJoutput
            logFile = R.logFile;
            logFileInit = R.logFileInit;
            
-            N = obj.simulationParam.N; 
-            rho = obj.simulationParam.rho;
-            rCutoff = obj.simulationParam.rCutoff;        
-            m = obj.simulationParam.m;
+           N = obj.simulationParam.N; 
+           rho = obj.simulationParam.rho;
+           rCutoff = obj.simulationParam.rCutoff;        
+           m = obj.simulationParam.m;
             
             angleDependent = obj.simulationParam.angleDependent;
             angleDependence = obj.simulationParam.angleDependence;
@@ -525,7 +525,7 @@ classdef MC2DLJoutput
                     rCutoff,...
                     obj.currentDists,...
                     obj.currentU,...
-                    'verelet',obj.simulationParam.rl,...
+                    'vereletRadius',obj.simulationParam.rl,...
                     'virial',obj.currentVir,...
                     'm',m,...
                     'angleDependent',angleDependent,...

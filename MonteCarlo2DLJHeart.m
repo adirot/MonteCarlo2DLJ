@@ -53,7 +53,6 @@ function [finalU,finalVirial,finalPressure,finalConfiguration,...
 % parse input parameters
 p = inputParser();
 addOptional(p, 'vereletRadius', []);
-addOptional(p, 'energyCutoffRadius', []); 
 addOptional(p, 'virial', []);
 addOptional(p, 'm', 6);
 addOptional(p, 'angleDependent',false);
@@ -70,7 +69,6 @@ addOptional(p, 'dipoleStrength', []);
 parse(p, varargin{:});
 Results = p.Results;
 rl = Results.vereletRadius;
-rc = Results.energyCutoffRadius;
 virial = Results.virial;
 m = Results.m;
 angleDependent = Results.angleDependent;
