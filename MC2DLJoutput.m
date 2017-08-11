@@ -223,6 +223,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'hcr', false);
                     addOptional(p, 'dontSaveDists', false);
                     addOptional(p, 'dipoleStrength', []);
+                    addOptional(p, 'rhoDistribNumOfSquares',[]);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.vereletRadius;
@@ -237,11 +238,8 @@ classdef MC2DLJoutput
                     hcr = Results.hcr;
                     dontSaveDists = Results.dontSaveDists;
                     dipoleStrength = Results.dipoleStrength;
-                    
-                    if dontSaveDists
-                        pressure = true;
-                    end
-                    
+                    numOfSquares = Results.rhoDistribNumOfSquares;
+                   
                     if isempty(ufunc)
                         if hcr
                             ufunc = @(r,m) (-((1./r).^m));
@@ -252,6 +250,12 @@ classdef MC2DLJoutput
                         end
                     else
                         ufuncstr ='_ufunccustum_';
+                    end
+                    
+                    if isempty(numOfSquares)
+                        obj.simulationParam.calcRhoDistrib = false;
+                    else
+                        obj.simulationParam.calcRhoDistrib = true;
                     end
                     
                     % create a simulation output object for a new
@@ -281,6 +285,7 @@ classdef MC2DLJoutput
                     obj.simulationParam.ufunc = ufunc;
                     obj.simulationParam.hcr = hcr;
                     obj.simulationParam.dontSaveDists = dontSaveDists;
+                    obj.simulationParam.numOfSquares = numOfSquares;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
@@ -564,8 +569,15 @@ classdef MC2DLJoutput
                     talk = false;
                 end
                 
-                
-                
+                if obj.simulationParam.calcRhoDistrib
+                    [obj, ~, ~, ~] = ...
+                        calcRhoDistrib(obj,...
+                        obj.simulationParam.numOfSquares,...
+                        'plotHist', false, ...
+                        'plotHist_times_partNum', false,...
+                        'coordsFromObj', true,...
+                        'save2Obj',true);
+                end
                 
                 if save2data
 %                     obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
@@ -645,22 +657,22 @@ classdef MC2DLJoutput
                 obj.data.allDists = s;
                 clear s;
                 
-                if dontSaveDists
-                    [bins, histo] =...
-                        calculateRDF(newDists,obj.simulationParam.N,...
-                        obj.simulationParam.rho,300,10);
-                    obj.data.RDFbins = bins;
-                    obj.data.RDFhisto = zeros(1,300,2);
-                    obj.data.RDFhisto(1,1:300,1) = histo;
-                end
+%                 if dontSaveDists
+%                     [bins, histo] =...
+%                         calculateRDF(newDists,obj.simulationParam.N,...
+%                         obj.simulationParam.rho,300,10);
+%                     obj.data.RDFbins = bins;
+%                     obj.data.RDFhisto = zeros(1,300,2);
+%                     obj.data.RDFhisto(1,1:300,1) = histo;
+%                 end
             else
                 obj.data.allCoords(:,:,obj.indIndata+1) = newCoords(:,:,1);
-                if dontSaveDists
-                    [~, histo] =...
-                        calculateRDF(newDists,obj.simulationParam.N,...
-                        obj.simulationParam.rho,300,10);
-                    obj.data.RDFhisto(1,1:300,obj.indIndata+1) = histo;
-                else
+                 if dontSaveDists
+%                     [~, histo] =...
+%                         calculateRDF(newDists,obj.simulationParam.N,...
+%                         obj.simulationParam.rho,300,10);
+%                     obj.data.RDFhisto(1,1:300,obj.indIndata+1) = histo;
+                 else
                     obj.data.allDists(:,:,obj.indIndata+1) = newDists(:,:,1);
                 end
             end
@@ -955,7 +967,8 @@ classdef MC2DLJoutput
            endAt = Results.endAt;
            coordsFromObj = Results.coordsFromObj;
            save2Obj = Results.save2Obj;
-
+           
+           
            L = obj.simulationParam.L;
            if isempty(endAt)
                 endAt = obj.indIndata;
@@ -980,7 +993,7 @@ classdef MC2DLJoutput
            histnumOfPartInSquare =...
                hist(numOfPartInSquare,histxnumOfPartInSquare);
            % Normalize
-           histxnumOfPartInSquare = histxnumOfPartInSquare / ((L^2/numOfSquares)*(N/L^2));       
+           % histxnumOfPartInSquare = histxnumOfPartInSquare / ((L^2/numOfSquares)*(N/L^2));       
 
            if plotHist
                figure;
@@ -1003,15 +1016,18 @@ classdef MC2DLJoutput
            end
 
            if save2Obj
-
-               bin = histxnumOfPartInSquare(2);
-               areaUnderPlot = sum(bin*histnumOfPartInSquare);
-
-               obj.data.rhoDistribX = histxnumOfPartInSquare;
-               obj.data.rhoDistribY = histnumOfPartInSquare/areaUnderPlot;
-
+               if obj.indIndata == 1
+                    obj.data.histxnumOfPartInSquare = histxnumOfPartInSquare;
+                    s = zeros(sqrt(numOfSquares),2);
+                    s(:,1) = histnumOfPartInSquare;
+                    obj.data.histnumOfPartInSquare = s;
+                    clear s;
+                    obj.data.numOfSquares = numOfSquares;
+               else
+                    obj.data.histnumOfPartInSquare(1:sqrt(numOfSquares),obj.indIndata+1)...
+                        = histnumOfPartInSquare';
+               end
            end
-
        end
 
        
