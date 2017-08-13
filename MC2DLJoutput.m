@@ -1018,13 +1018,13 @@ classdef MC2DLJoutput
            if save2Obj
                if obj.indIndata == 1
                     obj.data.histxnumOfPartInSquare = histxnumOfPartInSquare;
-                    s = zeros(sqrt(numOfSquares),2);
+                    s = zeros(obj.simulationParam.N+1,2);
                     s(:,1) = histnumOfPartInSquare;
                     obj.data.histnumOfPartInSquare = s;
                     clear s;
                     obj.data.numOfSquares = numOfSquares;
                else
-                    obj.data.histnumOfPartInSquare(1:sqrt(numOfSquares),obj.indIndata+1)...
+                    obj.data.histnumOfPartInSquare(:,obj.indIndata)...
                         = histnumOfPartInSquare';
                end
            end
