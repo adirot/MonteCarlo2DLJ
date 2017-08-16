@@ -975,23 +975,45 @@ classdef MC2DLJoutput
            end
            N = obj.simulationParam.N;  
 
+           histxnumOfPartInSquare = 0:N;
            if coordsFromObj
                numOfPartInSquare(1,1:numOfSquares) =...
                     numOfCellsDistribution(obj.currentCoords,...
                     L,numOfSquares);
+               histnumOfPartInSquare =...
+                    histcounts(numOfPartInSquare,0:N+1);
+           
            else
                numOfPartInSquare = zeros(1,numOfSquares*(endAt-startFrom+1));
-
-               for i = 1:(endAt-startFrom+1)
-                   numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
-                        numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i+startFrom-1),...
-                        L,numOfSquares);
+               % if the data is large we don't wont to load it all at once to the workspace
+               numOfSteps = endAt-startFrom+1;
+               maxSteps2load = 300;
+               if numOfSteps <= maxSteps2load 
+                   for i = 1:numOfSteps
+                       numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
+                            numOfCellsDistribution(obj.data.allCoords(1:2,1:N,i+startFrom-1),...
+                            L,numOfSquares);
+                   end
+                   histnumOfPartInSquare =...
+                        histcounts(numOfPartInSquare,0:N+1);              
+               else %load big data in parts of 'maxSteps2load' steps
+                   numOfParts = floor(numOfSteps/maxSteps2load);
+                   histnumOfPartInSquare = zeros(1,N+1);
+                   partInd = [0, maxSteps2load*(1:numOfParts), numOfSteps];
+                   for i = 1:(length(partInd)-1)
+                       c = 0;
+                       for j = (1+partInd(i)):partInd(i+1)
+                           c = c + 1;
+                            tempNumOfPartInSquare(1,((numOfSquares*(c-1)+1):(numOfSquares*c))) =...
+                                numOfCellsDistribution(obj.data.allCoords(1:2,1:N,j+startFrom-1),...
+                                L,numOfSquares);    
+                       end
+                       histnumOfPartInSquare = histnumOfPartInSquare + histcounts(tempNumOfPartInSquare,0:N+1);
+                       clear tempNumOfPartInSquare;
+                   end
                end
            end
 
-           histxnumOfPartInSquare = 0:N;
-           histnumOfPartInSquare =...
-               hist(numOfPartInSquare,histxnumOfPartInSquare);
            % Normalize
            % histxnumOfPartInSquare = histxnumOfPartInSquare / ((L^2/numOfSquares)*(N/L^2));       
 
@@ -1016,16 +1038,21 @@ classdef MC2DLJoutput
            end
 
            if save2Obj
-               if obj.indIndata == 1
-                    obj.data.histxnumOfPartInSquare = histxnumOfPartInSquare;
-                    s = zeros(obj.simulationParam.N+1,2);
-                    s(:,1) = histnumOfPartInSquare;
-                    obj.data.histnumOfPartInSquare = s;
-                    clear s;
-                    obj.data.numOfSquares = numOfSquares;
+               if coordsFromObj
+                   if obj.indIndata == 1
+                        obj.data.histxnumOfPartInSquare = histxnumOfPartInSquare;
+                        s = zeros(obj.simulationParam.N+1,2);
+                        s(:,1) = histnumOfPartInSquare;
+                        obj.data.histnumOfPartInSquare = s;
+                        clear s;
+                        obj.data.numOfSquares = numOfSquares;
+                   else
+                        obj.data.histnumOfPartInSquare(:,obj.indIndata)...
+                            = histnumOfPartInSquare';
+                   end
                else
-                    obj.data.histnumOfPartInSquare(:,obj.indIndata)...
-                        = histnumOfPartInSquare';
+                   obj.data.histxnumOfPartInSquare = 0:N;
+                   obj.data.histxnumOfPartInSquare = histnumOfPartInSquare;
                end
            end
        end
