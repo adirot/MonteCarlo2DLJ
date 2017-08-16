@@ -987,7 +987,7 @@ classdef MC2DLJoutput
                numOfPartInSquare = zeros(1,numOfSquares*(endAt-startFrom+1));
                % if the data is large we don't wont to load it all at once to the workspace
                numOfSteps = endAt-startFrom+1;
-               maxSteps2load = 300;
+               maxSteps2load = 50000;
                if numOfSteps <= maxSteps2load 
                    for i = 1:numOfSteps
                        numOfPartInSquare(1,(numOfSquares*(i-1)+1):(numOfSquares*i)) =...
