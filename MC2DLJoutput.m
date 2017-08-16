@@ -953,6 +953,7 @@ classdef MC2DLJoutput
            % PLN(rho) = (0:N).*histnumOfPartInSquare/N
 
            p = inputParser();
+           addOptional(p, 'talk', false);
            addOptional(p, 'plotHist', false); 
            addOptional(p, 'plotHist_times_partNum', false);
            addOptional(p, 'startFrom', 1);
@@ -961,6 +962,7 @@ classdef MC2DLJoutput
            addOptional(p, 'save2Obj', true);
            parse(p, varargin{:});
            Results = p.Results;
+           talk = Results.talk;
            plotHist = Results.plotHist;
            plotHist_times_partNum = Results.plotHist_times_partNum;
            startFrom = Results.startFrom;
@@ -980,9 +982,14 @@ classdef MC2DLJoutput
                numOfPartInSquare(1,1:numOfSquares) =...
                     numOfCellsDistribution(obj.currentCoords,...
                     L,numOfSquares);
+                if talk
+                    disp('finished counting cells' );
+                end
                histnumOfPartInSquare =...
                     histcounts(numOfPartInSquare,0:N+1);
-           
+                if talk
+                    disp('finished binning cells');
+                end
            else
                numOfPartInSquare = zeros(1,numOfSquares*(endAt-startFrom+1));
                % if the data is large we don't wont to load it all at once to the workspace
