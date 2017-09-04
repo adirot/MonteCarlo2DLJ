@@ -174,6 +174,10 @@ classdef MC2DLJoutput
                         obj.simulationParam.hcr = false;
                     end
                     
+                    if ~isfield(obj.simulationParam, 'lowLevelSave')
+                        obj.simulationParam.lowLevelSave = false;
+                    end
+                    
                     if obj.simulationParam.angleDependent
                    
                         obj.currentAngs = obj.data.allAngs(:,:,obj.indIndata);
@@ -225,6 +229,7 @@ classdef MC2DLJoutput
                     addOptional(p, 'dipoleStrength', []);
                     addOptional(p, 'rhoDistribNumOfSquares',[]);
                     addOptional(p, 'useSaveFast', false);
+                    addOptional(p, 'lowLevelSave', false);
                     parse(p, varargin{8:end});
                     Results = p.Results;
                     rl = Results.vereletRadius;
@@ -241,6 +246,7 @@ classdef MC2DLJoutput
                     dipoleStrength = Results.dipoleStrength;
                     numOfSquares = Results.rhoDistribNumOfSquares;
                     useSaveFast = Results.useSaveFast;
+                    lowLevelSave = Results.lowLevelSave;
                     
                     if isempty(ufunc)
                         if hcr
@@ -289,6 +295,7 @@ classdef MC2DLJoutput
                     obj.simulationParam.dontSaveDists = dontSaveDists;
                     obj.simulationParam.numOfSquares = numOfSquares;
                     obj.simulationParam.useSaveFast = useSaveFast;
+                    obj.simulationParam.lowLevelSave = lowLevelSave;
                     
                     obj.currentmaxdr = obj.simulationParam.initialmaxdr;
                     obj.moveCount = 0;
@@ -457,12 +464,45 @@ classdef MC2DLJoutput
                                 'allAlphas','allThetas',...
                                 'allAngs','allBettas','dipoleStrength');
                     else
-                        save(obj.fileName, 'allDists','allCoords',...
-                                'allU','allV','allP','allPlrc','sweepInd',...
-                                'moveCount','indIndata'...
-                                ,'currentmaxdr','simulationParam','runNum',...
-                                'allAlphas','allThetas',...
-                                'allAngs','allBettas','dipoleStrength','-v7.3');
+                        if lowLevelSave
+                            allCoordsFileName = [obj.fileName '_AllCoords.dat']; 
+                            coords_fid = fopen(allCoordsFileName,'w');
+                            fwriteCoords(coords_fid,allCoords);
+                            coords_stepPointer(1) = 0;
+                            coords_stepPointer(2) = ftell(coords_fid);
+                            fclose(coords_fid);
+                            
+                            allDistsFileName = [obj.fileName '_AllDists.dat']; 
+                            dists_fid = fopen(allDistsFileName,'w');
+                            fwriteDists(dists_fid,allDists);
+                            dists_stepPointer(1) = 0;
+                            dists_stepPointer(2) = ftell(dists_fid);
+                            fclose(dists_fid);
+                            
+                            allUFileName = [obj.fileName '_AllU.dat']; 
+                            allU_fid = fopen(allUFileName,'w');
+                            fwriteU(allU_fid,allU);
+                            allU_stepPointer(1) = 0;
+                            allU_stepPointer(2) = ftell(allU_fid);
+                            fclose(allU_fid);
+                            
+                            obj.simulationParam.allCoordsFileName = allCoordsFileName;
+                            obj.simulationParam.allDistsFileName = allDistsFileName;
+                            obj.simulationParam.allUFileName = allUFileName;
+                            
+                            save(obj.fileName,'currentmaxdr',...
+                                'simulationParam','runNum',...
+                                'coords_stepPointer','dists_stepPointer',...
+                                'allU_stepPointer','-v7.3');
+                            
+                        else
+                            save(obj.fileName, 'allDists','allCoords',...
+                                    'allU','allV','allP','allPlrc','sweepInd',...
+                                    'moveCount','indIndata'...
+                                    ,'currentmaxdr','simulationParam','runNum',...
+                                    'allAlphas','allThetas',...
+                                    'allAngs','allBettas','dipoleStrength','-v7.3');
+                        end
                     end
                     obj.data = matfile(obj.fileName);
                     obj.data = matfile(obj.fileName,'Writable',true);
@@ -488,12 +528,14 @@ classdef MC2DLJoutput
            addOptional(p, 'save2data', true);
            addOptional(p, 'logFile', true);
            addOptional(p, 'logFileInit', '');
+           addOptional(p, 'lowLevelSaveEvery', 1000);
            parse(p, varargin{:});
            R = p.Results;
            TalkEvery = R.TalkEvery;
            save2data = R.save2data;
            logFile = R.logFile;
            logFileInit = R.logFileInit;
+           lowLevelSaveEvery = R.lowLevelSaveEvery;
            
            N = obj.simulationParam.N; 
            rho = obj.simulationParam.rho;
@@ -524,6 +566,21 @@ classdef MC2DLJoutput
             
             sweepCount = 0;
             totSec = 0;
+            
+            if obj.simulationParam.lowLevelSave
+                lowLevelSaveInd = 1;
+                tempCoords = zeros(2,N,lowLevelSaveEvery);
+                tempDists = zeros(N,N,lowLevelSaveEvery);
+                tempU = zeros(1,lowLevelSaveEvery);
+                
+                % Open data files fid, and go to end of files
+                coords_fid = fopen(obj.simulationParam.allCoordsFileName,'w');
+                fseek(coords_fid,0,'eof');
+                dists_fid = fopen(obj.simulationParam.allDistsFileName,'w');
+                fseek(dists_fid,0,'eof');
+                allU_fid = fopen(obj.simulationParam.allUFileName,'w');
+                fseek(allU_fid,0,'eof');
+            end
             
             while(sweepCount < Nsweeps)
                 tic;
@@ -592,19 +649,41 @@ classdef MC2DLJoutput
                 end
                 
                 if save2data
-%                     obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
-%                         finalDistances,finalU,finalV,finalPressure,...
-%                         obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
-%                         angleDependent,obj.currentAngs,...
-%                         obj.currentAlphas,obj.currentThetas,...
-%                         obj.simulationParam.dontSaveDists,talk);
-                    obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
-                        finalDistances,finalU,finalV,finalPressure,...
-                        obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
-                        angleDependent,obj.currentAngs,...
-                        obj.currentBettas,...
-                        obj.simulationParam.dontSaveDists,talk);
-
+                    if obj.simulationParam.lowLevelSave
+                        tempCoords(1:2,1:N,lowLevelSaveInd) =...
+                            finalConfiguration;
+                        tempDists(1:N,1:N,lowLevelSaveInd) =...
+                            finalDistances;
+                        tempU(1,lowLevelSaveInd) = finalU;
+                        lowLevelSaveInd = lowLevelSaveInd + 1;
+                        if lowLevelSaveInd > lowLevelSaveEvery
+                            fwriteCoords(coords_fid,tempCoords);
+                            fwriteDists(dists_fid,tempDists);
+                            fwriteU(allU_fid,tempU);
+                            
+                            % save pointers to steps
+                            obj.data.coords_stepPointer(1,obj.currentSweep) = ...
+                                ftell(coords_fid);
+                            obj.data.dists_stepPointer(1,obj.currentSweep) = ...
+                                ftell(dists_fid);
+                            obj.data.allU_stepPointer(1,obj.currentSweep) = ...
+                                ftell(allU_fid);
+                            lowLevelSaveInd = 1;
+                        end
+                    else
+    %                     obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
+    %                         finalDistances,finalU,finalV,finalPressure,...
+    %                         obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
+    %                         angleDependent,obj.currentAngs,...
+    %                         obj.currentAlphas,obj.currentThetas,...
+    %                         obj.simulationParam.dontSaveDists,talk);
+                        obj = obj.addStep2data(obj.currentSweep,finalConfiguration,...
+                            finalDistances,finalU,finalV,finalPressure,...
+                            obj.moveCount,obj.currentmaxdr,obj.Ulrc,obj.Plrc,...
+                            angleDependent,obj.currentAngs,...
+                            obj.currentBettas,...
+                            obj.simulationParam.dontSaveDists,talk);
+                    end
                 end
                 
                 
@@ -634,6 +713,12 @@ classdef MC2DLJoutput
                     
             end
             
+            if obj.simulationParam.lowLevelSave
+                % close data files fid
+                fclose(coords_fid);
+                fclose(dists_fid);
+                fclose(allU_fid);
+            end
         end
         
 %        function obj = addStep2data(obj,newInd,newCoords,newDists,newU,newV...
@@ -2646,5 +2731,65 @@ function N = countParticlesInSquare(i,j,x,y,squareSide)
 % Count the number of particles in square i,j
     N = sum(and(and(y > j,y < j+squareSide), and(x > i,x < i+squareSide)));
 end
+
+
 end  
-        
+     
+% lowLevelSave related functions
+function status = fwriteCoords(fid,coords)
+% writes coordinates to a dat file in 'fid'. 'coords' should be a 2 by N by
+% numberOfSteps double. 'fid' is a fid with a dat file, the data will be
+% writen in the possition of the pointer. The fid sould be openned with a
+% 'w' flag. The output fid will have a pointer with the location after the
+% data added.
+    status = fwrite(fid,coords,'double');
+end
+
+function coords = freadCoords(fid,firstStep,lastStep,stepPointers,N)
+% reads coordinates from 'firstStep' to 'lastStep' from a dat file in 'fid'.
+% 'fid' is a fid with a dat file. The fid sould be openned with an
+% 'r' flag. The output fid will have a pointer with the location after the
+% data read. 'coords' is a 2 by N*number of steps read.
+    fseek(fid,stepPointers(firstStep),'bof');
+    numOfSteps2read = lastStep - firstStep;
+    coords = fread(fid,[2 N*numOfSteps2read],'double');
+end
+
+function status = fwriteDists(fid,dists)
+% writes distances to a dat file in 'fid'. 'dists' should be an N by N by
+% numberOfSteps double. 'fid' is a fid with a dat file, the data will be
+% writen in the possition of the pointer. The fid sould be openned with a
+% 'w' flag. The output fid will have a pointer with the location after the
+% data added.
+    status = fwrite(fid,dists,'double');
+end
+
+function dists = freadDists(fid,firstStep,lastStep,stepPointers,N)
+% reads distances from 'firstStep' to 'lastStep' from a dat file in 'fid'.
+% 'fid' is a fid with a dat file. The fid sould be openned with an
+% 'r' flag. The output fid will have a pointer with the location after the
+% data read. 'dists' is a N by N*number of steps read.
+    fseek(fid,stepPointers(firstStep),'bof');
+    numOfSteps2read = lastStep - firstStep;
+    dists = fread(fid,[N N*numOfSteps2read],'double');
+end
+
+function status = fwriteU(fid,U)
+% writes U to a dat file in 'fid'. 'U' should be a 1 by 
+% numberOfSteps double. 'fid' is a fid with a dat file, the data will be
+% writen in the possition of the pointer. The fid sould be openned with a
+% 'w' flag. The output fid will have a pointer with the location after the
+% data added.
+    status = fwrite(fid,U,'double');
+end
+
+function U = freadU(fid,firstStep,lastStep,stepPointers)
+% reads distances from 'firstStep' to 'lastStep' from a dat file in 'fid'.
+% 'fid' is a fid with a dat file. The fid sould be openned with an
+% 'r' flag. The output fid will have a pointer with the location after the
+% data read. 'U' is a 1 by number of steps read array.
+    fseek(fid,stepPointers(firstStep),'bof');
+    numOfSteps2read = lastStep - firstStep;
+    U = fread(fid,[1 numOfSteps2read],'double');
+end
+
