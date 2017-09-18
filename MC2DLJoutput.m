@@ -146,8 +146,11 @@ classdef MC2DLJoutput
                     obj.data = matfile(obj.fileName,'Writable',true);
                     obj.simulationParam = obj.data.simulationParam;
                     obj.currentmaxdr = obj.data.currentmaxdr;
-                    obj.moveCount = obj.data.moveCount;
-                    obj.indIndata = obj.data.indIndata;
+                    try
+                        obj.moveCount = obj.data.moveCount;
+                        obj.indIndata = obj.data.indIndata;
+                    catch
+                    end
                     
                     obj.currentCoords = obj.data.allCoords(:,:,obj.indIndata);
                     obj.currentDists =...
