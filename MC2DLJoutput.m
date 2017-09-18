@@ -2693,8 +2693,7 @@ function Ni = numOfCellsDistribution(coords,L,numOfSquares)
 % ~~~~~
 % Ni    : all number of cells in subsystems 
 
-% Parse input:
-[~, N] = size(coords); 
+% Parse input: 
 m = sqrt(numOfSquares);
 if isinteger(m)
     error('The square root of numOfSquares must be an intiger');
